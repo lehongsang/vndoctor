@@ -1,39 +1,28 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
-
-export type IsolationLevel = 'READ UNCOMMITTED' | 'READ COMMITTED' | 'REPEATABLE READ' | 'SERIALIZABLE';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { Pool } from 'pg';
 
 @Injectable()
-export class DatabaseService implements OnModuleInit {
-  constructor(private dataSource: DataSource) {}
+export class DatabaseService implements OnApplicationShutdown {
+  constructor(
+    private readonly dataSource: DataSource,
+    @Inject('PG_POOL') private readonly pool: Pool,
+  ) {}
 
-  onModuleInit() {
-    this.overrideDefaultTransactionIsolation();
+  /**
+   * Returns the active TypeORM data source.
+   */
+  getDataSource(): DataSource {
+    return this.dataSource;
   }
 
   /**
-   * Monkey patch the DataSource.transaction method to use 'SERIALIZABLE'
-   * as the default isolation level instead of PostgreSQL's default (READ COMMITTED).
+   * Closes database handles on app shutdown so CLI scripts (e.g. seed) can exit cleanly.
    */
-  private overrideDefaultTransactionIsolation() {
-    const originalTransaction = this.dataSource.transaction.bind(this.dataSource) as {
-      <T>(runInTransaction: (entityManager: EntityManager) => Promise<T>): Promise<T>;
-      <T>(isolationLevel: IsolationLevel, runInTransaction: (entityManager: EntityManager) => Promise<T>): Promise<T>;
-    };
-
-    this.dataSource.transaction = <T>(
-      isolationOrRun: IsolationLevel | ((entityManager: EntityManager) => Promise<T>),
-      runInTransaction?: (entityManager: EntityManager) => Promise<T>,
-    ): Promise<T> => {
-      if (typeof isolationOrRun === 'function') {
-        return originalTransaction('SERIALIZABLE', isolationOrRun);
-      }
-      
-      if (runInTransaction) {
-        return originalTransaction(isolationOrRun, runInTransaction);
-      }
-
-      throw new Error('Invalid arguments passed to transaction');
-    };
+  async onApplicationShutdown(): Promise<void> {
+    if (this.dataSource.isInitialized) {
+      await this.dataSource.destroy();
+    }
+    await this.pool.end();
   }
 }

@@ -13,6 +13,7 @@ export interface FileFieldValidationOptions {
   [fieldName: string]: {
     maxSize?: number;
     fileType?: string | RegExp;
+    allowAnyFileType?: boolean;
     required?: boolean;
   };
 }
@@ -23,6 +24,7 @@ export interface FileFieldValidationOptions {
 export function createFileValidationPipe(options?: {
   maxSize?: number;
   fileType?: string | RegExp;
+  allowAnyFileType?: boolean;
   required?: boolean;
 }) {
   const validators: FileValidator[] = [];
@@ -35,7 +37,7 @@ export function createFileValidationPipe(options?: {
     );
   }
 
-  if (options?.fileType || ALLOWED_IMAGE_TYPES) {
+  if (!options?.allowAnyFileType && (options?.fileType || ALLOWED_IMAGE_TYPES)) {
     validators.push(
       new FileTypeValidator({
         fileType: (options?.fileType as string) || ALLOWED_IMAGE_TYPES,
@@ -64,6 +66,7 @@ export class FileFieldsValidationPipe implements PipeTransform {
       | {
           maxSize?: number;
           fileType?: string | RegExp;
+          allowAnyFileType?: boolean;
           required?: boolean;
         },
   ) {}

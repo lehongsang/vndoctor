@@ -1,29 +1,25 @@
-# Asynchronous Mail System (Kafka-Driven)
+# Asynchronous Mail System (BullMQ-Driven)
 
-High-performance, event-driven mailing system using NestJS Mailer and Kafka.
+High-performance, queue-driven mailing system using NestJS Mailer and BullMQ with Redis.
 
-## 🏗️ 1. Architecture (Event-Driven)
-- **Producer**: API modules NEVER send mail directly. They produce a message to `KafkaTopic.AUTH_MAIL`.
-- **Consumer**: `MailConsumer` listens for events and calls `MailService` to perform the actual SMTP send.
-- **Why**: Ensures API responsiveness and handles retries/failures gracefully without blocking the user.
+## 🏗️ 1. Architecture (Queue-Driven)
+- **Producer / Queue**: API modules NEVER send mail directly synchronously. They use `MailQueueService` to enqueue jobs to the `mail` BullMQ queue.
+- **Consumer / Processor**: `MailProcessor` (`@Processor('mail')`) listens for jobs and calls `MailService` to perform SMTP sending asynchronously.
+- **Why**: Ensures API responsiveness and handles retries/failures gracefully without blocking the client.
 
-## ✉️ 2. Event Patterns & Payloads
-Every mail event MUST follow the `MailEventPayload` structure:
-- `pattern`: Unique identifier (e.g., `send-otp`, `send-verification-email`).
-- `data`: Actual data (email, url, code, etc.).
-- `metadata`: Contains `timestamp` for latency monitoring.
+## ✉️ 2. Job Names & Payloads
+Mail jobs follow defined types in `src/services/mail/mail-queue.types.ts`:
+- `MailJobName.SendOtp`: `{ email, otp, expiresInMinutes }`
+- `MailJobName.SendPasswordReset`: `{ email, url }`
+- `MailJobName.SendVerificationEmail`: `{ email, url }`
 
-## 🛡️ 3. Error Handling & DLQ
-- **Try/Catch**: The Consumer wraps the logic in a try/catch.
-- **DLQ**: Upon failure, the message is automatically moved to `KafkaTopic.AUTH_MAIL_DLQ` for audit and manual retry.
+## 🛡️ 3. Error Handling & Retries
+- Configured with exponential backoff and automatic retries in `MailQueueService`.
+- Failed jobs are retained with `removeOnFail` for debugging.
 
-## 📊 4. Monitoring Rules
-- **Latency**: If `Date.now() - metadata.timestamp > 10000` (10s), log a WARNING.
-- **Context**: Always use `LoggerService` with the correct class context.
-
-## 🎨 5. Templates (Handlebars)
+## 🎨 4. Templates (Handlebars)
 - Files live in `src/services/mail/templates/*.hbs`.
-- Always pass `appName` and `currentYear` in the context for consistent branding.
+- Pass `appName` and `currentYear` in the template context for consistent branding.
 
-## 🔗 6. References
+## 🔗 5. References
 - [MAIL.md](./references/MAIL.md) (Implementation Patterns)

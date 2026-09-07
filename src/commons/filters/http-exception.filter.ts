@@ -3,6 +3,7 @@ import { Catch, HttpException, Injectable } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { LoggerService } from '../logger/logger.service';
 import { getCorrelationId } from '../middlewares/correlation-id.middleware';
+import { buildRequestLogMetadata } from './request-log-metadata';
 
 @Catch(HttpException)
 @Injectable()
@@ -16,6 +17,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
     const correlationId = getCorrelationId(request);
+    const requestMetadata = buildRequestLogMetadata(request, status);
 
     // Extract message — handle both string and array (ValidationPipe returns array)
     let message: string | string[] = exception.message;
@@ -36,16 +38,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
-    // Log 500 errors to file (important), others to console only
     if (status >= 500) {
       this.logger.error(
         exception.message,
-        undefined,
+        requestMetadata,
         correlationId,
         exception.stack || '',
       );
     } else {
-      this.logger.errorConsoleOnly(exception.message, undefined, correlationId);
+      this.logger.warn(
+        `[HttpException] ${Array.isArray(message) ? message.join('; ') : message}`,
+        requestMetadata,
+        correlationId,
+      );
     }
 
     // Standardized response format — consistent with CustomExceptionFilter

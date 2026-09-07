@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import '@/commons/types/express-augmentation';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
@@ -9,19 +11,24 @@ import { AuthService as BetterAuthService } from '@thallesp/nestjs-better-auth';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import * as express from 'express';
+import { Logger as PinoNestLogger } from 'nestjs-pino';
+import { pinoHttp } from 'pino-http';
 import { AppModule } from './app.module';
 import {
   API_GLOBAL_PREFIX,
   APP_NAME,
   DEFAULT_PORT,
 } from './commons/constants/app.constants';
+import { pinoHttpOptions } from './commons/logger/pino-logger.config';
 import { LoggerService } from './commons/logger/logger.service';
+import { TimezoneResponseInterceptor } from './commons/interceptors/timezone-response.interceptor';
 import { correlationIdMiddleware } from './commons/middlewares/correlation-id.middleware';
 import { SanitizeRequestPipe } from './commons/pipes/sanitize-request.pipe';
+import { buildCorsOriginOption } from './commons/security/cors';
 import type { BetterAuthSchema } from './modules/auth/better-auth.interface';
 
 /**
- * Main application bootstrap function for Nest-Base.
+ * Main application bootstrap function for VNDoctor.
  * Implements high-performance documentation with Scalar and efficient body parsing.
  */
 async function bootstrap() {
@@ -31,14 +38,18 @@ async function bootstrap() {
   });
 
   const logger = new LoggerService('Application');
-  app.useLogger(logger);
+  app.useLogger(app.get(PinoNestLogger));
   app.set('query parser', 'extended');
 
   // 1. Configure CORS - Primary security layer
   app.enableCors({
-    origin: true,
+    origin: buildCorsOriginOption(),
     credentials: true,
   });
+
+  // Attach trace IDs before body parsing and guards.
+  app.use(correlationIdMiddleware);
+  app.use(pinoHttp(pinoHttpOptions));
 
   /*
    * 2. Smart Body Parser Implementation
@@ -64,11 +75,15 @@ async function bootstrap() {
   );
 
   // Middlewares & Global configs
-  app.use(correlationIdMiddleware);
   app.use(cookieParser());
   app.use(compression());
 
   const reflector = app.get<Reflector>(Reflector);
+  const configService = app.get(ConfigService);
+  const responseTimezone =
+    configService.get<string>('DB_TIMEZONE') ??
+    configService.get<string>('TZ') ??
+    'Asia/Ho_Chi_Minh';
   app.useGlobalPipes(
     new SanitizeRequestPipe(),
     new ValidationPipe({
@@ -76,19 +91,21 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
+  app.useGlobalInterceptors(
+    new TimezoneResponseInterceptor(responseTimezone),
+    new ClassSerializerInterceptor(reflector),
+  );
 
   app.setGlobalPrefix(API_GLOBAL_PREFIX, {
     exclude: [`/${API_GLOBAL_PREFIX}/auth/*path`, '/'],
   });
 
-  const configService = app.get(ConfigService);
   const port = configService.get<number>('APP_PORT') ?? DEFAULT_PORT;
 
   // --- DOCUMENTATION 1: Main APIs (Scalar) ---
   const mainConfig = new DocumentBuilder()
     .setTitle(APP_NAME)
-    .setDescription('Primary API documentation for Nest Base.')
+    .setDescription('Primary API documentation for VNDoctor.')
     .setVersion('1.0')
     .addBearerAuth()
     .setExternalDoc('Authentication Docs', 'auth/docs')
@@ -100,7 +117,7 @@ async function bootstrap() {
   const info = mainDocument.info as unknown as Record<string, unknown>;
   info['x-logo'] = {
     url: 'https://scalar.com/logo.svg',
-    altText: 'Nest-Base Logo',
+    altText: 'VNDoctor Logo',
   };
 
   //  Main Application APIs
@@ -108,23 +125,13 @@ async function bootstrap() {
     `/${API_GLOBAL_PREFIX}/docs`,
     apiReference({
       spec: { content: mainDocument },
-      theme: 'purple',
+      theme: 'deepSpace',
       layout: 'modern',
-      // authentication: {
-      //   preferredSecurityScheme: 'bearer',
-      // },
+      authentication: {
+        preferredSecurityScheme: 'bearer',
+      },
     }),
   );
-
-  // Expose Main OpenAPI JSON
-  app
-    .getHttpAdapter()
-    .get(
-      `/${API_GLOBAL_PREFIX}/docs-json`,
-      (req: express.Request, res: express.Response) => {
-        res.json(mainDocument);
-      },
-    );
 
   //  BetterAuth APIs (Isolated for performance)
   try {
@@ -146,7 +153,7 @@ async function bootstrap() {
         info: {
           title: `${APP_NAME} Auth API`,
           version: '1.0',
-          description: 'Authentication API documentation for Nest-Base',
+          description: 'Authentication API documentation for VNDoctor',
           'x-logo': {
             url: 'https://scalar.com/logo.svg',
             altText: 'Auth Logo',
@@ -169,24 +176,39 @@ async function bootstrap() {
         }),
       );
 
+      // Expose Auth OpenAPI JSON
       app
         .getHttpAdapter()
         .get(
-          `/${API_GLOBAL_PREFIX}/auth/docs-json`,
+          `/${API_GLOBAL_PREFIX}/auth/openapi.json`,
           (req: express.Request, res: express.Response) => {
             res.json(authDocument);
           },
         );
+
+      fs.writeFileSync('./open-api-auth.json', JSON.stringify(authDocument));
     }
   } catch (error) {
     logger.warn(
-      `Failed to generate Auth Scalar documentation for Nest-Base: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      `Failed to generate Auth Scalar documentation for VNDoctor: ${error instanceof Error ? error.message : 'Unknown error'}`,
     );
   }
 
+  // Expose Main OpenAPI JSON
+  app
+    .getHttpAdapter()
+    .get(
+      `/${API_GLOBAL_PREFIX}/openapi.json`,
+      (req: express.Request, res: express.Response) => {
+        res.json(mainDocument);
+      },
+    );
+
+  // Persist schema for external consumers
+  fs.writeFileSync('./open-api.json', JSON.stringify(mainDocument));
 
   await app.listen(port);
-  logger.log(`Nest-Base is running on url http://localhost:${port}`);
+  logger.log(`VNDoctor is running on url http://localhost:${port}`);
   app.enableShutdownHooks();
 }
 

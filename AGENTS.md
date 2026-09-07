@@ -27,7 +27,7 @@ npm run lint           # Check and fix lint issues
 - **No `any`**: Strictly forbidden. Use types or `unknown`.
 - **Comments**: MANDATORY JSDoc for all methods and internal step-by-step logic comments.
 - **DTOs**: Always validate inputs with `class-validator`.
-- **Kafka**: Use `KafkaTopic` enum for topic names.
+- **Queue**: Use `@nestjs/bullmq` for background jobs and async operations.
 - **Errors**: Throw custom exceptions from `@/commons/exceptions`.
 - **Documentation**: Use `@Doc()` for all controller methods.
 
@@ -38,7 +38,7 @@ You should adopt these personas based on the task context:
 - **Code Review**: Focus on type safety (No `any`), consistent patterns, and logic correctness.
 - **Security Auditor**: Focus on Auth config, RBAC guards, and S3 presigned URL security.
 - **DB Architect**: Focus on schema design, query optimization (N+1 prevention), and transaction atomicity.
-- **Integration/Kafka**: Focus on Claim Check pattern for payloads and DLQ implementation.
+- **Integration/Queue**: Focus on BullMQ job processors and Redis distributed locks.
 - **Testing Specialist**: Target 80%+ coverage for critical services.
 
 ## 🛠 Key Workflows

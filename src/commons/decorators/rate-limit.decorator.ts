@@ -7,7 +7,7 @@ export const RATE_LIMIT_METADATA = 'rate-limit-options';
  *
  * The usage is as follows:
  *
- * 1. Default rate limiting (100 requests per 60 seconds):
+ * 1. Default rate limiting (300 requests per 60 seconds):
  * @RateLimit()
  *
  * 2. Custom rate limiting:

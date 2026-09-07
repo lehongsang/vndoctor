@@ -1,15 +1,27 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
+import Redis from 'ioredis';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailService } from './mail.service';
-import { MailConsumer } from './mail.consumer';
-import { KafkaModule } from '../kafka/kafka.module';
+import { MailQueueService } from './mail-queue.service';
+import { MailProcessor } from './mail.processor';
+import { MAIL_QUEUE } from './mail-queue.types';
 
 @Module({
   imports: [
-    KafkaModule,
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: new Redis(
+          config.get<string>('REDIS_URL', 'redis://localhost:6379'),
+          { maxRetriesPerRequest: null },
+        ),
+      }),
+    }),
+    BullModule.registerQueue({ name: MAIL_QUEUE }),
     MailerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -39,7 +51,7 @@ import { KafkaModule } from '../kafka/kafka.module';
       }),
     }),
   ],
-  providers: [MailService, MailConsumer],
-  exports: [MailService],
+  providers: [MailService, MailQueueService, MailProcessor],
+  exports: [MailQueueService, MailService],
 })
 export class MailModule {}

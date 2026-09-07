@@ -1,24 +1,41 @@
-# Mail Implementation Patterns
+# Mail Implementation Patterns (BullMQ)
 
-## 📂 Producer: Sending a Mail Event
+## 📂 Enqueueing a Mail Job
 ```typescript
-await this.kafkaService.produce(KafkaTopic.AUTH_MAIL, [{
-  key: user.id,
-  value: JSON.stringify({
-    pattern: 'send-otp',
-    data: { email: user.email, otp: '123456' },
-    metadata: { timestamp: Date.now() }
-  })
-}]);
+// Inject MailQueueService into your service
+constructor(private readonly mailQueueService: MailQueueService) {}
+
+// Enqueue OTP job
+await this.mailQueueService.enqueueSendOtp(email, otp);
+
+// Enqueue Password Reset job
+await this.mailQueueService.enqueueSendPasswordReset(email, resetUrl);
+
+// Enqueue Verification Email job
+await this.mailQueueService.enqueueSendVerificationEmail(email, verifyUrl);
 ```
 
-## 🛠️ Consumer: Handling Events
+## 🛠️ Processor: Handling BullMQ Jobs
 ```typescript
-switch (pattern) {
-  case 'send-otp':
-    await this.mailService.sendOtp(data.email, data.otp);
-    break;
-  // Add new patterns here
+@Processor(MAIL_QUEUE)
+export class MailProcessor extends WorkerHost {
+  constructor(private readonly mailService: MailService) {
+    super();
+  }
+
+  async process(job: Job): Promise<void> {
+    switch (job.name) {
+      case MailJobName.SendOtp:
+        await this.mailService.sendOtp(job.data.email, job.data.otp);
+        break;
+      case MailJobName.SendPasswordReset:
+        await this.mailService.sendPasswordReset(job.data.email, job.data.url);
+        break;
+      case MailJobName.SendVerificationEmail:
+        await this.mailService.sendVerificationEmail(job.data.email, job.data.url);
+        break;
+    }
+  }
 }
 ```
 
@@ -30,20 +47,9 @@ async sendMail(email: string, template: string, context: object) {
     template: `./${template}`,
     context: {
       ...context,
-      appName: 'Nest Base',
+      appName: 'VNDoctor',
       currentYear: new Date().getFullYear(),
     },
   });
-}
-```
-
-## ⚙️ DLQ Logic (Safety Net)
-```typescript
-try {
-  // process
-} catch (error) {
-  await this.kafkaService.produce(KafkaTopic.AUTH_MAIL_DLQ, [{
-    value: JSON.stringify({ originalPayload, error: error.message, failedAt: new Date() })
-  }]);
 }
 ```

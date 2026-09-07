@@ -4,19 +4,21 @@ import { getAuth } from './auth';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import { RedisService } from '@/services/redis/redis.service';
-import { KafkaService } from '@/services/kafka/kafka.service';
+import { MailQueueService } from '@/services/mail/mail-queue.service';
+import { MailModule } from '@/services/mail/mail.module';
 
 @Module({
   imports: [
+    MailModule,
     BetterAuthModule.forRootAsync({
-      inject: [ConfigService, 'PG_POOL', RedisService, KafkaService],
+      inject: [ConfigService, 'PG_POOL', RedisService, MailQueueService],
       useFactory: (
         configService: ConfigService,
         pool: Pool,
         redisService: RedisService,
-        kafkaService: KafkaService,
+        mailQueueService: MailQueueService,
       ) => ({
-        auth: getAuth(pool, configService, redisService, kafkaService),
+        auth: getAuth(pool, configService, redisService, mailQueueService),
       }),
     }),
   ],

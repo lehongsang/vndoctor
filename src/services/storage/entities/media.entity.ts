@@ -27,6 +27,12 @@ export class Media extends BaseEntity {
   @Column({ nullable: true })
   url: string;
 
+  downloadUrl?: string;
+
+  canPreview?: boolean;
+
+  previewKind?: string;
+
   @Column({
     type: 'enum',
     enum: MediaStatus,

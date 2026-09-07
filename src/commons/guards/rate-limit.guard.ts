@@ -26,7 +26,7 @@ import { RATE_LIMIT_METADATA } from '../decorators/rate-limit.decorator';
 @Injectable()
 export class CustomRateLimitGuard implements CanActivate {
   private readonly logger = new Logger(CustomRateLimitGuard.name);
-  private readonly defaultLimit = 100;
+  private readonly defaultLimit = 300;
   private readonly defaultTtl = 60; // seconds
 
   constructor(

@@ -14,9 +14,7 @@ import { v7 as uuidv7 } from 'uuid';
 import type { ConfigService } from '@nestjs/config';
 import type { Pool } from 'pg';
 import type { RedisService } from '@/services/redis/redis.service';
-import type { KafkaService } from '@/services/kafka/kafka.service';
-import { KafkaTopic } from '@/services/kafka/kafka.enum';
-import type { MailEventPayload } from '@/services/mail/mail.interface';
+import type { MailQueueService } from '@/services/mail/mail-queue.service';
 
 export type Auth = ReturnType<typeof getAuth>;
 
@@ -24,7 +22,7 @@ export const getAuth = (
   database: Pool,
   configService: ConfigService,
   redisService: RedisService,
-  kafkaService: KafkaService,
+  mailQueueService: MailQueueService,
 ) =>
   betterAuth({
     database,
@@ -66,29 +64,13 @@ export const getAuth = (
             user: { email: string };
             otp: string;
           }) => {
-            const payload: MailEventPayload = {
-              pattern: 'send-otp',
-              data: { email: user.email, otp },
-              metadata: {
-                source: 'better-auth.email-otp',
-                timestamp: Date.now(),
-              },
-            };
-            await kafkaService.produce(KafkaTopic.AUTH_MAIL, [payload]);
+            await mailQueueService.enqueueSendOtp(user.email, otp);
           },
         },
       }),
       emailOTP({
         async sendVerificationOTP({ email, otp }) {
-          const payload: MailEventPayload = {
-            pattern: 'send-otp',
-            data: { email, otp },
-            metadata: {
-              source: 'better-auth.verification-otp',
-              timestamp: Date.now(),
-            },
-          };
-          await kafkaService.produce(KafkaTopic.AUTH_MAIL, [payload]);
+          await mailQueueService.enqueueSendOtp(email, otp);
         },
         sendVerificationOnSignUp: true,
         overrideDefaultEmailVerification: true,
@@ -173,15 +155,7 @@ export const getAuth = (
         user: { email: string };
         url: string;
       }) => {
-        const payload: MailEventPayload = {
-          pattern: 'send-password-reset',
-          data: { email: user.email, url },
-          metadata: {
-            source: 'better-auth.password-reset',
-            timestamp: Date.now(),
-          },
-        };
-        await kafkaService.produce(KafkaTopic.AUTH_MAIL, [payload]);
+        await mailQueueService.enqueueSendPasswordReset(user.email, url);
       },
     },
     emailVerification: {

@@ -304,6 +304,27 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Gets multiple values from Redis in one round trip.
+   *
+   * @param keys - Redis key names to read
+   * @returns Values in the same order as keys, or null when a key is missing
+   */
+  public async mget(keys: string[]): Promise<Array<string | null>> {
+    if (keys.length === 0) {
+      return [];
+    }
+
+    try {
+      return await this.cacheClient.mget(...keys);
+    } catch (error) {
+      if (this.configService.get('NODE_ENV') !== 'production') {
+        console.error('Failed to get multiple keys:', error);
+      }
+      return keys.map(() => null);
+    }
+  }
+
   public async set(
     key: string,
     value: string | number,

@@ -1,40 +1,39 @@
 # Base stage
 FROM node:22-alpine AS base
-RUN apk add --no-cache curl && npm install -g bun
+WORKDIR /app
 
-# Build stage
+# Install all dependencies (including dev) for build stage
+FROM base AS deps
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Build application
 FROM base AS builder
-
-WORKDIR /app
-
-# 1. Copy package files first
-COPY package*.json bun.lockb* ./
-
-# 2. Use bun for faster installation
-RUN bun install
-
-# 3. Copy the rest of the source code
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npm run build
 
-# 4. Build the project
-RUN bun run build
+# Prune to production-only dependencies for runtime image
+FROM deps AS prod-deps
+RUN npm prune --omit=dev && npm cache clean --force
 
-# Clean bun cache and remove source files to save space
-RUN bun pm cache clean
-# Note: Keeping dist and node_modules for the next stage
-
-# Production stage
-FROM base
-
+# Production runtime image
+FROM node:22-alpine AS production
 WORKDIR /app
+RUN apk add --no-cache curl
 
-# Copy only the necessary files from builder
-COPY --from=builder /app/node_modules ./node_modules
+ENV NODE_ENV=production
+
+# Copy only runtime artifacts
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 
-# Environment variables
-ENV NODE_ENV=production
+# Ensure non-root runtime user can write generated runtime files (logs, OpenAPI artifacts).
+RUN chown -R node:node /app
+
+# Run as non-root user
+USER node
 
 # Expose the application port (matching DEFAULT_PORT in app.constants.ts)
 EXPOSE 3000

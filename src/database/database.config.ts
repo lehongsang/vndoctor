@@ -1,35 +1,29 @@
-import 'dotenv/config';
-import type { DataSourceOptions } from 'typeorm';
-import { DataSource } from 'typeorm';
+import { registerAs } from '@nestjs/config';
 
-const {
-  POSTGRES_HOST,
-  POSTGRES_USERNAME,
-  POSTGRES_PASSWORD,
-  POSTGRES_PORT,
-  POSTGRES_DB,
-  POSTGRES_SSL,
-  NODE_ENV,
-} = process.env;
+export interface DatabaseConfig {
+  host: string;
+  username: string;
+  password: string;
+  port: number;
+  database: string;
+  ssl: boolean;
+  synchronize: boolean;
+  timezone: string;
+  migrationsRun: boolean;
+}
 
-export const databaseConnectionConfig = {
-  host: POSTGRES_HOST,
-  user: POSTGRES_USERNAME,
-  username: POSTGRES_USERNAME,
-  password: POSTGRES_PASSWORD,
-  port: parseInt(POSTGRES_PORT || '5432', 10),
-  database: POSTGRES_DB,
-  ssl: POSTGRES_SSL === 'true',
-};
-
-export const dataSourceOptions: DataSourceOptions = {
-  type: 'postgres',
-  ...databaseConnectionConfig,
-  synchronize: false,
-  entities: [__dirname + '/../**/**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-  migrationsRun: NODE_ENV === 'development',
-  migrationsTableName: 'migrations',
-};
-
-export const AppDataSource = new DataSource(dataSourceOptions);
+export default registerAs(
+  'database',
+  (): DatabaseConfig => ({
+    host: process.env.POSTGRES_HOST || 'localhost',
+    username: process.env.POSTGRES_USERNAME || 'postgres',
+    password: process.env.POSTGRES_PASSWORD || 'postgres',
+    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+    database: process.env.POSTGRES_DB || 'vndoctor',
+    ssl: process.env.POSTGRES_SSL === 'true',
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
+    timezone: process.env.DB_TIMEZONE || process.env.TZ || 'Asia/Ho_Chi_Minh',
+    // Migrations are opt-in so an application restart never changes the schema implicitly.
+    migrationsRun: process.env.DB_MIGRATIONS_RUN === 'true',
+  }),
+);

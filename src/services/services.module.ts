@@ -1,14 +1,12 @@
 import { Global, Module } from '@nestjs/common';
 import { RedisModule } from './redis/redis.module';
 import { MailModule } from './mail/mail.module';
-import { KafkaModule } from './kafka/kafka.module';
 import { StorageModule } from './storage/storage.module';
-import { SearchModule } from './search/search.module';
-
+import { SmsModule } from './sms/sms.module';
 
 @Global()
 @Module({
-  imports: [RedisModule, MailModule, KafkaModule, StorageModule, SearchModule],
-  exports: [RedisModule, MailModule, KafkaModule, StorageModule, SearchModule],
+  imports: [RedisModule, MailModule, StorageModule, SmsModule],
+  exports: [RedisModule, MailModule, StorageModule, SmsModule],
 })
 export class ServicesModule {}

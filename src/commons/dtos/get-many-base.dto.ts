@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
 } from 'class-validator';
@@ -74,3 +75,47 @@ export class GetManyWithStatusQueryParams extends GetManyBaseQueryParams {
   @IsString()
   status?: string;
 }
+
+export class CursorPaginationResponseMetaDto {
+  @ApiProperty()
+  hasMoreOlder: boolean;
+
+  @ApiProperty()
+  hasMoreNewer: boolean;
+
+  @ApiProperty()
+  limit: number;
+
+  @ApiProperty()
+  count: number;
+}
+
+export class CursorPaginationResponseDto<T> {
+  @ApiProperty({ isArray: true, type: () => Object })
+  @IsArray()
+  data: T[];
+
+  @ApiProperty({ type: () => CursorPaginationResponseMetaDto })
+  meta: CursorPaginationResponseMetaDto;
+}
+
+export class CursorPaginationQueryParams {
+  @ApiProperty({ required: false, example: 50 })
+  @Min(1)
+  @Max(100)
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  limit: number = 50;
+
+  @ApiProperty({ required: false, description: 'Get messages older than this ID' })
+  @IsUUID()
+  @IsOptional()
+  beforeMessageId?: string;
+
+  @ApiProperty({ required: false, description: 'Get messages newer than this ID' })
+  @IsUUID()
+  @IsOptional()
+  afterMessageId?: string;
+}
+

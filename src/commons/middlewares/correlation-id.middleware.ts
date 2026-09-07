@@ -15,7 +15,7 @@ export function correlationIdMiddleware(
   const correlationId =
     (req.headers['x-correlation-id'] as string) || generateId();
 
-  // Attach to request object (typed via express.d.ts — no `any` cast needed)
+  // Attach to request object (typed via express-augmentation.ts — no `any` cast needed)
   req.correlationId = correlationId;
 
   // Add to response headers for client tracing

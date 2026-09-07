@@ -1,25 +1,58 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseService } from './database.service';
-import { dataSourceOptions, databaseConnectionConfig } from './database.config';
+import { ConfigService } from '@nestjs/config';
+import { DatabaseConfig } from './database.config';
 
 import { Pool } from 'pg';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forRoot(dataSourceOptions)],
+  imports: [
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const dbConfig = configService.get<DatabaseConfig>('database');
+        if (!dbConfig) {
+          throw new Error('Database configuration is missing');
+        }
+        return {
+          type: 'postgres',
+          host: dbConfig.host,
+          port: dbConfig.port,
+          username: dbConfig.username,
+          password: dbConfig.password,
+          database: dbConfig.database,
+          ssl: dbConfig.ssl,
+          entities: [__dirname + '/../**/**/*.entity{.ts,.js}'],
+          migrations: [__dirname + '/migrations/*{.ts,.js}'],
+          migrationsRun: dbConfig.migrationsRun,
+          synchronize: dbConfig.synchronize,
+          extra: {
+            options: `-c timezone=${dbConfig.timezone}`,
+          },
+        };
+      },
+    }),
+  ],
   providers: [
     DatabaseService,
     {
       provide: 'PG_POOL',
-      useFactory: (): Pool => {
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): Pool => {
+        const dbConfig = configService.get<DatabaseConfig>('database');
+        if (!dbConfig) {
+          throw new Error('Database configuration is missing');
+        }
         return new Pool({
-          host: databaseConnectionConfig.host,
-          port: databaseConnectionConfig.port,
-          user: databaseConnectionConfig.username,
-          password: databaseConnectionConfig.password,
-          database: databaseConnectionConfig.database,
-          ssl: databaseConnectionConfig.ssl,
+          host: dbConfig.host,
+          port: dbConfig.port,
+          user: dbConfig.username,
+          password: dbConfig.password,
+          database: dbConfig.database,
+          ssl: dbConfig.ssl,
+          options: `-c timezone=${dbConfig.timezone}`,
         });
       },
     },
