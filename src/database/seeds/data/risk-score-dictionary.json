@@ -1,0 +1,3202 @@
+[
+  {
+    "lookupKey": "1.1_2.2_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.1_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.1_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.2_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.2_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.2_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.2_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.3_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.3_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.3_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.3_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.4_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.4_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.0_4.4_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.3_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.3_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.1_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.7",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 26.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 30.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 1.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.1_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.2_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.2_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.3_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.3_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.4_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.0_4.4_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.1_2.1_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 2.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.3_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.2_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.2_2.1_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.5",
+    "riskLevel": "LOW",
+    "mortalityRate": 3.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.6",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.3_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.3_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.4",
+    "riskLevel": "LOW",
+    "mortalityRate": 4.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 5.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.2_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.4_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 6.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 7.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 8.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.5_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 28.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 9.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 10.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 28.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 30.0
+  },
+  {
+    "lookupKey": "1.6_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 11.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.1_5.6",
+    "riskLevel": "HIGH",
+    "mortalityRate": 13.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.1_5.7",
+    "riskLevel": "HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.2_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 26.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 28.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 33.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 33.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 35.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 37.0
+  },
+  {
+    "lookupKey": "1.7_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 39.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 28.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 26.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 28.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 36.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 35.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 37.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 39.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 41.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 41.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 43.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 45.0
+  },
+  {
+    "lookupKey": "1.8_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 47.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 36.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 37.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 36.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 39.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 41.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 42.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 45.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 36.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 41.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 42.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 46.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 46.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 48.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 50.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 49.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 51.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 53.0
+  },
+  {
+    "lookupKey": "1.9_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 55.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 46.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 48.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 50.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 47.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 49.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 51.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 52.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 50.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 52.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 54.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 55.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 53.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 55.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 57.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 58.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 49.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 51.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 52.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 54.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 52.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 53.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 55.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 57.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 55.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 56.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 58.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 60.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 58.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 59.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 61.0
+  },
+  {
+    "lookupKey": "1.0_2.2_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 63.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.1_5.4",
+    "riskLevel": "HIGH",
+    "mortalityRate": 12.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.1_5.5",
+    "riskLevel": "HIGH",
+    "mortalityRate": 14.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 16.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 15.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 17.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 19.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 25.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 22.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 26.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 28.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 33.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 35.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.7_2.1_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 41.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 18.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 20.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 26.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 21.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 30.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 24.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 28.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 35.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 39.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 23.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 26.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 33.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 27.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 30.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 37.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 43.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 35.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 39.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.8_2.1_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 48.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 26.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 30.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 35.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 33.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 31.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 36.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 42.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 47.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 45.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 51.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 29.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 34.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 39.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 32.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 37.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 42.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 48.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 35.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 46.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 52.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 44.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 50.0
+  },
+  {
+    "lookupKey": "1.9_2.1_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 56.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 36.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 43.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 51.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 58.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 45.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 53.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 61.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 47.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 55.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 63.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 42.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 49.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 57.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.0_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 65.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.1_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 36.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.1_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 43.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.1_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 50.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.1_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 58.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.2_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 38.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.2_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 45.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.2_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 52.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.2_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 60.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.3_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 40.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.3_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 47.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.3_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 54.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.3_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 62.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.4_5.4",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 41.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.4_5.5",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 49.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.4_5.6",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 56.0
+  },
+  {
+    "lookupKey": "1.0_2.1_3.1_4.4_5.7",
+    "riskLevel": "VERY_HIGH",
+    "mortalityRate": 65.0
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "lookupKey": "8.1",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "8.2",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "8.3",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "8.4",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "8.5",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "8.6",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "8.7",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "8.8",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "7.1",
+    "riskLevel": "HIGH"
+  },
+  {
+    "lookupKey": "7.2",
+    "riskLevel": "HIGH"
+  },
+  {
+    "lookupKey": "7.3",
+    "riskLevel": "HIGH"
+  },
+  {
+    "lookupKey": "7.4",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "7.5",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "9.0",
+    "riskLevel": "HIGH"
+  },
+  {
+    "lookupKey": "9.1_9.3_6.0_8.0",
+    "riskLevel": "HIGH"
+  },
+  {
+    "lookupKey": "9.2_6.0_8.0",
+    "riskLevel": "HIGH"
+  },
+  {
+    "lookupKey": "9.1_9.5",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "9.1_9.6",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "9.2_9.5",
+    "riskLevel": "VERY_HIGH"
+  },
+  {
+    "lookupKey": "9.2_9.6",
+    "riskLevel": "VERY_HIGH"
+  }
+]

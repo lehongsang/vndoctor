@@ -1,0 +1,513 @@
+[
+  {
+    "section": "HYPERTENSION",
+    "score2Code": "4.1",
+    "name": "Tăng huyết áp vô căn (nguyên phát)",
+    "directIcd10Code": "I10",
+    "directIcd10Name": "Tăng huyết áp vô căn (nguyên phát)",
+    "relatedIcd10Codes": [
+      "I10",
+      "I11.9",
+      "I15.0",
+      "I15.9"
+    ]
+  },
+  {
+    "section": "HYPERTENSION",
+    "score2Code": "4.3",
+    "name": "Tăng huyết áp độ 2",
+    "directIcd10Code": "I10",
+    "directIcd10Name": "Tăng huyết áp vô căn (nguyên phát)",
+    "relatedIcd10Codes": [
+      "I10"
+    ]
+  },
+  {
+    "section": "LIPID",
+    "score2Code": "5.4",
+    "name": "Rối loạn lipid máu",
+    "directIcd10Code": "E78.5",
+    "directIcd10Name": "Rối loạn lipid máu, không xác định",
+    "relatedIcd10Codes": [
+      "E78.0",
+      "E78.2",
+      "E78.5"
+    ]
+  },
+  {
+    "score2Code": "6.1",
+    "name": "Phì đại thất trái trên siêu âm tim hoặc điện tim",
+    "directIcd10Code": "I51.7",
+    "directIcd10Name": "Tim to / Phì đại cơ tim",
+    "relatedIcd10Codes": [
+      "I51.7",
+      "I11.9"
+    ]
+  },
+  {
+    "score2Code": "6.2",
+    "name": "Có Albumin/Microalbumin niệu",
+    "directIcd10Code": "R80",
+    "directIcd10Name": "Protein niệu đơn độc",
+    "relatedIcd10Codes": [
+      "R80",
+      "N18.1",
+      "N18.2",
+      "N18.3",
+      "N18.4",
+      "N18.5",
+      "N18.9"
+    ]
+  },
+  {
+    "score2Code": "6.3",
+    "name": "Có tổn thương đáy mắt",
+    "directIcd10Code": "H35.0",
+    "directIcd10Name": "Bệnh lý võng mạc nền và/hoặc thay đổi mạch máu võng mạc",
+    "relatedIcd10Codes": [
+      "H35.0",
+      "H35.6",
+      "H35.8",
+      "H35.9",
+      "H36.0"
+    ]
+  },
+  {
+    "score2Code": "6.4",
+    "name": "Tổn thương thầm lặng trên não (slient infact)",
+    "directIcd10Code": "I63.9",
+    "directIcd10Name": "Nhồi máu não, không xác định",
+    "relatedIcd10Codes": [
+      "I63.9",
+      "I63.0",
+      "I63.1",
+      "I63.2",
+      "I63.3",
+      "I63.4",
+      "I63.5",
+      "I63.8",
+      "R90.8"
+    ]
+  },
+  {
+    "score2Code": "7.1",
+    "name": "Bệnh thận mạn không kèm ĐTĐ hoặc Bệnh TM xơ vữa",
+    "directIcd10Code": "N18.3",
+    "directIcd10Name": "Bệnh thận mạn tính, giai đoạn 3",
+    "relatedIcd10Codes": [
+      "N18.3",
+      "N18.9",
+      "I12.0",
+      "I12.9",
+      "I13.1",
+      "I13.2"
+    ]
+  },
+  {
+    "score2Code": "7.2",
+    "name": "Bệnh thận mạn tính, giai đoạn 3",
+    "directIcd10Code": "N18.3",
+    "directIcd10Name": "Bệnh thận mạn tính, giai đoạn 3",
+    "relatedIcd10Codes": [
+      "N18.3",
+      "R80",
+      "N18.9",
+      "I12.0",
+      "I12.9",
+      "I13.1",
+      "I13.2"
+    ]
+  },
+  {
+    "score2Code": "7.3",
+    "name": "Bệnh thận mạn tính, giai đoạn 1",
+    "directIcd10Code": "N18.1",
+    "directIcd10Name": "Bệnh thận mạn tính, giai đoạn 1",
+    "relatedIcd10Codes": [
+      "N18.1",
+      "N18.2",
+      "R80",
+      "N18.9",
+      "I12.9",
+      "I13.9"
+    ]
+  },
+  {
+    "score2Code": "7.4",
+    "name": "Bệnh thận mạn tính, giai đoạn 4",
+    "directIcd10Code": "N18.4",
+    "directIcd10Name": "Bệnh thận mạn tính, giai đoạn 4",
+    "relatedIcd10Codes": [
+      "N18.4",
+      "N18.5",
+      "N18.9",
+      "I12.0",
+      "I13.1",
+      "I13.2",
+      "Z99.2"
+    ]
+  },
+  {
+    "score2Code": "7.5",
+    "name": "Bệnh thận mạn tính, giai đoạn 3",
+    "directIcd10Code": "N18.3",
+    "directIcd10Name": "Bệnh thận mạn tính, giai đoạn 3",
+    "relatedIcd10Codes": [
+      "N18.3",
+      "R80",
+      "N18.9",
+      "I12.0",
+      "I12.9",
+      "I13.1",
+      "I13.2"
+    ]
+  },
+  {
+    "score2Code": "8.1",
+    "name": "Bệnh tim mạch do xơ vữa",
+    "directIcd10Code": "I21.9",
+    "directIcd10Name": "Nhồi máu cơ tim cấp, không xác định",
+    "relatedIcd10Codes": [
+      "I21.0",
+      "I21.1",
+      "I21.2",
+      "I21.3",
+      "I21.4",
+      "I21.9",
+      "I22.0",
+      "I22.1",
+      "I22.8",
+      "I22.9",
+      "I25.2",
+      "I23.0",
+      "I23.1",
+      "I23.2",
+      "I23.3",
+      "I23.4",
+      "I23.5",
+      "I23.6",
+      "I23.8",
+      "I25.3",
+      "I25.5"
+    ]
+  },
+  {
+    "score2Code": "8.2",
+    "name": "Đau thắt ngực không ổn định / Hội chứng vành cấp",
+    "directIcd10Code": "I20.0",
+    "directIcd10Name": "Đau thắt ngực không ổn định / Hội chứng vành cấp",
+    "relatedIcd10Codes": [
+      "I20.0",
+      "I21.0",
+      "I21.1",
+      "I21.2",
+      "I21.3",
+      "I21.4",
+      "I21.9",
+      "I22.0",
+      "I22.1",
+      "I22.8",
+      "I22.9",
+      "I24.0",
+      "I24.8",
+      "I24.9",
+      "I23.0",
+      "I23.1",
+      "I23.2",
+      "I23.3",
+      "I23.4",
+      "I23.5",
+      "I23.6",
+      "I23.8"
+    ]
+  },
+  {
+    "score2Code": "8.3",
+    "name": "Bệnh tim thiếu máu cục bộ mạn tính (Bệnh lý mạch vành)",
+    "directIcd10Code": "I25.9",
+    "directIcd10Name": "Bệnh tim thiếu máu cục bộ mạn tính (Bệnh lý mạch vành)",
+    "relatedIcd10Codes": [
+      "I25.0",
+      "I25.1",
+      "I25.5",
+      "I25.6",
+      "I25.8",
+      "I25.9",
+      "I20.1",
+      "I20.8",
+      "I20.9",
+      "I25.2",
+      "I25.3",
+      "I25.4"
+    ]
+  },
+  {
+    "score2Code": "8.4",
+    "name": "Nhồi máu não / Đột quỵ",
+    "directIcd10Code": "I63.9",
+    "directIcd10Name": "Nhồi máu não / Đột quỵ",
+    "relatedIcd10Codes": [
+      "I63.0",
+      "I63.1",
+      "I63.2",
+      "I63.3",
+      "I63.4",
+      "I63.5",
+      "I63.6",
+      "I63.8",
+      "I63.9",
+      "I60.0",
+      "I60.1",
+      "I60.2",
+      "I60.3",
+      "I60.4",
+      "I60.5",
+      "I60.6",
+      "I60.7",
+      "I60.8",
+      "I60.9",
+      "I61.0",
+      "I61.1",
+      "I61.2",
+      "I61.3",
+      "I61.4",
+      "I61.5",
+      "I61.6",
+      "I61.8",
+      "I61.9",
+      "I62.0",
+      "I62.1",
+      "I62.9",
+      "I64",
+      "I69.0",
+      "I69.1",
+      "I69.2",
+      "I69.3",
+      "I69.4",
+      "I69.8"
+    ]
+  },
+  {
+    "score2Code": "8.5",
+    "name": "Cơn thiếu máu não thoáng qua (TIA)",
+    "directIcd10Code": "G45.9",
+    "directIcd10Name": "Cơn thiếu máu não thoáng qua (TIA)",
+    "relatedIcd10Codes": [
+      "G45.0",
+      "G45.1",
+      "G45.2",
+      "G45.3",
+      "G45.8",
+      "G45.9",
+      "I65.0",
+      "I65.1",
+      "I65.2",
+      "I65.3",
+      "I65.8",
+      "I65.9",
+      "I66.0",
+      "I66.1",
+      "I66.2",
+      "I66.3",
+      "I66.4",
+      "I66.8",
+      "I66.9"
+    ]
+  },
+  {
+    "score2Code": "8.6",
+    "name": "Phình vỡ động mạch chủ ngực",
+    "directIcd10Code": "I71.1",
+    "directIcd10Name": "Phình vỡ động mạch chủ ngực",
+    "relatedIcd10Codes": [
+      "I71.1",
+      "I71.2",
+      "I71.3",
+      "I71.4",
+      "I71.5",
+      "I71.6",
+      "I71.8",
+      "I71.9",
+      "I71.0",
+      "I70.00",
+      "I70.01"
+    ]
+  },
+  {
+    "score2Code": "8.7",
+    "name": "Xơ vữa [xơ cứng] động mạch ngoại vi [tứ chi], không kèm hoại thư",
+    "directIcd10Code": "I70.20",
+    "directIcd10Name": "Xơ vữa [xơ cứng] động mạch ngoại vi [tứ chi], không kèm hoại thư",
+    "relatedIcd10Codes": [
+      "I70.20",
+      "I70.21",
+      "I73.8",
+      "I73.9",
+      "I74.2",
+      "I74.3",
+      "I74.4",
+      "I74.5",
+      "I72.1",
+      "I72.3",
+      "I72.4"
+    ]
+  },
+  {
+    "score2Code": "8.8",
+    "name": "Vữa xơ động mạch, không xác định",
+    "directIcd10Code": "I70.90",
+    "directIcd10Name": "Vữa xơ động mạch, không xác định",
+    "relatedIcd10Codes": [
+      "I70.00",
+      "I70.10",
+      "I70.20",
+      "I70.80",
+      "I70.90",
+      "I25.0",
+      "I25.1",
+      "I67.2",
+      "I70.01",
+      "I70.11",
+      "I70.21",
+      "I70.81",
+      "I70.91",
+      "I65.0",
+      "I65.1",
+      "I65.2",
+      "I65.3",
+      "I65.8",
+      "I65.9",
+      "I66.0",
+      "I66.1",
+      "I66.2",
+      "I66.3",
+      "I66.4",
+      "I66.8",
+      "I66.9",
+      "I73.9"
+    ]
+  },
+  {
+    "score2Code": "9.1",
+    "name": "ĐTĐ typ2 hoặc ĐTĐ typ 1 trên 40 tuổi",
+    "directIcd10Code": "E11.9",
+    "directIcd10Name": "Bệnh đái tháo đường típ 2, không kèm biến chứng",
+    "relatedIcd10Codes": [
+      "E10.9",
+      "E11.9",
+      "E10.2",
+      "E10.3",
+      "E10.4",
+      "E10.5",
+      "E10.6",
+      "E10.7",
+      "E10.8",
+      "E11.2",
+      "E11.3",
+      "E11.4",
+      "E11.5",
+      "E11.6",
+      "E11.7",
+      "E11.8"
+    ]
+  },
+  {
+    "score2Code": "9.2",
+    "name": "Bệnh đái tháo đường típ 2, không kèm biến chứng",
+    "directIcd10Code": "E11.9",
+    "directIcd10Name": "Bệnh đái tháo đường típ 2, không kèm biến chứng",
+    "relatedIcd10Codes": [
+      "E10.9",
+      "E11.9",
+      "E10.2",
+      "E10.3",
+      "E10.4",
+      "E10.5",
+      "E10.6",
+      "E10.7",
+      "E10.8",
+      "E11.2",
+      "E11.3",
+      "E11.4",
+      "E11.5",
+      "E11.6",
+      "E11.7",
+      "E11.8"
+    ]
+  },
+  {
+    "score2Code": "9.3",
+    "name": "Bệnh đái tháo đường típ 1, không kèm biến chứng",
+    "directIcd10Code": "E10.9",
+    "directIcd10Name": "Bệnh đái tháo đường típ 1, không kèm biến chứng",
+    "relatedIcd10Codes": [
+      "E10.9",
+      "E11.9"
+    ]
+  },
+  {
+    "score2Code": "9.4",
+    "name": "Bệnh đái tháo đường típ 1, không kèm biến chứng",
+    "directIcd10Code": "E10.9",
+    "directIcd10Name": "Bệnh đái tháo đường típ 1, không kèm biến chứng",
+    "relatedIcd10Codes": [
+      "E10.9",
+      "E11.9",
+      "R73.9"
+    ]
+  },
+  {
+    "score2Code": "9.5",
+    "name": "Bệnh đái tháo đường típ 2, kèm biến chứng thận/cơ quan đích",
+    "directIcd10Code": "E11.2",
+    "directIcd10Name": "Bệnh đái tháo đường típ 2, kèm biến chứng thận/cơ quan đích",
+    "relatedIcd10Codes": [
+      "E10.2",
+      "E10.3",
+      "E10.4",
+      "E10.5",
+      "E10.6",
+      "E10.7",
+      "E10.8",
+      "E11.2",
+      "E11.3",
+      "E11.4",
+      "E11.5",
+      "E11.6",
+      "E11.7",
+      "E11.8",
+      "N08.3",
+      "H36.0",
+      "G59.0",
+      "G63.2",
+      "R80",
+      "N18.1",
+      "N18.2",
+      "N18.3",
+      "N18.4",
+      "N18.5",
+      "H35.0",
+      "I51.7"
+    ]
+  },
+  {
+    "score2Code": "9.6",
+    "name": "Bệnh đái tháo đường típ 2, kèm biến chứng mạch máu",
+    "directIcd10Code": "E11.5",
+    "directIcd10Name": "Bệnh đái tháo đường típ 2, kèm biến chứng mạch máu",
+    "relatedIcd10Codes": [
+      "E10.9",
+      "E11.9",
+      "+ mã ASCVD cụ thể theo mục 8.1–8.8 (xem sheet Chi tiết mã ICD)",
+      "E10.5",
+      "E11.5",
+      "E10.7",
+      "E11.7",
+      "I64",
+      "I69.3",
+      "I69.4",
+      "I65.x",
+      "I66.x (xem sheet Chi tiết mã ICD)"
+    ]
+  }
+]
