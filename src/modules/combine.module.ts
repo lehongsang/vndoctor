@@ -14,6 +14,7 @@ import { ExaminationsModule } from './examinations/examinations.module';
 import { TreatmentDictionariesModule } from './treatment-dictionaries/treatment-dictionaries.module';
 import { TreatmentTargetsModule } from './treatment-targets/treatment-targets.module';
 import { TreatmentPlansModule } from './treatment-plans/treatment-plans.module';
+import { CarePackagesModule } from './care-packages/care-packages.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { TreatmentPlansModule } from './treatment-plans/treatment-plans.module';
     TreatmentDictionariesModule,
     TreatmentTargetsModule,
     TreatmentPlansModule,
+    CarePackagesModule,
   ],
   exports: [
     AuthModule,
@@ -49,6 +51,8 @@ import { TreatmentPlansModule } from './treatment-plans/treatment-plans.module';
     TreatmentDictionariesModule,
     TreatmentTargetsModule,
     TreatmentPlansModule,
+    CarePackagesModule,
   ],
 })
 export class CombineModule {}
+

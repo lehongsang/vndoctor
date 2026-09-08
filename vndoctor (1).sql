@@ -225,6 +225,82 @@ CREATE TABLE `treatment_templates` (
   `updated_at` timestamptz DEFAULT (now())
 );
 
+CREATE TABLE `care_packages` (
+  `id` uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
+  `facility_id` uuid NOT NULL COMMENT 'Cơ sở y tế phát hành gói',
+  `code` varchar(50) UNIQUE NOT NULL COMMENT 'Mã gói: PKG-CARDIO-30D',
+  `name` varchar(255) NOT NULL COMMENT 'Tên gói',
+  `type` ENUM ('STANDARD', 'VIP') NOT NULL DEFAULT 'STANDARD',
+  `description` text COMMENT 'Mô tả chi tiết quyền lợi gói',
+  `duration_days` int NOT NULL COMMENT 'Thời hạn gói (30, 90, 180, 365 ngày)',
+  `price_amount` decimal(14,2) NOT NULL DEFAULT 0 COMMENT 'Giá gói',
+  `status` ENUM ('ACTIVE', 'INACTIVE') DEFAULT 'ACTIVE',
+  `created_at` timestamptz DEFAULT (now()),
+  `updated_at` timestamptz DEFAULT (now())
+);
+
+CREATE TABLE `patient_care_subscriptions` (
+  `id` uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
+  `health_profile_id` uuid NOT NULL COMMENT 'Hồ sơ bệnh nhân tham gia gói',
+  `care_package_id` uuid NOT NULL COMMENT 'Gói dịch vụ đăng ký',
+  `assigned_doctor_id` uuid COMMENT 'Bác sĩ phụ trách theo dõi chính (users.id)',
+  `assigned_nurse_id` uuid COMMENT 'Y tá/Điều dưỡng phụ trách hỗ trợ (users.id)',
+  `assigned_expert_id` uuid COMMENT 'Bác sĩ chuyên gia cố vấn ca bệnh (users.id)',
+  `status` ENUM ('PENDING', 'ACTIVE', 'EXPIRED', 'CANCELLED') DEFAULT 'ACTIVE',
+  `started_at` timestamptz NOT NULL DEFAULT (now()) COMMENT 'Ngày kích hoạt',
+  `expires_at` timestamptz NOT NULL COMMENT 'Ngày hết hạn gói',
+  `created_at` timestamptz DEFAULT (now()),
+  `updated_at` timestamptz DEFAULT (now())
+);
+
+CREATE TABLE `conversations` (
+  `id` uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
+  `facility_id` uuid NOT NULL COMMENT 'Thuộc cơ sở y tế nào',
+  `type` ENUM ('CARE_TEAM', 'DIRECT') NOT NULL DEFAULT 'CARE_TEAM',
+  `title` varchar(255) COMMENT 'Tên nhóm hoặc tên người chat 1-1',
+  `status` ENUM ('ACTIVE', 'CLOSED', 'ARCHIVED') DEFAULT 'ACTIVE',
+  `subscription_id` uuid COMMENT 'Gắn với gói điều trị (nếu type = CARE_TEAM), nếu là chat với team ( thuộc gói điều trị) query các id doctor và nurse và doctor expert vào nhóm chat + health_profileid',
+  `health_profile_id` uuid COMMENT 'Hồ sơ bệnh nhân mục tiêu, nếu là chat với care_group thì trường này null, còn nếu chat 1-1 thì trường này có id',
+  `direct_user_id` uuid COMMENT 'Nhân viên y tế trong đoạn chat 1-1 với health_profile_id (users.id)',
+  `last_message_id` uuid,
+  `last_message_at` timestamptz COMMENT 'Thời điểm tin nhắn cuối cùng',
+  `last_message_preview` varchar(255) COMMENT 'Trích dẫn văn bản tin nhắn cuối',
+  `created_at` timestamptz DEFAULT (now()),
+  `updated_at` timestamptz DEFAULT (now())
+);
+
+CREATE TABLE `messages` (
+  `id` uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
+  `conversation_id` uuid NOT NULL COMMENT 'Thuộc phòng chat nào',
+  `sender_type` ENUM ('STAFF', 'PATIENT', 'SYSTEM') NOT NULL COMMENT 'STAFF / PATIENT / SYSTEM',
+  `sender_user_id` uuid COMMENT 'ID nhân viên y tế nếu sender_type = STAFF (users.id)',
+  `sender_account_id` uuid COMMENT 'ID tài khoản bệnh nhân nếu sender_type = PATIENT (accounts.id)',
+  `message_type` ENUM ('TEXT', 'IMAGE', 'FILE', 'EXAMINATION', 'RISK_ASSESSMENT', 'HEALTH_RECORD', 'CARE_REQUEST', 'SYSTEM') NOT NULL DEFAULT 'TEXT' COMMENT 'Phân loại tin nhắn hoặc loại thẻ đính kèm',
+  `content` text NOT NULL COMMENT 'Nội dung tin nhắn văn bản / Lời nhắn kèm',
+  `resource_id` uuid COMMENT 'ID thực thể (Phiếu khám, Phân tầng, Đo chỉ số...) khi message_type là thực thể',
+  `media_url` text COMMENT 'Đường dẫn ảnh/file khi message_type = IMAGE hoặc FILE',
+  `reply_to_message_id` uuid COMMENT 'Trả lời tin nhắn cụ thể',
+  `is_pinned` boolean DEFAULT false COMMENT 'Ghim tin nhắn quan trọng',
+  `is_deleted` boolean DEFAULT false COMMENT 'Đánh dấu tin nhắn đã thu hồi / xóa',
+  `created_at` timestamptz DEFAULT (now()),
+  `updated_at` timestamptz DEFAULT (now())
+);
+
+CREATE TABLE `patient_care_requests` (
+  `id` uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
+  `request_code` varchar(50) UNIQUE NOT NULL COMMENT 'Mã yêu cầu: REQ-2026-001',
+  `facility_id` uuid NOT NULL COMMENT 'Thuộc cơ sở y tế',
+  `subscription_id` uuid COMMENT 'Thuộc gói điều trị nào của bệnh nhân',
+  `assigned_user_id` uuid COMMENT 'Bác sĩ hoặc Y tá trực tiếp nhận xử lý (users.id)',
+  `status` ENUM ('PENDING', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED') DEFAULT 'PENDING',
+  `title` varchar(255) NOT NULL COMMENT 'Tiêu đề: Cảm thấy tức ngực sau khi uống thuốc',
+  `media_urls` text[] COMMENT 'Mảng đường dẫn ảnh chụp kèm theo (đơn thuốc, vết thương...)',
+  `resolution_note` text COMMENT 'Nội dung Bác sĩ phản hồi / kết luận hướng xử lý',
+  `resolved_at` timestamptz COMMENT 'Thời điểm xử lý xong',
+  `created_at` timestamptz DEFAULT (now()),
+  `updated_at` timestamptz DEFAULT (now())
+);
+
 CREATE INDEX `users_index_0` ON `users` (`facility_id`);
 
 CREATE INDEX `users_index_1` ON `users` (`role`);
@@ -289,6 +365,52 @@ CREATE INDEX `treatment_templates_index_30` ON `treatment_templates` (`facility_
 
 CREATE INDEX `treatment_templates_index_31` ON `treatment_templates` (`disease_category`);
 
+CREATE INDEX `care_packages_index_32` ON `care_packages` (`facility_id`);
+
+CREATE INDEX `care_packages_index_33` ON `care_packages` (`status`);
+
+CREATE INDEX `care_packages_index_34` ON `care_packages` (`code`);
+
+CREATE INDEX `patient_care_subscriptions_index_35` ON `patient_care_subscriptions` (`health_profile_id`, `status`);
+
+CREATE INDEX `patient_care_subscriptions_index_36` ON `patient_care_subscriptions` (`health_profile_id`, `expires_at`);
+
+CREATE INDEX `patient_care_subscriptions_index_37` ON `patient_care_subscriptions` (`care_package_id`);
+
+CREATE INDEX `patient_care_subscriptions_index_38` ON `patient_care_subscriptions` (`assigned_doctor_id`);
+
+CREATE INDEX `patient_care_subscriptions_index_39` ON `patient_care_subscriptions` (`assigned_nurse_id`);
+
+CREATE INDEX `patient_care_subscriptions_index_40` ON `patient_care_subscriptions` (`assigned_expert_id`);
+
+CREATE INDEX `conversations_index_41` ON `conversations` (`facility_id`);
+
+CREATE INDEX `conversations_index_42` ON `conversations` (`type`);
+
+CREATE INDEX `conversations_index_43` ON `conversations` (`subscription_id`);
+
+CREATE INDEX `conversations_index_44` ON `conversations` (`health_profile_id`);
+
+CREATE INDEX `conversations_index_45` ON `conversations` (`last_message_at`);
+
+CREATE INDEX `messages_index_46` ON `messages` (`conversation_id`, `created_at`);
+
+CREATE INDEX `messages_index_47` ON `messages` (`message_type`, `resource_id`);
+
+CREATE INDEX `messages_index_48` ON `messages` (`sender_user_id`);
+
+CREATE INDEX `messages_index_49` ON `messages` (`sender_account_id`);
+
+CREATE INDEX `patient_care_requests_index_50` ON `patient_care_requests` (`facility_id`, `status`);
+
+CREATE INDEX `patient_care_requests_index_51` ON `patient_care_requests` (`subscription_id`);
+
+CREATE INDEX `patient_care_requests_index_52` ON `patient_care_requests` (`assigned_user_id`);
+
+CREATE INDEX `patient_care_requests_index_53` ON `patient_care_requests` (`request_code`);
+
+CREATE INDEX `patient_care_requests_index_54` ON `patient_care_requests` (`created_at`);
+
 ALTER TABLE `users` ADD FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE RESTRICT;
 
 ALTER TABLE `health_profiles` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE RESTRICT;
@@ -334,3 +456,35 @@ ALTER TABLE `treatment_plans` ADD FOREIGN KEY (`doctor_id`) REFERENCES `users` (
 ALTER TABLE `treatment_plans` ADD FOREIGN KEY (`treatment_target_id`) REFERENCES `patient_treatment_targets` (`id`) ON DELETE SET NULL;
 
 ALTER TABLE `treatment_templates` ADD FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `care_packages` ADD FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE RESTRICT;
+
+ALTER TABLE `patient_care_subscriptions` ADD FOREIGN KEY (`health_profile_id`) REFERENCES `health_profiles` (`id`) ON DELETE RESTRICT;
+
+ALTER TABLE `patient_care_subscriptions` ADD FOREIGN KEY (`care_package_id`) REFERENCES `care_packages` (`id`) ON DELETE RESTRICT;
+
+ALTER TABLE `patient_care_subscriptions` ADD FOREIGN KEY (`assigned_doctor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `patient_care_subscriptions` ADD FOREIGN KEY (`assigned_nurse_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `patient_care_subscriptions` ADD FOREIGN KEY (`assigned_expert_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `conversations` ADD FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE RESTRICT;
+
+ALTER TABLE `conversations` ADD FOREIGN KEY (`subscription_id`) REFERENCES `patient_care_subscriptions` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `conversations` ADD FOREIGN KEY (`health_profile_id`) REFERENCES `health_profiles` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `messages` ADD FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `messages` ADD FOREIGN KEY (`sender_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `messages` ADD FOREIGN KEY (`sender_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `messages` ADD FOREIGN KEY (`reply_to_message_id`) REFERENCES `messages` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `patient_care_requests` ADD FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE RESTRICT;
+
+ALTER TABLE `patient_care_requests` ADD FOREIGN KEY (`subscription_id`) REFERENCES `patient_care_subscriptions` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `patient_care_requests` ADD FOREIGN KEY (`assigned_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;

@@ -120,3 +120,20 @@ export enum VnDoctorPlanStatus {
   COMPLETED = 'COMPLETED',
   DISCONTINUED = 'DISCONTINUED',
 }
+
+/**
+ * Care Package classification type
+ */
+export enum CarePackageType {
+  STANDARD = 'STANDARD',
+  VIP = 'VIP',
+}
+
+/**
+ * Care Package operational status
+ */
+export enum CarePackageStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
