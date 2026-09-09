@@ -2,8 +2,11 @@ import 'reflect-metadata';
 import { config } from 'dotenv';
 import { DataSource } from 'typeorm';
 import { join } from 'path';
+import { parseDatabaseEnv } from './database.config';
 
 config({ path: join(__dirname, '../../.env') });
+
+const parsed = parseDatabaseEnv();
 
 /**
  * Data source for the TypeORM CLI (`migration:run`, `migration:generate`, …).
@@ -11,12 +14,12 @@ config({ path: join(__dirname, '../../.env') });
  */
 export default new DataSource({
   type: 'postgres',
-  host: process.env.POSTGRES_HOST || 'localhost',
-  port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-  username: process.env.POSTGRES_USERNAME || 'postgres',
-  password: process.env.POSTGRES_PASSWORD || 'postgres',
-  database: process.env.POSTGRES_DB || 'vndoctor',
-  ssl: process.env.POSTGRES_SSL === 'true',
+  host: parsed.host,
+  port: parsed.port,
+  username: parsed.username,
+  password: parsed.password,
+  database: parsed.database,
+  ssl: parsed.ssl,
   extra: {
     options: `-c timezone=${process.env.DB_TIMEZONE || process.env.TZ || 'Asia/Ho_Chi_Minh'}`,
   },
