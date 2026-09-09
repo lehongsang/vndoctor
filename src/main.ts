@@ -4,10 +4,8 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { OpenAPIObject } from '@nestjs/swagger';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
-import { AuthService as BetterAuthService } from '@thallesp/nestjs-better-auth';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import * as express from 'express';
@@ -25,15 +23,13 @@ import { TimezoneResponseInterceptor } from './commons/interceptors/timezone-res
 import { correlationIdMiddleware } from './commons/middlewares/correlation-id.middleware';
 import { SanitizeRequestPipe } from './commons/pipes/sanitize-request.pipe';
 import { buildCorsOriginOption } from './commons/security/cors';
-import type { BetterAuthSchema } from './modules/auth/better-auth.interface';
 
 /**
- * Main application bootstrap function for VNDoctor.
- * Implements high-performance documentation with Scalar and efficient body parsing.
+ * Main application bootstrap function for VNDoctor Medical Backend.
+ * Implements high-performance documentation with Scalar, CORS, JSON Web Token Auth & WebSocket support.
  */
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bodyParser: false, // Required for BetterAuth raw body handling
     bufferLogs: true,
   });
 
@@ -41,40 +37,19 @@ async function bootstrap() {
   app.useLogger(app.get(PinoNestLogger));
   app.set('query parser', 'extended');
 
-  // 1. Configure CORS - Primary security layer
+  // 1. Configure CORS
   app.enableCors({
     origin: buildCorsOriginOption(),
     credentials: true,
   });
 
-  // Attach trace IDs before body parsing and guards.
+  // Attach trace IDs before body parsing and guards
   app.use(correlationIdMiddleware);
   app.use(pinoHttp(pinoHttpOptions));
 
-  /*
-   * 2. Smart Body Parser Implementation
-   * Branched logic to provide raw bodies for Auth and JSON for application routes.
-   * This is critical to prevent API hangs when bodyParser is false.
-   */
-  app.use(
-    (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      const authPath = `/${API_GLOBAL_PREFIX}/auth`;
-      if (req.path.startsWith(authPath)) {
-        next();
-      } else {
-        express.json({ limit: '50mb' })(req, res, (err) => {
-          if (err) return next(err);
-          express.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
-        });
-      }
-    },
-  );
-
-  // Middlewares & Global configs
+  // 2. Middlewares & Global configs
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
   app.use(cookieParser());
   app.use(compression());
 
@@ -84,6 +59,7 @@ async function bootstrap() {
     configService.get<string>('DB_TIMEZONE') ??
     configService.get<string>('TZ') ??
     'Asia/Ho_Chi_Minh';
+
   app.useGlobalPipes(
     new SanitizeRequestPipe(),
     new ValidationPipe({
@@ -91,13 +67,14 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
   app.useGlobalInterceptors(
     new TimezoneResponseInterceptor(responseTimezone),
     new ClassSerializerInterceptor(reflector),
   );
 
   app.setGlobalPrefix(API_GLOBAL_PREFIX, {
-    exclude: [`/${API_GLOBAL_PREFIX}/auth/*path`, '/'],
+    exclude: ['/'],
   });
 
   const port =
@@ -105,13 +82,25 @@ async function bootstrap() {
     configService.get<number>('APP_PORT') ??
     DEFAULT_PORT;
 
-  // --- DOCUMENTATION 1: Main APIs (Scalar) ---
+  // --- DOCUMENTATION: VNDoctor Medical APIs (Scalar & OpenAPI) ---
   const mainConfig = new DocumentBuilder()
     .setTitle(APP_NAME)
-    .setDescription('Primary API documentation for VNDoctor.')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .setExternalDoc('Authentication Docs', 'auth/docs')
+    .setDescription(
+      'Hệ thống Quản lý Y tế & Bệnh mạn tính VNDoctor - API Documentation (Phase 1 & Phase 2)',
+    )
+    .setVersion('2.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT Authorization',
+        description:
+          'Nhập Access Token nhận được từ API /api/vndoctor-auth/staff/login hoặc /api/vndoctor-auth/account/login',
+        in: 'header',
+      },
+      'access-token',
+    )
     .build();
 
   const mainDocument = SwaggerModule.createDocument(app, mainConfig);
@@ -123,81 +112,21 @@ async function bootstrap() {
     altText: 'VNDoctor Logo',
   };
 
-  //  Main Application APIs
-  app.use(
-    `/${API_GLOBAL_PREFIX}/docs`,
-    apiReference({
-      spec: { content: mainDocument },
-      theme: 'deepSpace',
-      layout: 'modern',
-      authentication: {
-        preferredSecurityScheme: 'bearer',
-      },
-    }),
-  );
+  // Mount Scalar UI at /api/docs and /reference
+  const scalarMiddleware = apiReference({
+    spec: { content: mainDocument },
+    theme: 'deepSpace',
+    layout: 'modern',
+    authentication: {
+      preferredSecurityScheme: 'access-token',
+    },
+  });
 
-  //  BetterAuth APIs (Isolated for performance)
-  try {
-    const authService = app.get(BetterAuthService);
-    const authInstance = authService.instance as unknown as {
-      api: { generateOpenAPISchema: () => Promise<BetterAuthSchema> };
-    };
+  app.use(`/${API_GLOBAL_PREFIX}/docs`, scalarMiddleware);
+  app.use('/reference', scalarMiddleware);
+  app.use('/docs', scalarMiddleware);
 
-    if (authInstance?.api?.generateOpenAPISchema) {
-      const authSchema = await authInstance.api.generateOpenAPISchema();
-      const authPaths: Record<string, unknown> = {};
-
-      Object.entries(authSchema.paths).forEach(([key, value]) => {
-        authPaths[`/${API_GLOBAL_PREFIX}/auth${key}`] = value;
-      });
-
-      const authDocument = {
-        openapi: '3.0.0',
-        info: {
-          title: `${APP_NAME} Auth API`,
-          version: '1.0',
-          description: 'Authentication API documentation for VNDoctor',
-          'x-logo': {
-            url: 'https://scalar.com/logo.svg',
-            altText: 'Auth Logo',
-          },
-        },
-        externalDocs: {
-          url: `/${API_GLOBAL_PREFIX}/docs`,
-          description: 'Main API documentation',
-        },
-        paths: authPaths,
-        components: authSchema.components,
-      } as unknown as OpenAPIObject;
-
-      app.use(
-        `/${API_GLOBAL_PREFIX}/auth/docs`,
-        apiReference({
-          spec: { content: authDocument },
-          theme: 'deepSpace',
-          layout: 'modern',
-        }),
-      );
-
-      // Expose Auth OpenAPI JSON
-      app
-        .getHttpAdapter()
-        .get(
-          `/${API_GLOBAL_PREFIX}/auth/openapi.json`,
-          (req: express.Request, res: express.Response) => {
-            res.json(authDocument);
-          },
-        );
-
-      fs.writeFileSync('./open-api-auth.json', JSON.stringify(authDocument));
-    }
-  } catch (error) {
-    logger.warn(
-      `Failed to generate Auth Scalar documentation for VNDoctor: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
-  }
-
-  // Expose Main OpenAPI JSON
+  // Expose OpenAPI JSON endpoints
   app
     .getHttpAdapter()
     .get(
@@ -207,11 +136,18 @@ async function bootstrap() {
       },
     );
 
-  // Persist schema for external consumers
-  fs.writeFileSync('./open-api.json', JSON.stringify(mainDocument));
+  app
+    .getHttpAdapter()
+    .get('/openapi.json', (req: express.Request, res: express.Response) => {
+      res.json(mainDocument);
+    });
+
+  // Persist schema file for external consumers
+  fs.writeFileSync('./open-api.json', JSON.stringify(mainDocument, null, 2));
 
   await app.listen(port, '0.0.0.0');
-  logger.log(`VNDoctor is running on url http://0.0.0.0:${port}`);
+  logger.log(`🩺 VNDoctor is running on url http://0.0.0.0:${port}`);
+  logger.log(`📚 API Reference available at http://0.0.0.0:${port}/reference`);
   app.enableShutdownHooks();
 }
 

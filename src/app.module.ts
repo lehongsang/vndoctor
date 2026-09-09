@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
@@ -10,7 +9,6 @@ import { LoggerModule } from './commons/logger/logger.module';
 import { CustomRateLimitGuard } from './commons/guards/rate-limit.guard';
 import {
   AllExceptionsFilter,
-  BetterAuthErrorExceptionFilter,
   HttpExceptionFilter,
   CustomExceptionFilter,
 } from './commons/filters';
@@ -30,10 +28,6 @@ import {
   providers: [
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
-    {
-      provide: APP_GUARD,
       useClass: CustomRateLimitGuard,
     },
     {
@@ -43,10 +37,6 @@ import {
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: BetterAuthErrorExceptionFilter,
     },
     {
       provide: APP_FILTER,
