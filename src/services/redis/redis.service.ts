@@ -80,6 +80,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         this.waitForClientReady(this.publisher),
         this.waitForClientReady(this.subscriber),
       ]);
+
+      // BullMQ requires Redis maxmemory-policy to be noeviction
+      try {
+        await this.client.config('SET', 'maxmemory-policy', 'noeviction');
+      } catch {
+        // Silently skip if Redis server disables CONFIG command (e.g. managed cloud)
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
