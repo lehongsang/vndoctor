@@ -1,4 +1,4 @@
-# 📚 Bộ Tài liệu Kỹ thuật API - VNDoctor Backend (Phase 1)
+# 📚 Bộ Tài liệu Kỹ thuật API - VNDoctor Backend (Phase 1 & Phase 2)
 
 Thư mục chứa tài liệu mô tả chi tiết đầu vào (Input), đầu ra (Output), phân quyền (Auth) và logic xử lý của từng module trong hệ sinh thái y tế **VNDoctor**:
 
@@ -17,3 +17,9 @@ Thư mục chứa tài liệu mô tả chi tiết đầu vào (Input), đầu ra
 | **11** | [`11-treatment-dictionaries.md`](./11-treatment-dictionaries.md) | `treatment-dictionaries` | Bộ từ điển mục tiêu điều trị chuẩn y khoa **A1 $\rightarrow$ G5** (Auto-seed) |
 | **12** | [`12-treatment-targets.md`](./12-treatment-targets.md) | `treatment-targets` | Mục tiêu điều trị cá nhân hóa & Luồng Bác sĩ duyệt (`DOCTOR_VERIFIED`) |
 | **13** | [`13-treatment-plans.md`](./13-treatment-plans.md) | `treatment-plans` | Mẫu phác đồ viện (`treatment_templates`) & Phác đồ bệnh nhân (`treatment_plans`) |
+| **14** | [`14-care-packages.md`](./14-care-packages.md) | `care-packages` | Danh mục gói dịch vụ chăm sóc y tế (Standard/VIP, thời hạn, giá) |
+| **15** | [`15-care-subscriptions.md`](./15-care-subscriptions.md) | `care-subscriptions` | Đăng ký gói (`PENDING`), Phân công Care Team & Kích hoạt (`ACTIVE`) |
+| **16** | [`16-care-requests.md`](./16-care-requests.md) | `care-requests` | Tiếp nhận yêu cầu hỗ trợ & Quy trình chuyển ca Điều dưỡng - Bác sĩ |
+| **17** | [`17-conversations.md`](./17-conversations.md) | `conversations` | Hội thoại Care Team, Chat 1-1 & **WebSocket Gateway (`/chat`)** realtime |
+| **18** | [`18-users.md`](./18-users.md) | `users` | Hồ sơ cá nhân người dùng hệ thống & Tải lên Avatar S3 |
+

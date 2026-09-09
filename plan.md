@@ -69,9 +69,9 @@ Phase 2 Timeline:
   - `PATCH /api/v1/care-packages/:id/status`: Đổi trạng thái kích hoạt `ACTIVE`/`INACTIVE`.
 
 #### 2. Nhiệm vụ kiểm thử & Migration
-- [ ] Viết migration cho `care_packages`.
-- [ ] Unit test cho `CarePackageService` và `CarePackageController` (Coverage >= 80%).
-- [ ] Viết tài liệu Swagger `@Doc()` cho toàn bộ Controller.
+- [x] Viết migration cho `care_packages`.
+- [x] Unit test cho `CarePackageService` và `CarePackageController` (Coverage >= 80%).
+- [x] Viết tài liệu Swagger `@Doc()` cho toàn bộ Controller.
 
 ---
 
@@ -121,13 +121,13 @@ Phase 2 Timeline:
   - Tự động cập nhật trạng thái phòng chat liên quan sang `CLOSED` khi gói hết hạn.
 
 #### 4. Nhiệm vụ kiểm thử & Migration
-- [ ] Viết migration cho `patient_care_subscriptions`.
-- [ ] Unit test cho `CareSubscriptionService`:
+- [x] Viết migration cho `patient_care_subscriptions`.
+- [x] Unit test cho `CareSubscriptionService`:
   - Test luồng đăng ký tạo trạng thái `PENDING`.
   - Test phân công và kích hoạt gói: kiểm tra validation role `DOCTOR`, `NURSE`, kiểm tra điều kiện bắt buộc `assignedExpertId` đối với gói `VIP`.
   - Test tính toán ngày bắt đầu `started_at` và ngày kết thúc `expires_at`.
   - Test khởi tạo `conversations` và tin nhắn mở đầu `SYSTEM`.
-- [ ] E2E test cho toàn bộ luồng từ Đăng ký -> Phân công & Kích hoạt -> Kiểm tra phòng chat được sinh ra.
+- [x] E2E test cho toàn bộ luồng từ Đăng ký -> Phân công & Kích hoạt -> Kiểm tra phòng chat được sinh ra.
 
 ---
 
@@ -200,8 +200,8 @@ Phase 2 Timeline:
   - `message_read`: Đánh dấu đã đọc tin nhắn.
 
 #### 3. Nhiệm vụ kiểm thử & Tích hợp
-- [ ] Kiểm thử hiệu năng truy vấn tin nhắn với Index `messages_index_46` (`conversation_id, created_at`).
-- [ ] Viết kịch bản E2E test cho luồng gửi nhận tin nhắn Realtime & REST API.
+- [x] Kiểm thử hiệu năng truy vấn tin nhắn với Index `messages_index_46` (`conversation_id, created_at`).
+- [x] Viết kịch bản unit/E2E test cho luồng gửi nhận tin nhắn Realtime & REST API.
 
 ---
 
