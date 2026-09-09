@@ -82,6 +82,39 @@ describe('FacilitiesService', () => {
       expect(mockRepository.save).toHaveBeenCalled();
     });
 
+    it('should allow VNDOCTOR_ADMIN to create a top-level facility or assign any parentId', async () => {
+      const rootAdmin: StaffJwtPayload = {
+        id: 'root-01',
+        facilityId: undefined,
+        staffCode: 'ROOT-001',
+        username: 'vndoctor_admin',
+        fullName: 'Quản trị viên Hệ thống VNDoctor',
+        role: StaffRole.VNDOCTOR_ADMIN,
+        type: 'STAFF',
+      };
+
+      mockRepository.findOne.mockResolvedValueOnce(null);
+      mockRepository.create.mockReturnValue(mockParentFacility);
+      mockRepository.save.mockResolvedValue(mockParentFacility);
+
+      const result = await service.createFacility(
+        {
+          facilityCode: 'BV-TRUNGUONG-01',
+          facilityName: 'Bệnh viện Bạch Mai (Trung ương)',
+          facilityType: FacilityType.CENTRAL_HOSPITAL,
+          address: '78 Giải Phóng, Hà Nội',
+        },
+        rootAdmin,
+      );
+
+      expect(result).toEqual(mockParentFacility);
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          parentId: null,
+        }),
+      );
+    });
+
     it('should automatically assign parentId when created by Facility Admin', async () => {
       const provincialAdmin: StaffJwtPayload = {
         id: 'admin-01',

@@ -5,6 +5,7 @@ import { Facility } from './entities/facility.entity';
 import { CreateFacilityDto, QueryFacilityDto, UpdateFacilityDto } from './dtos';
 import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
+import { StaffRole } from '@/commons/enums/vndoctor.enum';
 
 @Injectable()
 export class FacilitiesService {
@@ -35,11 +36,11 @@ export class FacilitiesService {
       );
     }
 
-    // 2. Enforce hierarchy rules based on creator's facility
+    // 2. Enforce hierarchy rules based on creator's facility & role
     let targetParentId = dto.parentId || null;
 
-    if (creator && creator.facilityId) {
-      // If the creator is an admin of a facility, they can ONLY create sub-facilities under their facility
+    if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && creator.facilityId) {
+      // If the creator is a regular Facility Admin, they can ONLY create sub-facilities under their own facility
       if (dto.parentId && dto.parentId !== creator.facilityId) {
         throw new Forbidden(
           'Bạn chỉ có quyền tạo cơ sở y tế trực thuộc cơ sở y tế do bạn quản lý',

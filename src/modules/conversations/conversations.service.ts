@@ -96,7 +96,7 @@ export class ConversationsService {
 
     // 4. Create new direct conversation
     const conversation = this.conversationRepo.create({
-      facilityId: doctor.facilityId,
+      facilityId: doctor.facilityId || '',
       type: ConversationType.DIRECT,
       status: ConversationStatus.ACTIVE,
       healthProfileId: dto.healthProfileId,

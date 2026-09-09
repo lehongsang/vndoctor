@@ -21,5 +21,4 @@ Thư mục chứa tài liệu mô tả chi tiết đầu vào (Input), đầu ra
 | **15** | [`15-care-subscriptions.md`](./15-care-subscriptions.md) | `care-subscriptions` | Đăng ký gói (`PENDING`), Phân công Care Team & Kích hoạt (`ACTIVE`) |
 | **16** | [`16-care-requests.md`](./16-care-requests.md) | `care-requests` | Tiếp nhận yêu cầu hỗ trợ & Quy trình chuyển ca Điều dưỡng - Bác sĩ |
 | **17** | [`17-conversations.md`](./17-conversations.md) | `conversations` | Hội thoại Care Team, Chat 1-1 & **WebSocket Gateway (`/chat`)** realtime |
-| **18** | [`18-users.md`](./18-users.md) | `users` | Hồ sơ cá nhân người dùng hệ thống & Tải lên Avatar S3 |
 

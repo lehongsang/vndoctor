@@ -1,4 +1,4 @@
-import { Forbidden, NotFound } from '@/commons/exceptions';
+import { BadRequest, Forbidden, NotFound } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
@@ -45,7 +45,7 @@ export class ExaminationsService {
   async create(
     dto: CreateExaminationDto,
     doctorId: string,
-    defaultFacilityId: string,
+    defaultFacilityId?: string,
   ): Promise<Examination> {
     const profile = await this.healthProfileRepo.findOne({
       where: { id: dto.healthProfileId },
@@ -56,6 +56,9 @@ export class ExaminationsService {
     }
 
     const targetFacilityId = dto.facilityId || defaultFacilityId;
+    if (!targetFacilityId) {
+      throw new BadRequest('Thiếu thông tin cơ sở y tế (facilityId)');
+    }
     const facility = await this.facilityRepo.findOne({
       where: { id: targetFacilityId },
     });

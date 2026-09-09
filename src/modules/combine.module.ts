@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { RootModule } from './root/root.module';
-import { UsersModule } from './users/users.module';
 import { FacilitiesModule } from './facilities/facilities.module';
 import { StaffModule } from './staff/staff.module';
 import { AccountsModule } from './accounts/accounts.module';
@@ -23,7 +22,6 @@ import { ConversationsModule } from './conversations/conversations.module';
   imports: [
     AuthModule,
     RootModule,
-    UsersModule,
     FacilitiesModule,
     StaffModule,
     AccountsModule,
@@ -44,7 +42,6 @@ import { ConversationsModule } from './conversations/conversations.module';
   exports: [
     AuthModule,
     RootModule,
-    UsersModule,
     FacilitiesModule,
     StaffModule,
     AccountsModule,

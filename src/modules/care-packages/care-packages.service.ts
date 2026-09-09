@@ -32,7 +32,7 @@ export class CarePackagesService {
    */
   async create(
     dto: CreateCarePackageDto,
-    staffFacilityId: string,
+    staffFacilityId?: string,
   ): Promise<CarePackage> {
     // 1. Determine target facility ID
     const facilityId = dto.facilityId || staffFacilityId;

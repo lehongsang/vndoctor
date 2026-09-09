@@ -5,7 +5,7 @@ import type { StaffRole } from '@/commons/enums/vndoctor.enum';
 
 export interface StaffJwtPayload {
   id: string;
-  facilityId: string;
+  facilityId?: string;
   staffCode: string;
   username: string;
   fullName: string;

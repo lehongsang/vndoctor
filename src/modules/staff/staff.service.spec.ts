@@ -130,6 +130,41 @@ describe('StaffService', () => {
       );
     });
 
+    it('should allow VNDOCTOR_ADMIN to create staff for any facility without facility restrictions', async () => {
+      const rootAdmin: StaffJwtPayload = {
+        id: 'root-1',
+        facilityId: undefined,
+        staffCode: 'ROOT-01',
+        username: 'vndoctor_admin',
+        fullName: 'Root Admin',
+        role: StaffRole.VNDOCTOR_ADMIN,
+        type: 'STAFF',
+      };
+
+      mockFacilitiesService.getFacilityById.mockResolvedValue(mockFacility);
+      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.create.mockReturnValue({ ...mockStaff });
+      mockRepository.save.mockResolvedValue({ ...mockStaff });
+
+      const result = await service.createStaff(
+        {
+          facilityId: 'any-fac-999',
+          staffCode: 'CCHN-ROOT-CREATED',
+          fullName: 'BS. Bệnh Viện Khác',
+          email: 'dr.other@hospital.vn',
+          role: StaffRole.DOCTOR,
+        },
+        rootAdmin,
+      );
+
+      expect(result).toBeDefined();
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          facilityId: 'any-fac-999',
+        }),
+      );
+    });
+
     it('should throw Forbidden if FacilityAdmin tries to create staff for another facilityId', async () => {
       const facilityAdmin: StaffJwtPayload = {
         id: 'admin-1',

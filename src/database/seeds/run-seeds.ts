@@ -100,9 +100,19 @@ async function runSeed() {
     console.log(`   Facility already exists: ${facility.facilityName}`);
   }
 
-  // 2. Seed Staff Accounts (Admin, Doctor, Nurse, Technician)
+  // 2. Seed Staff Accounts (Root Admin, Admin, Doctor Expert, Doctor, Nurse)
   console.log('👨‍⚕️ [2/9] Seeding Staff Accounts for each role...');
   const staffList = [
+    {
+      staffCode: 'ROOT-001',
+      username: 'vndoctor_admin',
+      fullName: 'Quản trị viên Hệ thống VNDoctor (Root Admin)',
+      role: StaffRole.VNDOCTOR_ADMIN,
+      specialty: 'Ban Quản trị Toàn quốc VNDoctor',
+      email: 'root.admin@vndoctor.vn',
+      phoneNumber: '0900000000',
+      facilityId: null,
+    },
     {
       staffCode: 'ADMIN-001',
       username: 'staff_admin',
@@ -111,6 +121,7 @@ async function runSeed() {
       specialty: 'Ban Giám đốc / IT Y tế',
       email: 'admin@hospital.vndoctor.vn',
       phoneNumber: '0901000001',
+      facilityId: facility.id,
     },
     {
       staffCode: 'DOC-001',
@@ -120,6 +131,7 @@ async function runSeed() {
       specialty: 'Tim mạch Can thiệp & Nội tiết',
       email: 'dr.an@vndoctor.vn',
       phoneNumber: '0901000002',
+      facilityId: facility.id,
     },
     {
       staffCode: 'EXPERT-001',
@@ -129,6 +141,7 @@ async function runSeed() {
       specialty: 'Chuyên gia Đầu ngành Tim mạch & Đột quỵ (VIP)',
       email: 'expert.nam@vndoctor.vn',
       phoneNumber: '0901000005',
+      facilityId: facility.id,
     },
     {
       staffCode: 'NURSE-001',
@@ -138,6 +151,7 @@ async function runSeed() {
       specialty: 'Điều dưỡng Chăm sóc Tim mạch',
       email: 'nurse.mai@vndoctor.vn',
       phoneNumber: '0901000003',
+      facilityId: facility.id,
     },
   ];
 
@@ -147,7 +161,7 @@ async function runSeed() {
     let staffUser = await staffRepo.findOne({ where: { username: s.username } });
     if (!staffUser) {
       staffUser = staffRepo.create({
-        facilityId: facility.id,
+        facilityId: s.facilityId ?? undefined,
         staffCode: s.staffCode,
         username: s.username,
         passwordHash: hashedPassword,
@@ -425,7 +439,8 @@ async function runSeed() {
   console.log('📋 TÀI KHOẢN ĐĂNG NHẬP MẪU:');
   console.log('------------------------------------------------------');
   console.log(`🔐 1. STAFF CMS (Đăng nhập tại /api/v1/auth/staff/login):
-   - ADMIN:          username: staff_admin        | pass: ${defaultPassword}
+   - VNDOCTOR_ADMIN: username: vndoctor_admin     | pass: ${defaultPassword} (ROOT SYSTEM ADMIN)
+   - ADMIN:          username: staff_admin        | pass: ${defaultPassword} (FACILITY ADMIN)
    - DOCTOR:         username: dr_nguyenvanan     | pass: ${defaultPassword}
    - DOCTOR_EXPERT:  username: expert_phamhoangnam| pass: ${defaultPassword}
    - NURSE:          username: nurse_tranthimai   | pass: ${defaultPassword}

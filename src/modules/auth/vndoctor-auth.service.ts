@@ -64,7 +64,7 @@ export class VnDoctorAuthService {
 
     const payload: StaffJwtPayload = {
       id: staff.id,
-      facilityId: staff.facilityId,
+      facilityId: staff.facilityId ?? undefined,
       staffCode: staff.staffCode,
       username: staff.username,
       fullName: staff.fullName,

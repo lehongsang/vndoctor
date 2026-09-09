@@ -45,7 +45,7 @@ export class StaffService {
     // 1. Determine target facility ID based on creator scope
     let targetFacilityId = dto.facilityId;
 
-    if (creator && creator.facilityId) {
+    if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && creator.facilityId) {
       if (dto.facilityId && dto.facilityId !== creator.facilityId) {
         throw new Forbidden(
           'Bạn chỉ có quyền tạo nhân sự thuộc cơ sở y tế do bạn quản lý',
@@ -54,14 +54,16 @@ export class StaffService {
       targetFacilityId = creator.facilityId;
     }
 
-    if (!targetFacilityId) {
+    if (!targetFacilityId && dto.role !== StaffRole.VNDOCTOR_ADMIN) {
       throw new BadRequest('Thiếu thông tin cơ sở y tế (facilityId)');
     }
 
-    // Verify facility exists and is active
-    const facility = await this.facilitiesService.getFacilityById(targetFacilityId);
-    if (!facility.isActive) {
-      throw new Forbidden('Cơ sở y tế này hiện đang bị tạm khóa');
+    // Verify facility exists and is active if facilityId provided
+    if (targetFacilityId) {
+      const facility = await this.facilitiesService.getFacilityById(targetFacilityId);
+      if (!facility.isActive) {
+        throw new Forbidden('Cơ sở y tế này hiện đang bị tạm khóa');
+      }
     }
 
     // 2. Resolve username: use provided username or email prefix

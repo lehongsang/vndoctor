@@ -34,11 +34,11 @@ export class StaffController {
   constructor(private readonly staffService: StaffService) {}
 
   @Post()
-  @Roles(StaffRole.ADMIN)
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN)
   @Doc({
-    summary: 'Role: ADMIN - Tạo tài khoản Bác sĩ / Nhân sự y tế',
+    summary: 'Role: VNDOCTOR_ADMIN / ADMIN - Tạo tài khoản Bác sĩ / Nhân sự y tế',
     description:
-      'FacilityAdmin tạo tài khoản cho bác sĩ/nhân sự thuộc viện mình. Email là bắt buộc, mật khẩu mặc định tự động là vndoctor123 nếu không truyền.',
+      'VNDOCTOR_ADMIN hoặc FacilityAdmin tạo tài khoản cho bác sĩ/nhân sự. Email là bắt buộc, mật khẩu mặc định tự động là vndoctor123 nếu không truyền.',
     response: { serialization: StaffUser },
   })
   async createStaff(
@@ -49,7 +49,7 @@ export class StaffController {
   }
 
   @Get()
-  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân viên - Danh sách nhân sự',
     description: 'Lấy danh sách nhân viên theo cơ sở y tế, vai trò hoặc tìm kiếm theo tên/mã CCHN/email',
@@ -59,7 +59,7 @@ export class StaffController {
   }
 
   @Get('me')
-  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân sự - Thông tin cá nhân đang đăng nhập',
     description: 'Lấy thông tin chi tiết của nhân viên y tế đang đăng nhập',
@@ -70,7 +70,7 @@ export class StaffController {
   }
 
   @Patch('me')
-  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân sự - Tự cập nhật thông tin cá nhân',
     description: 'Bác sĩ/nhân viên y tế tự cập nhật họ tên, SĐT, chuyên khoa hoặc email',
@@ -84,7 +84,7 @@ export class StaffController {
   }
 
   @Get(':id')
-  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân viên - Chi tiết nhân viên theo ID',
     description: 'Lấy thông tin chi tiết một nhân viên y tế',
@@ -95,10 +95,10 @@ export class StaffController {
   }
 
   @Patch(':id')
-  @Roles(StaffRole.ADMIN)
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN)
   @Doc({
-    summary: 'Role: ADMIN - Quản trị viên cập nhật thông tin nhân sự',
-    description: 'Admin cơ sở cập nhật họ tên, vai trò, chuyên khoa, email, SĐT hoặc trạng thái của nhân viên',
+    summary: 'Role: VNDOCTOR_ADMIN / ADMIN - Quản trị viên cập nhật thông tin nhân sự',
+    description: 'Admin cập nhật họ tên, vai trò, chuyên khoa, email, SĐT hoặc trạng thái của nhân viên',
     response: { serialization: StaffUser },
   })
   async updateStaff(@Param('id') id: string, @Body() dto: UpdateStaffDto) {
@@ -106,7 +106,7 @@ export class StaffController {
   }
 
   @Put('change-password')
-  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân sự - Tự đổi mật khẩu',
     description: 'Thay đổi mật khẩu cá nhân (sau lần đầu đăng nhập với mật khẩu mặc định vndoctor123)',

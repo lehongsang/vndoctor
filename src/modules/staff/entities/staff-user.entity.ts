@@ -9,14 +9,14 @@ import { Facility } from '@/modules/facilities/entities/facility.entity';
  */
 @Entity('users')
 export class StaffUser extends BaseEntity {
-  @ApiProperty({ description: 'Facility ID to which the staff belongs' })
+  @ApiPropertyOptional({ description: 'Facility ID to which the staff belongs (null for Root System Admin)' })
   @Index('users_index_0')
-  @Column({ type: 'uuid' })
-  facilityId: string;
+  @Column({ type: 'uuid', nullable: true })
+  facilityId?: string | null;
 
-  @ManyToOne(() => Facility, (facility) => facility.staffUsers, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Facility, (facility) => facility.staffUsers, { onDelete: 'RESTRICT', nullable: true })
   @JoinColumn({ name: 'facilityId' })
-  facility: Facility;
+  facility?: Facility | null;
 
   @ApiProperty({ description: 'Staff code or medical practice certificate number', example: 'CCHN-12345' })
   @Column({ type: 'varchar', length: 50, unique: true })

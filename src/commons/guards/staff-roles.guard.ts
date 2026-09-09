@@ -31,6 +31,11 @@ export class StaffRolesGuard implements CanActivate {
       throw new ForbiddenException('Bạn không có quyền truy cập chức năng này');
     }
 
+    // Root Super Admin (VNDOCTOR_ADMIN) has global administrative access
+    if (staff.role === StaffRole.VNDOCTOR_ADMIN) {
+      return true;
+    }
+
     const hasRole = requiredRoles.includes(staff.role);
     if (!hasRole) {
       throw new ForbiddenException(

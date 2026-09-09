@@ -2,6 +2,7 @@
  * Staff role for VNDoctor Medical CMS
  */
 export enum StaffRole {
+  VNDOCTOR_ADMIN = 'VNDOCTOR_ADMIN',
   ADMIN = 'ADMIN',
   DOCTOR = 'DOCTOR',
   DOCTOR_EXPERT = 'DOCTOR_EXPERT',
@@ -13,6 +14,7 @@ export enum StaffRole {
  * Facility level / hierarchy type for medical facilities
  */
 export enum FacilityType {
+  CENTRAL_HOSPITAL = 'CENTRAL_HOSPITAL',
   PROVINCIAL_HOSPITAL = 'PROVINCIAL_HOSPITAL',
   DISTRICT_HOSPITAL = 'DISTRICT_HOSPITAL',
   COMMUNE_HEALTH_STATION = 'COMMUNE_HEALTH_STATION',
