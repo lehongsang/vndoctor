@@ -5,9 +5,11 @@ import {
   AppAuthResponseDto,
   AppLoginDto,
   AppRegisterDto,
+  RefreshTokenDto,
   StaffAuthResponseDto,
   StaffLoginDto,
-} from './dtos/vndoctor-auth.dto';
+  TokenRefreshResponseDto,
+} from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
 import { Public } from '@/commons/decorators/public.decorator';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
@@ -30,11 +32,22 @@ export class VnDoctorAuthController {
   @Post('staff/login')
   @Doc({
     summary: 'Public - Đăng nhập Nhân viên y tế / Bác sĩ (Web CMS)',
-    description: 'Xác thực tài khoản nhân viên y tế qua username & password, trả về JWT token',
+    description: 'Xác thực tài khoản nhân viên y tế qua username & password, trả về Access Token & Refresh Token',
     response: { serialization: StaffAuthResponseDto },
   })
   async loginStaff(@Body() dto: StaffLoginDto): Promise<StaffAuthResponseDto> {
     return this.authService.loginStaff(dto);
+  }
+
+  @Public()
+  @Post('staff/refresh')
+  @Doc({
+    summary: 'Public - Làm mới Access Token cho Staff / Bác sĩ',
+    description: 'Sử dụng Refresh Token hợp lệ của nhân sự y tế để lấy cặp Access Token & Refresh Token mới',
+    response: { serialization: TokenRefreshResponseDto },
+  })
+  async refreshStaffToken(@Body() dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
+    return this.authService.refreshStaffToken(dto);
   }
 
   @Get('staff/me')
@@ -63,11 +76,22 @@ export class VnDoctorAuthController {
   @Post('app/login')
   @Doc({
     summary: 'Public - Đăng nhập Bệnh nhân (Mobile App)',
-    description: 'Đăng nhập vào ứng dụng di động bệnh nhân qua số điện thoại & mật khẩu',
+    description: 'Đăng nhập vào ứng dụng di động bệnh nhân qua số điện thoại & mật khẩu, trả về Access Token & Refresh Token',
     response: { serialization: AppAuthResponseDto },
   })
   async loginApp(@Body() dto: AppLoginDto): Promise<AppAuthResponseDto> {
     return this.authService.loginApp(dto);
+  }
+
+  @Public()
+  @Post('app/refresh')
+  @Doc({
+    summary: 'Public - Làm mới Access Token cho Bệnh nhân App',
+    description: 'Sử dụng Refresh Token hợp lệ của tài khoản bệnh nhân để lấy cặp Access Token & Refresh Token mới',
+    response: { serialization: TokenRefreshResponseDto },
+  })
+  async refreshAppToken(@Body() dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
+    return this.authService.refreshAppToken(dto);
   }
 
   @Get('app/me')

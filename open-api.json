@@ -3,7 +3,7 @@
   "paths": {
     "/api/auth/staff/login": {
       "post": {
-        "description": "Xác thực tài khoản nhân viên y tế qua username & password, trả về JWT token",
+        "description": "Xác thực tài khoản nhân viên y tế qua username & password, trả về Access Token & Refresh Token",
         "operationId": "VnDoctorAuthController_loginStaff",
         "parameters": [],
         "requestBody": {
@@ -34,6 +34,44 @@
           }
         },
         "summary": "Public - Đăng nhập Nhân viên y tế / Bác sĩ (Web CMS)",
+        "tags": [
+          "Authentication (Xác thực CMS & App)"
+        ]
+      }
+    },
+    "/api/auth/staff/refresh": {
+      "post": {
+        "description": "Sử dụng Refresh Token hợp lệ của nhân sự y tế để lấy cặp Access Token & Refresh Token mới",
+        "operationId": "VnDoctorAuthController_refreshStaffToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/TokenRefreshResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Public - Làm mới Access Token cho Staff / Bác sĩ",
         "tags": [
           "Authentication (Xác thực CMS & App)"
         ]
@@ -111,7 +149,7 @@
     },
     "/api/auth/app/login": {
       "post": {
-        "description": "Đăng nhập vào ứng dụng di động bệnh nhân qua số điện thoại & mật khẩu",
+        "description": "Đăng nhập vào ứng dụng di động bệnh nhân qua số điện thoại & mật khẩu, trả về Access Token & Refresh Token",
         "operationId": "VnDoctorAuthController_loginApp",
         "parameters": [],
         "requestBody": {
@@ -142,6 +180,44 @@
           }
         },
         "summary": "Public - Đăng nhập Bệnh nhân (Mobile App)",
+        "tags": [
+          "Authentication (Xác thực CMS & App)"
+        ]
+      }
+    },
+    "/api/auth/app/refresh": {
+      "post": {
+        "description": "Sử dụng Refresh Token hợp lệ của tài khoản bệnh nhân để lấy cặp Access Token & Refresh Token mới",
+        "operationId": "VnDoctorAuthController_refreshAppToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/TokenRefreshResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Public - Làm mới Access Token cho Bệnh nhân App",
         "tags": [
           "Authentication (Xác thực CMS & App)"
         ]
@@ -6080,17 +6156,29 @@
         "properties": {
           "accessToken": {
             "type": "string",
-            "description": "JWT Access Token Bearer"
+            "description": "JWT Access Token Bearer",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "JWT Refresh Token Bearer",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           },
           "tokenType": {
             "type": "string",
             "description": "Loại token",
-            "example": "Bearer"
+            "example": "Bearer",
+            "default": "Bearer"
           },
           "expiresIn": {
             "type": "number",
-            "description": "Thời gian hiệu lực (giây)",
+            "description": "Thời gian hiệu lực accessToken (giây)",
             "example": 86400
+          },
+          "refreshTokenExpiresIn": {
+            "type": "number",
+            "description": "Thời gian hiệu lực refreshToken (giây)",
+            "example": 2592000
           },
           "staff": {
             "description": "Thông tin nhân viên",
@@ -6103,8 +6191,10 @@
         },
         "required": [
           "accessToken",
+          "refreshToken",
           "tokenType",
           "expiresIn",
+          "refreshTokenExpiresIn",
           "staff"
         ]
       },
@@ -6129,6 +6219,57 @@
         "required": [
           "username",
           "password"
+        ]
+      },
+      "TokenRefreshResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT Access Token mới",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "JWT Refresh Token mới",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "tokenType": {
+            "type": "string",
+            "description": "Loại token",
+            "example": "Bearer",
+            "default": "Bearer"
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Thời gian hiệu lực accessToken (giây)",
+            "example": 86400
+          },
+          "refreshTokenExpiresIn": {
+            "type": "number",
+            "description": "Thời gian hiệu lực refreshToken (giây)",
+            "example": 2592000
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "tokenType",
+          "expiresIn",
+          "refreshTokenExpiresIn"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh Token được cấp khi đăng nhập",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refreshToken"
         ]
       },
       "Account": {
@@ -6174,16 +6315,28 @@
         "properties": {
           "accessToken": {
             "type": "string",
-            "description": "JWT Access Token Bearer"
+            "description": "JWT Access Token Bearer",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "JWT Refresh Token Bearer",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           },
           "tokenType": {
             "type": "string",
             "description": "Loại token",
-            "example": "Bearer"
+            "example": "Bearer",
+            "default": "Bearer"
           },
           "expiresIn": {
             "type": "number",
-            "description": "Thời gian hiệu lực (giây)",
+            "description": "Thời gian hiệu lực accessToken (giây)",
+            "example": 86400
+          },
+          "refreshTokenExpiresIn": {
+            "type": "number",
+            "description": "Thời gian hiệu lực refreshToken (giây)",
             "example": 2592000
           },
           "account": {
@@ -6197,8 +6350,10 @@
         },
         "required": [
           "accessToken",
+          "refreshToken",
           "tokenType",
           "expiresIn",
+          "refreshTokenExpiresIn",
           "account"
         ]
       },

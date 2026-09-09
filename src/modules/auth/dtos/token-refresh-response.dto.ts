@@ -1,11 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 
-export class StaffAuthResponseDto {
-  @ApiProperty({ description: 'JWT Access Token Bearer', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
+export class TokenRefreshResponseDto {
+  @ApiProperty({ description: 'JWT Access Token mới', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
   accessToken: string;
 
-  @ApiProperty({ description: 'JWT Refresh Token Bearer', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
+  @ApiProperty({ description: 'JWT Refresh Token mới', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
   refreshToken: string;
 
   @ApiProperty({ description: 'Loại token', example: 'Bearer', default: 'Bearer' })
@@ -16,7 +15,4 @@ export class StaffAuthResponseDto {
 
   @ApiProperty({ description: 'Thời gian hiệu lực refreshToken (giây)', example: 2592000 })
   refreshTokenExpiresIn: number;
-
-  @ApiProperty({ type: () => StaffUser, description: 'Thông tin nhân viên' })
-  staff: Partial<StaffUser>;
 }
