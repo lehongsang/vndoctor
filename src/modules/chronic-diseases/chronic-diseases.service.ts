@@ -47,13 +47,16 @@ export class ChronicDiseasesService implements OnModuleInit {
         return;
       }
 
-      const seedFilePath = path.join(
-        process.cwd(),
-        'src/database/seeds/data/icd10-score2-dictionary.json',
-      );
+      const candidatePaths = [
+        path.join(process.cwd(), 'src/database/seeds/data/icd10-score2-dictionary.json'),
+        path.join(process.cwd(), 'dist/database/seeds/data/icd10-score2-dictionary.json'),
+        path.resolve(__dirname, '../../database/seeds/data/icd10-score2-dictionary.json'),
+      ];
 
-      if (!fs.existsSync(seedFilePath)) {
-        this.logger.warn(`Seed file not found at ${seedFilePath}, skipping seed.`);
+      const seedFilePath = candidatePaths.find((p) => fs.existsSync(p));
+
+      if (!seedFilePath) {
+        this.logger.warn(`Seed file not found for chronic diseases, skipping seed.`);
         return;
       }
 

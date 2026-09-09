@@ -46,13 +46,16 @@ export class TreatmentDictionariesService implements OnModuleInit {
         return;
       }
 
-      const seedFilePath = path.join(
-        process.cwd(),
-        'src/database/seeds/data/treatment-target-dictionary.json',
-      );
+      const candidatePaths = [
+        path.join(process.cwd(), 'src/database/seeds/data/treatment-target-dictionary.json'),
+        path.join(process.cwd(), 'dist/database/seeds/data/treatment-target-dictionary.json'),
+        path.resolve(__dirname, '../../database/seeds/data/treatment-target-dictionary.json'),
+      ];
 
-      if (!fs.existsSync(seedFilePath)) {
-        this.logger.warn(`Seed file not found at ${seedFilePath}, skipping seed.`);
+      const seedFilePath = candidatePaths.find((p) => fs.existsSync(p));
+
+      if (!seedFilePath) {
+        this.logger.warn(`Seed file not found for treatment-target-dictionary, skipping seed.`);
         return;
       }
 
