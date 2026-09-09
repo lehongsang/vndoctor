@@ -37,10 +37,30 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         throw new Error('REDIS_URL is not defined in environment variables');
       }
 
-      this.client = new Redis(redisUrl);
+      const redisOptions = {
+        maxRetriesPerRequest: null,
+        enableReadyCheck: true,
+        lazyConnect: false,
+      };
+      this.client = new Redis(redisUrl, redisOptions);
+      this.client.on('error', (err) => {
+        console.warn(`[Redis Client] Connection warning: ${err.message}`);
+      });
+
       this.cacheClient = this.client.duplicate();
+      this.cacheClient.on('error', (err) => {
+        console.warn(`[Redis Cache] Connection warning: ${err.message}`);
+      });
+
       this.publisher = this.client.duplicate();
+      this.publisher.on('error', (err) => {
+        console.warn(`[Redis Publisher] Connection warning: ${err.message}`);
+      });
+
       this.subscriber = this.client.duplicate();
+      this.subscriber.on('error', (err) => {
+        console.warn(`[Redis Subscriber] Connection warning: ${err.message}`);
+      });
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';

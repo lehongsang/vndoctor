@@ -100,7 +100,10 @@ async function bootstrap() {
     exclude: [`/${API_GLOBAL_PREFIX}/auth/*path`, '/'],
   });
 
-  const port = configService.get<number>('APP_PORT') ?? DEFAULT_PORT;
+  const port =
+    (process.env.PORT ? parseInt(process.env.PORT, 10) : undefined) ??
+    configService.get<number>('APP_PORT') ??
+    DEFAULT_PORT;
 
   // --- DOCUMENTATION 1: Main APIs (Scalar) ---
   const mainConfig = new DocumentBuilder()
@@ -207,8 +210,8 @@ async function bootstrap() {
   // Persist schema for external consumers
   fs.writeFileSync('./open-api.json', JSON.stringify(mainDocument));
 
-  await app.listen(port);
-  logger.log(`VNDoctor is running on url http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  logger.log(`VNDoctor is running on url http://0.0.0.0:${port}`);
   app.enableShutdownHooks();
 }
 
