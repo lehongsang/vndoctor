@@ -137,3 +137,63 @@ export enum CarePackageStatus {
   INACTIVE = 'INACTIVE',
 }
 
+/**
+ * Care Subscription status
+ */
+export enum CareSubscriptionStatus {
+  PENDING = 'PENDING',
+  ACTIVE = 'ACTIVE',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+}
+
+/**
+ * Conversation type for medical communication
+ */
+export enum ConversationType {
+  CARE_TEAM = 'CARE_TEAM',
+  DIRECT = 'DIRECT',
+}
+
+/**
+ * Conversation operational status
+ */
+export enum ConversationStatus {
+  ACTIVE = 'ACTIVE',
+  CLOSED = 'CLOSED',
+  ARCHIVED = 'ARCHIVED',
+}
+
+/**
+ * Chat message type
+ */
+export enum MessageType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  FILE = 'FILE',
+  EXAMINATION = 'EXAMINATION',
+  RISK_ASSESSMENT = 'RISK_ASSESSMENT',
+  HEALTH_RECORD = 'HEALTH_RECORD',
+  CARE_REQUEST = 'CARE_REQUEST',
+  SYSTEM = 'SYSTEM',
+}
+
+/**
+ * Sender type for chat messages
+ */
+export enum SenderType {
+  STAFF = 'STAFF',
+  PATIENT = 'PATIENT',
+  SYSTEM = 'SYSTEM',
+}
+
+/**
+ * Care Request processing status
+ */
+export enum CareRequestStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  RESOLVED = 'RESOLVED',
+  CANCELLED = 'CANCELLED',
+}
+

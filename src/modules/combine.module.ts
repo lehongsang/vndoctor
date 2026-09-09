@@ -15,6 +15,9 @@ import { TreatmentDictionariesModule } from './treatment-dictionaries/treatment-
 import { TreatmentTargetsModule } from './treatment-targets/treatment-targets.module';
 import { TreatmentPlansModule } from './treatment-plans/treatment-plans.module';
 import { CarePackagesModule } from './care-packages/care-packages.module';
+import { CareSubscriptionsModule } from './care-subscriptions/care-subscriptions.module';
+import { CareRequestsModule } from './care-requests/care-requests.module';
+import { ConversationsModule } from './conversations/conversations.module';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { CarePackagesModule } from './care-packages/care-packages.module';
     TreatmentTargetsModule,
     TreatmentPlansModule,
     CarePackagesModule,
+    CareSubscriptionsModule,
+    CareRequestsModule,
+    ConversationsModule,
   ],
   exports: [
     AuthModule,
@@ -52,6 +58,9 @@ import { CarePackagesModule } from './care-packages/care-packages.module';
     TreatmentTargetsModule,
     TreatmentPlansModule,
     CarePackagesModule,
+    CareSubscriptionsModule,
+    CareRequestsModule,
+    ConversationsModule,
   ],
 })
 export class CombineModule {}
