@@ -35,7 +35,7 @@ export function parseDatabaseEnv(): {
     try {
       const parsed = new URL(rawUrl);
       host = parsed.hostname || host;
-      port = parsed.port ? parseInt(parsed.port, 10) : port;
+      port = parsed.port ? parseInt(parsed.port, 10) : 5432;
       username = parsed.username
         ? decodeURIComponent(parsed.username)
         : username;

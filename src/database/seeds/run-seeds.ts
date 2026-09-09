@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 import 'reflect-metadata';
 import * as bcrypt from 'bcryptjs';
+import * as fs from 'fs';
+import * as path from 'path';
 import dataSource from '../data-source';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
@@ -12,6 +14,8 @@ import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/c
 import { Conversation } from '@/modules/care-subscriptions/entities/conversation.entity';
 import { Message } from '@/modules/care-subscriptions/entities/message.entity';
 import { HealthRecord } from '@/modules/health-records/entities/health-record.entity';
+import { TreatmentTargetDictionary } from '@/modules/treatment-dictionaries/entities/treatment-target-dictionary.entity';
+import { ChronicDisease } from '@/modules/chronic-diseases/entities/chronic-disease.entity';
 import {
   CarePackageStatus,
   CarePackageType,
@@ -28,6 +32,30 @@ import {
   SenderType,
   StaffRole,
 } from '@/commons/enums/vndoctor.enum';
+
+interface DictionarySeedItem {
+  code: string;
+  assessmentNotes?: string | null;
+  assessmentTimeframe?: string | null;
+  bpTarget?: string | null;
+  lipidTarget?: string | null;
+  bmiTarget?: string | null;
+  glycemicTarget?: string | null;
+  renalTarget?: string | null;
+  dietAdvice?: string | null;
+  exerciseAdvice?: string | null;
+  smokingAdvice?: string | null;
+  notes?: string | null;
+}
+
+interface IcdSeedItem {
+  section?: string;
+  score2Code?: string;
+  name: string;
+  directIcd10Code?: string;
+  directIcd10Name?: string;
+  relatedIcd10Codes?: string[];
+}
 
 async function runSeed() {
   console.log('🌱 [Seed] Initializing DataSource connection...');
@@ -48,12 +76,14 @@ async function runSeed() {
   const conversationRepo = dataSource.getRepository(Conversation);
   const messageRepo = dataSource.getRepository(Message);
   const recordRepo = dataSource.getRepository(HealthRecord);
+  const dictionaryRepo = dataSource.getRepository(TreatmentTargetDictionary);
+  const chronicDiseaseRepo = dataSource.getRepository(ChronicDisease);
 
   const defaultPassword = 'Password@123';
   const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
   // 1. Seed Medical Facility
-  console.log('🏥 [1/7] Seeding Medical Facility...');
+  console.log('🏥 [1/9] Seeding Medical Facility...');
   let facility = await facilityRepo.findOne({ where: { facilityCode: 'HOSP-VNDOCTOR' } });
   if (!facility) {
     facility = facilityRepo.create({
@@ -71,7 +101,7 @@ async function runSeed() {
   }
 
   // 2. Seed Staff Accounts (Admin, Doctor, Nurse, Technician)
-  console.log('👨‍⚕️ [2/7] Seeding Staff Accounts for each role...');
+  console.log('👨‍⚕️ [2/9] Seeding Staff Accounts for each role...');
   const staffList = [
     {
       staffCode: 'ADMIN-001',
@@ -137,7 +167,7 @@ async function runSeed() {
   }
 
   // 3. Seed Mobile App Patient Account
-  console.log('📱 [3/7] Seeding Patient Mobile App Account...');
+  console.log('📱 [3/9] Seeding Patient Mobile App Account...');
   let appAccount = await accountRepo.findOne({ where: { phoneNumber: '0987654321' } });
   if (!appAccount) {
     appAccount = accountRepo.create({
@@ -153,7 +183,7 @@ async function runSeed() {
   }
 
   // 4. Seed Health Profile for Patient
-  console.log('👤 [4/7] Seeding Patient Health Profile...');
+  console.log('👤 [4/9] Seeding Patient Health Profile...');
   let healthProfile = await profileRepo.findOne({
     where: { accountId: appAccount.id, relationship: ProfileRelationship.SELF },
   });
@@ -195,7 +225,7 @@ async function runSeed() {
   }
 
   // 5. Seed Care Packages (Standard & VIP)
-  console.log('📦 [5/7] Seeding Care Packages...');
+  console.log('📦 [5/9] Seeding Care Packages...');
   let packageStandard = await packageRepo.findOne({ where: { code: 'PKG-CARDIO-STANDARD' } });
   if (!packageStandard) {
     packageStandard = packageRepo.create({
@@ -229,7 +259,7 @@ async function runSeed() {
   }
 
   // 6. Seed Active Subscription, Care Team & Conversation Chat Room
-  console.log('💬 [6/7] Seeding Active Subscription & Care Team Chat Room...');
+  console.log('💬 [6/9] Seeding Active Subscription & Care Team Chat Room...');
   let subscription = await subscriptionRepo.findOne({
     where: { healthProfileId: healthProfile.id, status: CareSubscriptionStatus.ACTIVE },
   });
@@ -296,7 +326,7 @@ async function runSeed() {
   }
 
   // 7. Seed Sample Health Metric Records
-  console.log('📊 [7/7] Seeding Health Records (Blood pressure, heart rate)...');
+  console.log('📊 [7/9] Seeding Health Records (Blood pressure, heart rate)...');
   const existingRecordsCount = await recordRepo.count({
     where: { healthProfileId: healthProfile.id },
   });
@@ -313,6 +343,80 @@ async function runSeed() {
     });
     await recordRepo.save(sampleRecord);
     console.log('   Created Sample Health Record (125/82 mmHg).');
+  }
+
+  // 8. Seed Treatment Target Dictionaries (A1 -> G5)
+  console.log('📖 [8/9] Seeding Treatment Target Dictionaries (A1 -> G5)...');
+  const existingDictCount = await dictionaryRepo.count();
+  if (existingDictCount === 0) {
+    const dictPaths = [
+      path.join(process.cwd(), 'src/database/seeds/data/treatment-target-dictionary.json'),
+      path.join(process.cwd(), 'dist/database/seeds/data/treatment-target-dictionary.json'),
+      path.resolve(__dirname, 'data/treatment-target-dictionary.json'),
+    ];
+    const dictFilePath = dictPaths.find((p) => fs.existsSync(p));
+    if (dictFilePath) {
+      const rawData = fs.readFileSync(dictFilePath, 'utf8');
+      const seedItems = JSON.parse(rawData) as DictionarySeedItem[];
+      const entities = seedItems.map((item) =>
+        dictionaryRepo.create({
+          code: item.code.trim().toUpperCase(),
+          assessmentNotes: item.assessmentNotes ?? null,
+          assessmentTimeframe: item.assessmentTimeframe ?? null,
+          bpTarget: item.bpTarget ?? null,
+          lipidTarget: item.lipidTarget ?? null,
+          bmiTarget: item.bmiTarget ?? null,
+          glycemicTarget: item.glycemicTarget ?? null,
+          renalTarget: item.renalTarget ?? null,
+          dietAdvice: item.dietAdvice ?? null,
+          exerciseAdvice: item.exerciseAdvice ?? null,
+          smokingAdvice: item.smokingAdvice ?? item.notes ?? null,
+          notes: item.notes ?? null,
+        }),
+      );
+      await dictionaryRepo.save(entities);
+      console.log(`   Seeded ${entities.length} treatment target dictionaries (A1 -> G5).`);
+    } else {
+      console.warn('   Seed file treatment-target-dictionary.json not found, skipping.');
+    }
+  } else {
+    console.log(`   Treatment target dictionaries already exist (${existingDictCount} items).`);
+  }
+
+  // 9. Seed Chronic Diseases (ICD-10)
+  console.log('🩺 [9/9] Seeding Chronic Diseases (ICD-10)...');
+  const existingDiseasesCount = await chronicDiseaseRepo.count();
+  if (existingDiseasesCount === 0) {
+    const icdPaths = [
+      path.join(process.cwd(), 'src/database/seeds/data/icd10-score2-dictionary.json'),
+      path.join(process.cwd(), 'dist/database/seeds/data/icd10-score2-dictionary.json'),
+      path.resolve(__dirname, 'data/icd10-score2-dictionary.json'),
+    ];
+    const icdFilePath = icdPaths.find((p) => fs.existsSync(p));
+    if (icdFilePath) {
+      const rawData = fs.readFileSync(icdFilePath, 'utf8');
+      const seedItems = JSON.parse(rawData) as IcdSeedItem[];
+      const entities = seedItems.map((item, index) => {
+        const code = (item.score2Code
+          ? `SCORE2_${item.score2Code.replace(/\./g, '_')}`
+          : `DISEASE_${index + 1}`
+        ).toUpperCase();
+        return chronicDiseaseRepo.create({
+          code,
+          name: item.name,
+          icd10Code: item.directIcd10Code || null,
+          category: item.section || 'Khác',
+          isActive: true,
+          displayOrder: index + 1,
+        });
+      });
+      await chronicDiseaseRepo.save(entities);
+      console.log(`   Seeded ${entities.length} chronic diseases (ICD-10).`);
+    } else {
+      console.warn('   Seed file icd10-score2-dictionary.json not found, skipping.');
+    }
+  } else {
+    console.log(`   Chronic diseases already exist (${existingDiseasesCount} items).`);
   }
 
   console.log('\n======================================================');
