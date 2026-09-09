@@ -11,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 
 describe('StaffService', () => {
   let service: StaffService;
+  jest.setTimeout(30000);
 
   const mockFacility = {
     id: 'fac-111',

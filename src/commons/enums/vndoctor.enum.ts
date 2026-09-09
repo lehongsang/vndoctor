@@ -4,8 +4,8 @@
 export enum StaffRole {
   ADMIN = 'ADMIN',
   DOCTOR = 'DOCTOR',
+  DOCTOR_EXPERT = 'DOCTOR_EXPERT',
   NURSE = 'NURSE',
-  TECHNICIAN = 'TECHNICIAN',
   STAFF = 'STAFF',
 }
 

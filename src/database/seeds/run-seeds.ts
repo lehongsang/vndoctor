@@ -122,6 +122,15 @@ async function runSeed() {
       phoneNumber: '0901000002',
     },
     {
+      staffCode: 'EXPERT-001',
+      username: 'expert_phamhoangnam',
+      fullName: 'PGS. TS. BS. Phạm Hoàng Nam',
+      role: StaffRole.DOCTOR_EXPERT,
+      specialty: 'Chuyên gia Đầu ngành Tim mạch & Đột quỵ (VIP)',
+      email: 'expert.nam@vndoctor.vn',
+      phoneNumber: '0901000005',
+    },
+    {
       staffCode: 'NURSE-001',
       username: 'nurse_tranthimai',
       fullName: 'ĐD. Trần Thị Mai',
@@ -129,15 +138,6 @@ async function runSeed() {
       specialty: 'Điều dưỡng Chăm sóc Tim mạch',
       email: 'nurse.mai@vndoctor.vn',
       phoneNumber: '0901000003',
-    },
-    {
-      staffCode: 'TECH-001',
-      username: 'tech_leminhtri',
-      fullName: 'KTV. Lê Minh Trí',
-      role: StaffRole.TECHNICIAN,
-      specialty: 'Chẩn đoán Hình ảnh & Xét nghiệm',
-      email: 'tech.tri@vndoctor.vn',
-      phoneNumber: '0901000004',
     },
   ];
 
@@ -424,11 +424,12 @@ async function runSeed() {
   console.log('======================================================');
   console.log('📋 TÀI KHOẢN ĐĂNG NHẬP MẪU:');
   console.log('------------------------------------------------------');
-  console.log('🔐 1. STAFF CMS (Đăng nhập tại /api/v1/auth/staff/login):');
-  console.log(`   - ADMIN:       username: staff_admin     | pass: ${defaultPassword}`);
-  console.log(`   - DOCTOR:      username: dr_nguyenvanan  | pass: ${defaultPassword}`);
-  console.log(`   - NURSE:       username: nurse_tranthimai| pass: ${defaultPassword}`);
-  console.log(`   - TECHNICIAN:  username: tech_leminhtri  | pass: ${defaultPassword}`);
+  console.log(`🔐 1. STAFF CMS (Đăng nhập tại /api/v1/auth/staff/login):
+   - ADMIN:          username: staff_admin        | pass: ${defaultPassword}
+   - DOCTOR:         username: dr_nguyenvanan     | pass: ${defaultPassword}
+   - DOCTOR_EXPERT:  username: expert_phamhoangnam| pass: ${defaultPassword}
+   - NURSE:          username: nurse_tranthimai   | pass: ${defaultPassword}
+`);
   console.log('------------------------------------------------------');
   console.log('📱 2. PATIENT APP (Đăng nhập tại /api/v1/auth/app/login):');
   console.log(`   - Bệnh nhân:  phone: 0987654321         | pass: ${defaultPassword}`);

@@ -2,11 +2,11 @@
 
 ## 📌 Tổng quan
 Module `staff` quản lý hồ sơ nhân viên y tế, bác sĩ và phân quyền các vai trò trong bệnh viện:
-- `ADMIN`: Quản trị viên cơ sở y tế
-- `DOCTOR`: Bác sĩ điều trị / khám bệnh
+- `ADMIN`: Quản trị viên cơ sở y tế / Điều phối viên
+- `DOCTOR`: Bác sĩ điều trị / Khám bệnh
+- `DOCTOR_EXPERT`: Bác sĩ Chuyên gia / Cố vấn cao cấp (Gói VIP)
 - `NURSE`: Điều dưỡng viên
-- `TECHNICIAN`: Kỹ thuật viên xét nghiệm / CĐHA
-- `STAFF`: Nhân viên hành chính / tiếp đón
+- `STAFF`: Nhân viên hành chính / Tiếp đón
 
 ---
 
@@ -26,7 +26,7 @@ Module `staff` quản lý hồ sơ nhân viên y tế, bác sĩ và phân quyề
 | `username` | string | Có | Tên đăng nhập CMS (Unique) |
 | `password` | string | Có | Mật khẩu khởi tạo |
 | `fullName` | string | Có | Họ và tên nhân viên |
-| `role` | enum | Có | `ADMIN`, `DOCTOR`, `NURSE`, `TECHNICIAN`, `STAFF` |
+| `role` | enum | Có | `ADMIN`, `DOCTOR`, `DOCTOR_EXPERT`, `NURSE`, `STAFF` |
 | `email` | string | Có | Email liên hệ (bắt buộc) |
 | `specialty` | string | Không | Chuyên khoa (VD: Tim mạch, Nội tiết) |
 | `phoneNumber`| string | Không | Số điện thoại |
