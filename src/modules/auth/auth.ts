@@ -96,6 +96,11 @@ export const getAuth = (
     trustedOrigins: [
       configService.get<string>('FRONTEND_URL', 'http://localhost:5173'),
       'http://localhost:3000',
+      'http://localhost:5173',
+      'https://vndoctor.onrender.com',
+      ...(configService.get<string>('BETTER_AUTH_BASE_URL')
+        ? [new URL(configService.get<string>('BETTER_AUTH_BASE_URL')!).origin]
+        : []),
     ],
     advanced: {
       useSecureCookies: configService.get<string>('NODE_ENV') === 'production',
