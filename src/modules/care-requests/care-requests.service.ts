@@ -6,7 +6,7 @@ import {
   SenderType,
   StaffRole,
 } from '@/commons/enums/vndoctor.enum';
-import { BadRequest, Forbidden, NotFound } from '@/commons/exceptions';
+import { BadRequest, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 import { Conversation } from '@/modules/care-subscriptions/entities/conversation.entity';
 import { Message } from '@/modules/care-subscriptions/entities/message.entity';
@@ -74,23 +74,22 @@ export class CareRequestsService {
     });
 
     if (!subscription) {
-      throw new NotFound(`Gói đăng ký chăm sóc với ID ${dto.subscriptionId} không tồn tại`);
+      throw new NotFound(ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND);
     }
 
     if (accountId && subscription.healthProfile?.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền gửi yêu cầu cho gói chăm sóc của người khác');
+      throw new Forbidden(ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND);
     }
 
     if (subscription.status !== CareSubscriptionStatus.ACTIVE) {
-      throw new BadRequest(
-        `Chỉ có thể gửi yêu cầu hỗ trợ khi gói chăm sóc đang ở trạng thái ACTIVE (Hiện tại: ${subscription.status})`,
-      );
+      throw new BadRequest(ErrorCode.CARE_SUBSCRIPTION_EXPIRED);
     }
 
     const facilityId = subscription.carePackage?.facilityId;
     if (!facilityId) {
-      throw new NotFound('Không xác định được cơ sở y tế phụ trách gói chăm sóc');
+      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
+
 
     // 2. Determine initial assigned staff: Default to support nurse if assigned, else primary doctor
     const initialAssignedUserId =
@@ -237,11 +236,11 @@ export class CareRequestsService {
     });
 
     if (!careRequest) {
-      throw new NotFound(`Không tìm thấy yêu cầu chăm sóc với ID ${id}`);
+      throw new NotFound(ErrorCode.CARE_REQUEST_NOT_FOUND);
     }
 
     if (staffFacilityId && careRequest.facilityId !== staffFacilityId) {
-      throw new Forbidden('Bạn không có quyền truy cập yêu cầu chăm sóc của cơ sở y tế khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     if (
@@ -249,7 +248,7 @@ export class CareRequestsService {
       careRequest.subscription?.healthProfile?.accountId &&
       careRequest.subscription.healthProfile.accountId !== accountId
     ) {
-      throw new Forbidden('Bạn không có quyền xem yêu cầu chăm sóc của người khác');
+      throw new Forbidden(ErrorCode.CARE_REQUEST_NOT_FOUND);
     }
 
     return careRequest;
@@ -274,9 +273,7 @@ export class CareRequestsService {
       careRequest.status === CareRequestStatus.RESOLVED ||
       careRequest.status === CareRequestStatus.CANCELLED
     ) {
-      throw new BadRequest(
-        `Không thể phân công lại yêu cầu đã ở trạng thái ${careRequest.status}`,
-      );
+      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
     }
 
     // Validate target staff user
@@ -285,11 +282,11 @@ export class CareRequestsService {
     });
 
     if (!targetStaff) {
-      throw new NotFound(`Nhân viên y tế với ID ${dto.assignedUserId} không tồn tại`);
+      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
     }
 
     if (targetStaff.facilityId !== careRequest.facilityId) {
-      throw new BadRequest('Nhân sự nhận xử lý phải thuộc cùng cơ sở y tế với yêu cầu');
+      throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     if (
@@ -297,11 +294,11 @@ export class CareRequestsService {
       targetStaff.role !== StaffRole.NURSE &&
       targetStaff.role !== StaffRole.ADMIN
     ) {
-      throw new BadRequest('Chỉ có thể phân công cho Bác sĩ hoặc Điều dưỡng');
+      throw new BadRequest(ErrorCode.INVALID_INPUT);
     }
 
     if (!targetStaff.isActive) {
-      throw new BadRequest(`Tài khoản của ${targetStaff.fullName} hiện đang bị vô hiệu hóa`);
+      throw new BadRequest(ErrorCode.STAFF_INACTIVE);
     }
 
     careRequest.assignedUserId = dto.assignedUserId;
@@ -366,11 +363,11 @@ export class CareRequestsService {
     const careRequest = await this.findById(id, staffFacilityId);
 
     if (careRequest.status === CareRequestStatus.RESOLVED) {
-      throw new BadRequest('Yêu cầu chăm sóc này đã được giải quyết trước đó');
+      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
     }
 
     if (careRequest.status === CareRequestStatus.CANCELLED) {
-      throw new BadRequest('Không thể giải quyết yêu cầu chăm sóc đã bị hủy');
+      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
     }
 
     const now = new Date();
@@ -432,10 +429,11 @@ export class CareRequestsService {
     const careRequest = await this.findById(id, staffFacilityId);
 
     if (careRequest.status === CareRequestStatus.RESOLVED) {
-      throw new BadRequest('Không thể đổi trạng thái của yêu cầu đã hoàn tất giải quyết');
+      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
     }
 
     careRequest.status = dto.status;
     return this.careRequestRepo.save(careRequest);
   }
 }
+

@@ -1,4 +1,4 @@
-import { BadRequest, Forbidden, NotFound } from '@/commons/exceptions';
+import { BadRequest, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
@@ -52,20 +52,21 @@ export class ExaminationsService {
     });
 
     if (!profile) {
-      throw new NotFound(`Hồ sơ sức khỏe ${dto.healthProfileId} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     const targetFacilityId = dto.facilityId || defaultFacilityId;
     if (!targetFacilityId) {
-      throw new BadRequest('Thiếu thông tin cơ sở y tế (facilityId)');
+      throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
     }
     const facility = await this.facilityRepo.findOne({
       where: { id: targetFacilityId },
     });
 
     if (!facility) {
-      throw new NotFound(`Cơ sở y tế ${targetFacilityId} không tồn tại`);
+      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
+
 
     let calculatedBmi = dto.bmi;
     if (!calculatedBmi && dto.heightCm && dto.weightKg && dto.heightCm > 0) {
@@ -120,7 +121,7 @@ export class ExaminationsService {
     });
 
     if (!exam) {
-      throw new NotFound(`Phiếu khám bệnh ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
     }
 
     if (dto.heartRate !== undefined) exam.heartRate = dto.heartRate;
@@ -229,11 +230,11 @@ export class ExaminationsService {
     });
 
     if (!exam) {
-      throw new NotFound(`Phiếu khám bệnh ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
     }
 
     if (accountId && exam.healthProfile && exam.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền xem phiếu khám bệnh này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return exam;
@@ -253,13 +254,14 @@ export class ExaminationsService {
     });
 
     if (!exam) {
-      throw new NotFound(`Phiếu khám bệnh với mã ${examinationCode} không tồn tại`);
+      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
     }
 
     if (accountId && exam.healthProfile && exam.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền xem phiếu khám bệnh này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return exam;
   }
+
 }

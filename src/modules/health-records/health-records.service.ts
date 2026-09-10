@@ -1,4 +1,4 @@
-import { Forbidden, NotFound } from '@/commons/exceptions';
+import { Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { HealthMetricType } from '@/commons/enums/vndoctor.enum';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { Injectable } from '@nestjs/common';
@@ -32,15 +32,16 @@ export class HealthRecordsService {
     });
 
     if (!profile) {
-      throw new NotFound(`Hồ sơ sức khỏe ${healthProfileId} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền truy cập hồ sơ sức khỏe này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return profile;
   }
+
 
   /**
    * Log a new health metric measurement.
@@ -124,11 +125,11 @@ export class HealthRecordsService {
     });
 
     if (!record) {
-      throw new NotFound(`Bản ghi chỉ số sức khỏe với id ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_RECORD_NOT_FOUND);
     }
 
     if (accountId && record.healthProfile && record.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền xem bản ghi này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return record;

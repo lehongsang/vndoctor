@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { TreatmentTargetDictionary } from './entities/treatment-target-dictionary.entity';
 import { QueryTreatmentDictionaryDto } from './dtos';
-import { NotFound } from '@/commons/exceptions';
+import { NotFound, ErrorCode } from '@/commons/exceptions';
 import { LoggerService } from '@/commons/logger/logger.service';
 
 interface DictionarySeedItem {
@@ -128,7 +128,7 @@ export class TreatmentDictionariesService implements OnModuleInit {
     });
 
     if (!item) {
-      throw new NotFound(`Không tìm thấy bộ mục tiêu điều trị với mã ${code}`);
+      throw new NotFound(ErrorCode.TREATMENT_DICTIONARY_NOT_FOUND);
     }
 
     return item;

@@ -16,6 +16,7 @@ import {
   Forbidden,
   NotFound,
   Unauthorized,
+  ErrorCode,
 } from '@/commons/exceptions';
 import { FacilitiesService } from '@/modules/facilities/facilities.service';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
@@ -47,22 +48,20 @@ export class StaffService {
 
     if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && creator.facilityId) {
       if (dto.facilityId && dto.facilityId !== creator.facilityId) {
-        throw new Forbidden(
-          'Bạn chỉ có quyền tạo nhân sự thuộc cơ sở y tế do bạn quản lý',
-        );
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
       targetFacilityId = creator.facilityId;
     }
 
     if (!targetFacilityId && dto.role !== StaffRole.VNDOCTOR_ADMIN) {
-      throw new BadRequest('Thiếu thông tin cơ sở y tế (facilityId)');
+      throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
     }
 
     // Verify facility exists and is active if facilityId provided
     if (targetFacilityId) {
       const facility = await this.facilitiesService.getFacilityById(targetFacilityId);
       if (!facility.isActive) {
-        throw new Forbidden('Cơ sở y tế này hiện đang bị tạm khóa');
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
     }
 
@@ -78,14 +77,14 @@ export class StaffService {
       where: { staffCode: dto.staffCode },
     });
     if (existingCode) {
-      throw new Conflict(`Mã nhân viên / CCHN ${dto.staffCode} đã tồn tại`);
+      throw new Conflict(ErrorCode.STAFF_CODE_ALREADY_EXISTS);
     }
 
     const existingEmail = await this.staffRepository.findOne({
       where: { email: dto.email.toLowerCase().trim() },
     });
     if (existingEmail) {
-      throw new Conflict(`Email ${dto.email} đã được đăng ký tài khoản`);
+      throw new Conflict(ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS);
     }
 
     const existingUsername = await this.staffRepository.findOne({
@@ -175,7 +174,7 @@ export class StaffService {
     });
 
     if (!staff) {
-      throw new NotFound(`Không tìm thấy nhân viên y tế với ID ${id}`);
+      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
     }
 
     return staff;
@@ -214,9 +213,7 @@ export class StaffService {
         where: { email: dto.email.toLowerCase().trim() },
       });
       if (emailExists) {
-        throw new Conflict(
-          `Email ${dto.email} đã được sử dụng bởi nhân viên khác`,
-        );
+        throw new Conflict(ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS);
       }
       staff.email = dto.email.toLowerCase().trim();
     }
@@ -240,9 +237,7 @@ export class StaffService {
         where: { email: dto.email.toLowerCase().trim() },
       });
       if (emailExists) {
-        throw new Conflict(
-          `Email ${dto.email} đã được sử dụng bởi tài khoản khác`,
-        );
+        throw new Conflict(ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS);
       }
       staff.email = dto.email.toLowerCase().trim();
     }
@@ -271,12 +266,12 @@ export class StaffService {
       .getOne();
 
     if (!staff) {
-      throw new NotFound('Nhân viên không tồn tại');
+      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
     }
 
     const isMatch = await bcrypt.compare(dto.oldPassword, staff.passwordHash);
     if (!isMatch) {
-      throw new Unauthorized('Mật khẩu hiện tại không chính xác');
+      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -286,3 +281,4 @@ export class StaffService {
     return { success: true, message: 'Đổi mật khẩu thành công' };
   }
 }
+

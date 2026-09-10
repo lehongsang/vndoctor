@@ -1,12 +1,12 @@
 import {
   PipeTransform,
   Injectable,
-  BadRequestException,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
   FileValidator,
 } from '@nestjs/common';
+import { BadRequest, ErrorCode } from '../exceptions';
 import { MAX_FILE_SIZE, ALLOWED_IMAGE_TYPES } from '../constants/app.constants';
 
 export interface FileFieldValidationOptions {
@@ -74,7 +74,7 @@ export class FileFieldsValidationPipe implements PipeTransform {
   async transform(value: unknown) {
     if (!value) {
       if ((this.options as Record<string, unknown>)?.required) {
-        throw new BadRequestException('File is required');
+        throw new BadRequest(ErrorCode.FILE_REQUIRED);
       }
       return value;
     }
@@ -93,7 +93,7 @@ export class FileFieldsValidationPipe implements PipeTransform {
         const config = optionsMap[fieldName];
 
         if (config.required && (!fieldFiles || fieldFiles.length === 0)) {
-          throw new BadRequestException(`Field "${fieldName}" is required`);
+          throw new BadRequest(ErrorCode.FILE_REQUIRED);
         }
 
         if (fieldFiles && fieldFiles.length > 0) {

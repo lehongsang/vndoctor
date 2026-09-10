@@ -2,7 +2,6 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +11,7 @@ import { IS_PUBLIC_KEY } from '@/commons/decorators/public.decorator';
 import { AppAccountJwtPayload } from '@/commons/decorators/current-account.decorator';
 import { RedisService } from '@/services/redis/redis.service';
 import { getBlacklistTokenKey } from '@/utils/key-redis';
+import { Unauthorized, ErrorCode } from '@/commons/exceptions';
 
 @Injectable()
 export class AppAuthGuard implements CanActivate {
@@ -35,18 +35,18 @@ export class AppAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      throw new UnauthorizedException('Thiếu Authorization Header');
+      throw new Unauthorized(ErrorCode.TOKEN_MISSING);
     }
 
     const [scheme, token] = authHeader.trim().split(/\s+/, 2);
     if (scheme !== 'Bearer' || !token) {
-      throw new UnauthorizedException('Định dạng Token không hợp lệ (cần Bearer <token>)');
+      throw new Unauthorized(ErrorCode.TOKEN_INVALID_FORMAT);
     }
 
     const blacklistKey = getBlacklistTokenKey(token);
     const isBlacklisted = await this.redisService.get(blacklistKey);
     if (isBlacklisted) {
-      throw new UnauthorizedException('Token đã bị vô hiệu hóa do đã đăng xuất');
+      throw new Unauthorized(ErrorCode.TOKEN_BLACKLISTED);
     }
 
     const secret = this.configService.get<string>('JWT_APP_SECRET') ||
@@ -56,7 +56,7 @@ export class AppAuthGuard implements CanActivate {
     try {
       const decoded = jwt.verify(token, secret) as AppAccountJwtPayload;
       if (decoded.type !== 'APP_ACCOUNT') {
-        throw new UnauthorizedException('Token không dành cho tài khoản Bệnh nhân');
+        throw new Unauthorized(ErrorCode.TOKEN_AUDIENCE_MISMATCH);
       }
 
       (request as unknown as { account: AppAccountJwtPayload; user: AppAccountJwtPayload; rawToken: string }).account = decoded;
@@ -64,8 +64,7 @@ export class AppAuthGuard implements CanActivate {
       (request as unknown as { rawToken: string }).rawToken = token;
       return true;
     } catch {
-      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
+      throw new Unauthorized(ErrorCode.TOKEN_INVALID);
     }
   }
 }
-

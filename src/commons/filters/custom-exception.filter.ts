@@ -16,10 +16,6 @@ export class CustomExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
-    const exceptionResponse = exception.getResponse() as Record<
-      string,
-      unknown
-    >;
     const correlationId = getCorrelationId(request);
     const requestMetadata = buildRequestLogMetadata(request, status);
 
@@ -28,8 +24,7 @@ export class CustomExceptionFilter implements ExceptionFilter {
 
     response.status(status).json({
       statusCode: status,
-      message: exceptionResponse.message || exception.message,
-      code: exceptionResponse.code,
+      errorCode: exception.errorCode,
     });
   }
 
@@ -46,18 +41,17 @@ export class CustomExceptionFilter implements ExceptionFilter {
     // Use setImmediate to defer logging, not block current request
     setImmediate(() => {
       try {
-        // Context is already extracted in CustomException constructor
         const context = exception.context || 'Exception';
         this.logger.setContext(context);
         if (status >= 500) {
           this.logger.error(
-            exception.message,
+            String(exception.errorCode),
             requestMetadata,
             correlationId,
             exception.stack || '',
           );
         } else {
-          this.logger.warn(exception.message, requestMetadata, correlationId);
+          this.logger.warn(String(exception.errorCode), requestMetadata, correlationId);
         }
       } catch {
         // eslint-disable-next-line no-console

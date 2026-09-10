@@ -19,6 +19,7 @@ import {
 import {
   Forbidden,
   Unauthorized,
+  ErrorCode,
 } from '@/commons/exceptions';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { AppAccountJwtPayload } from '@/commons/decorators/current-account.decorator';
@@ -75,7 +76,6 @@ export class VnDoctorAuthService {
       `${this.appSecret}-refresh`;
   }
 
-
   /**
    * Authenticates Medical Staff / Doctor on CMS and generates Access & Refresh token pair.
    *
@@ -85,16 +85,16 @@ export class VnDoctorAuthService {
   async loginStaff(dto: StaffLoginDto): Promise<StaffAuthResponseDto> {
     const staff = await this.staffService.findByUsernameWithPassword(dto.username);
     if (!staff) {
-      throw new Unauthorized('Tên đăng nhập hoặc mật khẩu không chính xác');
+      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
     }
 
     if (!staff.isActive) {
-      throw new Forbidden('Tài khoản nhân viên này đang bị vô hiệu hóa');
+      throw new Forbidden(ErrorCode.STAFF_INACTIVE);
     }
 
     const isMatch = await bcrypt.compare(dto.password, staff.passwordHash);
     if (!isMatch) {
-      throw new Unauthorized('Tên đăng nhập hoặc mật khẩu không chính xác');
+      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
     }
 
     const payload: StaffJwtPayload = {
@@ -141,7 +141,7 @@ export class VnDoctorAuthService {
    */
   async refreshStaffToken(dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
     if (await this.isTokenBlacklisted(dto.refreshToken)) {
-      throw new Unauthorized('Refresh token đã bị vô hiệu hóa do đăng xuất');
+      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_BLACKLISTED);
     }
 
     let decoded: RefreshTokenPayload;
@@ -151,16 +151,16 @@ export class VnDoctorAuthService {
         this.staffRefreshSecret,
       ) as RefreshTokenPayload;
     } catch {
-      throw new Unauthorized('Refresh token không hợp lệ hoặc đã hết hạn');
+      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_INVALID);
     }
 
     if (decoded.type !== 'STAFF_REFRESH' || !decoded.id) {
-      throw new Unauthorized('Loại refresh token không hợp lệ cho nhân sự');
+      throw new Unauthorized(ErrorCode.TOKEN_AUDIENCE_MISMATCH);
     }
 
     const staff = await this.staffService.getStaffById(decoded.id);
     if (!staff || !staff.isActive) {
-      throw new Forbidden('Tài khoản nhân viên không tồn tại hoặc đã bị khóa');
+      throw new Forbidden(ErrorCode.STAFF_INACTIVE);
     }
 
     const payload: StaffJwtPayload = {
@@ -243,16 +243,16 @@ export class VnDoctorAuthService {
   async loginApp(dto: AppLoginDto): Promise<AppAuthResponseDto> {
     const account = await this.accountsService.findByPhoneNumberWithPassword(dto.phoneNumber);
     if (!account) {
-      throw new Unauthorized('Số điện thoại hoặc mật khẩu không chính xác');
+      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
     }
 
     if (!account.isActive) {
-      throw new Forbidden('Tài khoản bệnh nhân đang bị khóa');
+      throw new Forbidden(ErrorCode.ACCOUNT_INACTIVE);
     }
 
     const isMatch = await bcrypt.compare(dto.password, account.passwordHash);
     if (!isMatch) {
-      throw new Unauthorized('Số điện thoại hoặc mật khẩu không chính xác');
+      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
     }
 
     const payload: AppAccountJwtPayload = {
@@ -296,7 +296,7 @@ export class VnDoctorAuthService {
    */
   async refreshAppToken(dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
     if (await this.isTokenBlacklisted(dto.refreshToken)) {
-      throw new Unauthorized('Refresh token đã bị vô hiệu hóa do đăng xuất');
+      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_BLACKLISTED);
     }
 
     let decoded: RefreshTokenPayload;
@@ -306,16 +306,16 @@ export class VnDoctorAuthService {
         this.appRefreshSecret,
       ) as RefreshTokenPayload;
     } catch {
-      throw new Unauthorized('Refresh token không hợp lệ hoặc đã hết hạn');
+      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_INVALID);
     }
 
     if (decoded.type !== 'APP_REFRESH' || !decoded.id) {
-      throw new Unauthorized('Loại refresh token không hợp lệ cho bệnh nhân');
+      throw new Unauthorized(ErrorCode.TOKEN_AUDIENCE_MISMATCH);
     }
 
     const account = await this.accountsService.getAccountById(decoded.id);
     if (!account || !account.isActive) {
-      throw new Forbidden('Tài khoản bệnh nhân không tồn tại hoặc đã bị khóa');
+      throw new Forbidden(ErrorCode.ACCOUNT_INACTIVE);
     }
 
     const payload: AppAccountJwtPayload = {
@@ -346,6 +346,7 @@ export class VnDoctorAuthService {
       refreshTokenExpiresIn: this.appRefreshExpiresInSeconds,
     };
   }
+
 
   /**
    * Checks whether a JWT token is in the Redis blacklist.

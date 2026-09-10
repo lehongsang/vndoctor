@@ -8,7 +8,7 @@ import {
   SenderType,
   StaffRole,
 } from '@/commons/enums/vndoctor.enum';
-import { BadRequest, Conflict, Forbidden, NotFound } from '@/commons/exceptions';
+import { BadRequest, Conflict, ErrorCode, Forbidden, NotFound } from '@/commons/exceptions';
 import { CarePackage } from '@/modules/care-packages/entities/care-package.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
@@ -64,11 +64,11 @@ export class CareSubscriptionsService {
       where: { id: dto.healthProfileId },
     });
     if (!healthProfile) {
-      throw new NotFound(`Hồ sơ sức khỏe với ID ${dto.healthProfileId} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     if (accountId && healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền đăng ký gói cho hồ sơ sức khỏe này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     // 2. Validate Care Package existence and active status
@@ -76,11 +76,11 @@ export class CareSubscriptionsService {
       where: { id: dto.carePackageId },
     });
     if (!carePackage) {
-      throw new NotFound(`Gói chăm sóc với ID ${dto.carePackageId} không tồn tại`);
+      throw new NotFound(ErrorCode.CARE_PACKAGE_NOT_FOUND);
     }
 
     if (carePackage.status !== CarePackageStatus.ACTIVE) {
-      throw new BadRequest(`Gói chăm sóc '${carePackage.name}' hiện đang tạm ngừng cung cấp`);
+      throw new BadRequest(ErrorCode.CARE_PACKAGE_INACTIVE);
     }
 
     // 3. Check for existing active subscription for the same profile and package
@@ -92,7 +92,7 @@ export class CareSubscriptionsService {
       },
     });
     if (existingActive) {
-      throw new Conflict('Hồ sơ sức khỏe này đang có gói chăm sóc này vẫn còn hiệu lực');
+      throw new Conflict(ErrorCode.CARE_SUBSCRIPTION_ALREADY_ACTIVE);
     }
 
     // 4. Create subscription in PENDING status (dates and care team are null until assignment)
@@ -205,7 +205,7 @@ export class CareSubscriptionsService {
     });
 
     if (!subscription) {
-      throw new NotFound(`Không tìm thấy đăng ký gói chăm sóc với ID ${id}`);
+      throw new NotFound(ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND);
     }
 
     if (
@@ -213,7 +213,7 @@ export class CareSubscriptionsService {
       subscription.carePackage?.facilityId &&
       subscription.carePackage.facilityId !== staffFacilityId
     ) {
-      throw new Forbidden('Bạn không có quyền truy cập đăng ký gói chăm sóc của cơ sở y tế khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     if (
@@ -221,7 +221,7 @@ export class CareSubscriptionsService {
       subscription.healthProfile?.accountId &&
       subscription.healthProfile.accountId !== accountId
     ) {
-      throw new Forbidden('Bạn không có quyền xem thông tin gói chăm sóc của người khác');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return subscription;
@@ -249,30 +249,26 @@ export class CareSubscriptionsService {
       });
 
       if (!subscription) {
-        throw new NotFound(`Không tìm thấy đăng ký gói chăm sóc với ID ${id}`);
+        throw new NotFound(ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND);
       }
 
       if (subscription.status !== CareSubscriptionStatus.PENDING) {
-        throw new BadRequest(
-          `Chỉ có thể phân công và kích hoạt gói ở trạng thái PENDING (Hiện tại: ${subscription.status})`,
-        );
+        throw new BadRequest(ErrorCode.CARE_SUBSCRIPTION_INVALID_STATUS);
       }
 
       const carePackage = subscription.carePackage;
       if (!carePackage) {
-        throw new NotFound('Không tìm thấy thông tin gói chăm sóc liên kết');
+        throw new NotFound(ErrorCode.CARE_PACKAGE_NOT_FOUND);
       }
 
       const facilityId = carePackage.facilityId;
       if (staffFacilityId && facilityId !== staffFacilityId) {
-        throw new Forbidden('Bạn không có quyền phân công cho gói chăm sóc của cơ sở y tế khác');
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
 
       // 2. Validate VIP package requirement
       if (carePackage.type === CarePackageType.VIP && !dto.assignedExpertId) {
-        throw new BadRequest(
-          'Gói VIP bắt buộc phải phân công Bác sĩ chuyên gia cố vấn (assignedExpertId)',
-        );
+        throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
       }
 
       // 3. Validate Assigned Primary Doctor
@@ -280,16 +276,16 @@ export class CareSubscriptionsService {
         where: { id: dto.assignedDoctorId },
       });
       if (!doctor) {
-        throw new NotFound(`Bác sĩ với ID ${dto.assignedDoctorId} không tồn tại`);
+        throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
       }
       if (doctor.facilityId !== facilityId) {
-        throw new BadRequest('Bác sĩ phụ trách phải thuộc cùng cơ sở y tế với gói chăm sóc');
+        throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
       }
       if (doctor.role !== StaffRole.DOCTOR && doctor.role !== StaffRole.ADMIN) {
-        throw new BadRequest(`Nhân viên '${doctor.fullName}' không có vai trò Bác sĩ (DOCTOR)`);
+        throw new BadRequest(ErrorCode.BAD_REQUEST);
       }
       if (!doctor.isActive) {
-        throw new BadRequest(`Tài khoản của Bác sĩ '${doctor.fullName}' hiện đang bị vô hiệu hóa`);
+        throw new BadRequest(ErrorCode.STAFF_INACTIVE);
       }
 
       // 4. Validate Assigned Support Nurse
@@ -297,16 +293,16 @@ export class CareSubscriptionsService {
         where: { id: dto.assignedNurseId },
       });
       if (!nurse) {
-        throw new NotFound(`Điều dưỡng với ID ${dto.assignedNurseId} không tồn tại`);
+        throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
       }
       if (nurse.facilityId !== facilityId) {
-        throw new BadRequest('Điều dưỡng hỗ trợ phải thuộc cùng cơ sở y tế với gói chăm sóc');
+        throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
       }
       if (nurse.role !== StaffRole.NURSE && nurse.role !== StaffRole.STAFF) {
-        throw new BadRequest(`Nhân viên '${nurse.fullName}' không có vai trò Điều dưỡng (NURSE)`);
+        throw new BadRequest(ErrorCode.BAD_REQUEST);
       }
       if (!nurse.isActive) {
-        throw new BadRequest(`Tài khoản của Điều dưỡng '${nurse.fullName}' hiện đang bị vô hiệu hóa`);
+        throw new BadRequest(ErrorCode.STAFF_INACTIVE);
       }
 
       // 5. Validate Assigned Expert (if provided)
@@ -316,16 +312,16 @@ export class CareSubscriptionsService {
           where: { id: dto.assignedExpertId },
         });
         if (!expert) {
-          throw new NotFound(`Bác sĩ chuyên gia với ID ${dto.assignedExpertId} không tồn tại`);
+          throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
         }
         if (expert.facilityId !== facilityId) {
-          throw new BadRequest('Bác sĩ chuyên gia phải thuộc cùng cơ sở y tế với gói chăm sóc');
+          throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
         }
         if (expert.role !== StaffRole.DOCTOR && expert.role !== StaffRole.ADMIN) {
-          throw new BadRequest(`Chuyên gia '${expert.fullName}' không có vai trò Bác sĩ (DOCTOR)`);
+          throw new BadRequest(ErrorCode.BAD_REQUEST);
         }
         if (!expert.isActive) {
-          throw new BadRequest(`Tài khoản của Chuyên gia '${expert.fullName}' hiện đang bị vô hiệu hóa`);
+          throw new BadRequest(ErrorCode.STAFF_INACTIVE);
         }
       }
 
@@ -412,9 +408,7 @@ export class CareSubscriptionsService {
       subscription.status !== CareSubscriptionStatus.ACTIVE &&
       subscription.status !== CareSubscriptionStatus.PENDING
     ) {
-      throw new BadRequest(
-        `Không thể thay đổi Care Team cho gói ở trạng thái ${subscription.status}`,
-      );
+      throw new BadRequest(ErrorCode.CARE_SUBSCRIPTION_INVALID_STATUS);
     }
 
     const facilityId = subscription.carePackage?.facilityId;
@@ -425,7 +419,7 @@ export class CareSubscriptionsService {
         where: { id: dto.assignedDoctorId },
       });
       if (!doctor || doctor.facilityId !== facilityId || !doctor.isActive) {
-        throw new BadRequest('Bác sĩ được chỉ định không hợp lệ hoặc không thuộc cơ sở y tế này');
+        throw new BadRequest(ErrorCode.BAD_REQUEST);
       }
       subscription.assignedDoctorId = dto.assignedDoctorId;
     }
@@ -436,7 +430,7 @@ export class CareSubscriptionsService {
         where: { id: dto.assignedNurseId },
       });
       if (!nurse || nurse.facilityId !== facilityId || !nurse.isActive) {
-        throw new BadRequest('Điều dưỡng được chỉ định không hợp lệ hoặc không thuộc cơ sở y tế này');
+        throw new BadRequest(ErrorCode.BAD_REQUEST);
       }
       subscription.assignedNurseId = dto.assignedNurseId;
     }
@@ -448,12 +442,12 @@ export class CareSubscriptionsService {
           where: { id: dto.assignedExpertId },
         });
         if (!expert || expert.facilityId !== facilityId || !expert.isActive) {
-          throw new BadRequest('Chuyên gia được chỉ định không hợp lệ hoặc không thuộc cơ sở y tế này');
+          throw new BadRequest(ErrorCode.BAD_REQUEST);
         }
         subscription.assignedExpertId = dto.assignedExpertId;
       } else {
         if (subscription.carePackage?.type === CarePackageType.VIP) {
-          throw new BadRequest('Gói VIP bắt buộc phải có Bác sĩ chuyên gia');
+          throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
         }
         subscription.assignedExpertId = null;
       }
@@ -473,11 +467,11 @@ export class CareSubscriptionsService {
     const subscription = await this.findById(id, staffFacilityId);
 
     if (subscription.status === CareSubscriptionStatus.CANCELLED) {
-      throw new BadRequest('Gói chăm sóc này đã bị hủy trước đó');
+      throw new BadRequest(ErrorCode.CARE_SUBSCRIPTION_ALREADY_CANCELLED);
     }
 
     if (subscription.status === CareSubscriptionStatus.EXPIRED) {
-      throw new BadRequest('Không thể hủy gói chăm sóc đã hết hạn');
+      throw new BadRequest(ErrorCode.CARE_SUBSCRIPTION_ALREADY_EXPIRED);
     }
 
     subscription.status = CareSubscriptionStatus.CANCELLED;

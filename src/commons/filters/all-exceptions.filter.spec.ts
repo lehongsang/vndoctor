@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { BadRequest } from '@/commons/exceptions';
 import { AllExceptionsFilter } from './all-exceptions.filter';
+import { ErrorCode } from '../exceptions/error-codes';
 
 describe('AllExceptionsFilter', () => {
   /**
@@ -19,7 +20,7 @@ describe('AllExceptionsFilter', () => {
     return { host: host as never, status, json };
   }
 
-  it('preserves detailed validation messages from BadRequestException', () => {
+  it('maps BadRequestException to BAD_REQUEST errorCode', () => {
     const filter = new AllExceptionsFilter();
     const { host, status, json } = createHostMock();
 
@@ -31,42 +32,27 @@ describe('AllExceptionsFilter', () => {
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
       statusCode: 400,
-      message: ['fullName must be longer than 2 characters'],
-      code: 'BAD_REQUEST',
+      errorCode: 'BAD_REQUEST',
     });
   });
 
-  it('preserves custom string messages from BadRequestException', () => {
-    const filter = new AllExceptionsFilter();
-    const { host, json } = createHostMock();
-
-    filter.catch(new BadRequestException('Patient not found'), host);
-
-    expect(json).toHaveBeenCalledWith({
-      statusCode: 400,
-      message: 'Patient not found',
-      code: 'BAD_REQUEST',
-    });
-  });
-
-  it('preserves CustomException status and message', () => {
+  it('preserves CustomException errorCode', () => {
     const filter = new AllExceptionsFilter();
     const { host, status, json } = createHostMock();
 
     filter.catch(
-      new BadRequest('Care group code is not registered to an active subscription'),
+      new BadRequest(ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND),
       host,
     );
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
       statusCode: 400,
-      message: 'Care group code is not registered to an active subscription',
-      code: 'INVALID_INPUT',
+      errorCode: ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
     });
   });
 
-  it('masks unexpected 500 runtime errors with Internal server error message', () => {
+  it('masks unexpected 500 runtime errors with INTERNAL_SERVER_ERROR', () => {
     const filter = new AllExceptionsFilter();
     const { host, status, json } = createHostMock();
 
@@ -75,8 +61,7 @@ describe('AllExceptionsFilter', () => {
     expect(status).toHaveBeenCalledWith(500);
     expect(json).toHaveBeenCalledWith({
       statusCode: 500,
-      message: 'Internal server error',
-      code: 'INTERNAL_SERVER_ERROR',
+      errorCode: 'INTERNAL_SERVER_ERROR',
     });
   });
 });

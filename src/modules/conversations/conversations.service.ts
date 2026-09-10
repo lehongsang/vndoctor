@@ -4,7 +4,7 @@ import {
   MessageType,
   SenderType,
 } from '@/commons/enums/vndoctor.enum';
-import { BadRequest, Forbidden, NotFound } from '@/commons/exceptions';
+import { BadRequest, ErrorCode, Forbidden, NotFound } from '@/commons/exceptions';
 import { Account } from '@/modules/accounts/entities/account.entity';
 import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 import { Conversation } from '@/modules/care-subscriptions/entities/conversation.entity';
@@ -61,11 +61,11 @@ export class ConversationsService {
       where: { id: dto.healthProfileId },
     });
     if (!profile) {
-      throw new NotFound(`Hồ sơ sức khỏe ${dto.healthProfileId} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     if (callerAccountId && profile.accountId !== callerAccountId) {
-      throw new Forbidden('Bạn không có quyền mở hội thoại cho hồ sơ sức khỏe này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     // 2. Validate Target Doctor / Staff
@@ -73,11 +73,11 @@ export class ConversationsService {
       where: { id: dto.directUserId },
     });
     if (!doctor) {
-      throw new NotFound(`Bác sĩ/Nhân viên y tế ${dto.directUserId} không tồn tại`);
+      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
     }
 
     if (!doctor.isActive) {
-      throw new BadRequest(`Tài khoản của ${doctor.fullName} hiện đang bị vô hiệu hóa`);
+      throw new BadRequest(ErrorCode.STAFF_INACTIVE);
     }
 
     // 3. Check for existing direct conversation
@@ -205,11 +205,11 @@ export class ConversationsService {
     });
 
     if (!conversation) {
-      throw new NotFound(`Không tìm thấy phòng chat với ID ${id}`);
+      throw new NotFound(ErrorCode.CONVERSATION_NOT_FOUND);
     }
 
     if (staffFacilityId && conversation.facilityId !== staffFacilityId) {
-      throw new Forbidden('Bạn không có quyền truy cập phòng chat của cơ sở y tế khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     if (accountId) {
@@ -218,7 +218,7 @@ export class ConversationsService {
         conversation.subscription?.healthProfile?.accountId === accountId;
 
       if (!isOwner) {
-        throw new Forbidden('Bạn không có quyền truy cập phòng chat này');
+        throw new Forbidden(ErrorCode.CONVERSATION_ACCESS_DENIED);
       }
     }
 
@@ -297,11 +297,11 @@ export class ConversationsService {
     );
 
     if (conversation.status === ConversationStatus.CLOSED) {
-      throw new BadRequest('Phòng chat này đã bị đóng, không thể gửi tin nhắn mới');
+      throw new BadRequest(ErrorCode.CONVERSATION_CLOSED);
     }
 
     if (conversation.status === ConversationStatus.ARCHIVED) {
-      throw new BadRequest('Phòng chat này đã được lưu trữ');
+      throw new BadRequest(ErrorCode.CONVERSATION_ARCHIVED);
     }
 
     const now = new Date();
@@ -349,11 +349,11 @@ export class ConversationsService {
     });
 
     if (!message) {
-      throw new NotFound(`Không tìm thấy tin nhắn với ID ${messageId}`);
+      throw new NotFound(ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND);
     }
 
     if (staffFacilityId && message.conversation?.facilityId !== staffFacilityId) {
-      throw new Forbidden('Bạn không có quyền thao tác trên tin nhắn của cơ sở y tế khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     message.isPinned = isPinned;
@@ -381,20 +381,20 @@ export class ConversationsService {
     });
 
     if (!message) {
-      throw new NotFound(`Không tìm thấy tin nhắn với ID ${messageId}`);
+      throw new NotFound(ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND);
     }
 
     if (staffFacilityId && message.conversation?.facilityId !== staffFacilityId) {
-      throw new Forbidden('Bạn không có quyền thao tác trên tin nhắn của cơ sở y tế khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     // Ownership check
     if (staffUserId && message.senderUserId && message.senderUserId !== staffUserId) {
-      throw new Forbidden('Bạn chỉ có thể thu hồi tin nhắn do chính mình gửi');
+      throw new Forbidden(ErrorCode.CONVERSATION_MESSAGE_CANNOT_DELETE);
     }
 
     if (accountId && message.senderAccountId && message.senderAccountId !== accountId) {
-      throw new Forbidden('Bạn chỉ có thể thu hồi tin nhắn do chính mình gửi');
+      throw new Forbidden(ErrorCode.CONVERSATION_MESSAGE_CANNOT_DELETE);
     }
 
     message.isDeleted = true;

@@ -12,6 +12,7 @@ import {
   Conflict,
   Forbidden,
   NotFound,
+  ErrorCode,
 } from '@/commons/exceptions';
 import { FacilityPatientLinkStatus } from '@/commons/enums/vndoctor.enum';
 import { FacilitiesService } from '@/modules/facilities/facilities.service';
@@ -43,15 +44,13 @@ export class PatientLinksService {
 
     if (staff && staff.facilityId) {
       if (dto.facilityId && dto.facilityId !== staff.facilityId) {
-        throw new Forbidden(
-          'Bạn chỉ có quyền liên kết bệnh nhân vào cơ sở y tế của mình',
-        );
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
       targetFacilityId = staff.facilityId;
     }
 
     if (!targetFacilityId) {
-      throw new BadRequest('Thiếu ID cơ sở y tế (facilityId)');
+      throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
     }
 
     // Verify facility exists
@@ -70,7 +69,7 @@ export class PatientLinksService {
 
     if (existing) {
       if (existing.status === FacilityPatientLinkStatus.ACTIVE) {
-        throw new Conflict('Hồ sơ bệnh nhân đã được liên kết với cơ sở y tế này');
+        throw new Conflict(ErrorCode.PATIENT_ALREADY_LINKED);
       }
 
       // Reactivate previously unlinked link
@@ -98,20 +97,20 @@ export class PatientLinksService {
   /**
    * Searches health profiles across the platform by phone number, citizen ID or name.
    *
-   * @param keyword - Phone number, CCCD, or full name.
-   * @returns Matching HealthProfile array.
+   * @param query - Search criteria.
+   * @returns Array of matching HealthProfile objects with facility linking status.
    */
-  async searchPatients(keyword: string): Promise<HealthProfile[]> {
-    if (!keyword || keyword.trim().length < 3) {
-      return [];
-    }
-
-    const result = await this.healthProfilesService.getProfiles({
-      search: keyword.trim(),
-      limit: 20,
+  async searchPlatformPatients(
+    query: QueryPatientLinkDto,
+  ): Promise<HealthProfile[]> {
+    const res = await this.healthProfilesService.getProfiles({
+      phoneNumber: query.phoneNumber,
+      citizenId: query.citizenId,
+      search: query.search,
+      page: query.page,
+      limit: query.limit,
     });
-
-    return result.items;
+    return res.items;
   }
 
   /**
@@ -121,30 +120,26 @@ export class PatientLinksService {
    * @param staff - Staff context.
    * @returns Paginated result list.
    */
-  async getFacilityLinks(
+  async getFacilityPatients(
     query: QueryPatientLinkDto,
     staff?: StaffJwtPayload,
   ): Promise<{ items: FacilityPatientLink[]; total: number; page: number; limit: number }> {
+    const targetFacilityId =
+      staff && staff.facilityId ? staff.facilityId : query.facilityId;
+
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
     const skip = (page - 1) * limit;
 
     const qb = this.linkRepository
       .createQueryBuilder('link')
-      .leftJoinAndSelect('link.facility', 'facility')
       .leftJoinAndSelect('link.healthProfile', 'profile')
+      .leftJoinAndSelect('link.facility', 'facility')
       .leftJoinAndSelect('profile.profileChronicDisease', 'pcd');
 
-    const targetFacilityId = staff?.facilityId || query.facilityId;
     if (targetFacilityId) {
       qb.andWhere('link.facilityId = :facilityId', {
         facilityId: targetFacilityId,
-      });
-    }
-
-    if (query.healthProfileId) {
-      qb.andWhere('link.healthProfileId = :healthProfileId', {
-        healthProfileId: query.healthProfileId,
       });
     }
 
@@ -152,22 +147,10 @@ export class PatientLinksService {
       qb.andWhere('link.status = :status', { status: query.status });
     }
 
-    if (query.phoneNumber) {
-      qb.andWhere('link.phoneNumber = :phone', {
-        phone: query.phoneNumber.trim(),
-      });
-    }
-
-    if (query.hospitalPatientCode) {
-      qb.andWhere('link.hospitalPatientCode = :code', {
-        code: query.hospitalPatientCode.trim(),
-      });
-    }
-
     if (query.search) {
       const kw = `%${query.search.trim()}%`;
       qb.andWhere(
-        '(link.phoneNumber ILIKE :kw OR link.hospitalPatientCode ILIKE :kw OR profile.fullName ILIKE :kw OR profile.citizenId ILIKE :kw)',
+        '(profile.fullName ILIKE :kw OR profile.phoneNumber ILIKE :kw OR profile.citizenId ILIKE :kw OR link.hospitalPatientCode ILIKE :kw)',
         { kw },
       );
     }
@@ -191,7 +174,7 @@ export class PatientLinksService {
     });
 
     if (!link) {
-      throw new NotFound(`Không tìm thấy liên kết với ID ${id}`);
+      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
     }
 
     return link;
@@ -213,7 +196,7 @@ export class PatientLinksService {
     const link = await this.getLinkById(id);
 
     if (staff && staff.facilityId && link.facilityId !== staff.facilityId) {
-      throw new Forbidden('Bạn không có quyền chỉnh sửa liên kết của cơ sở khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     Object.assign(link, dto);
@@ -235,7 +218,7 @@ export class PatientLinksService {
     });
 
     if (!link) {
-      throw new NotFound('Không tìm thấy liên kết giữa cơ sở và bệnh nhân');
+      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
     }
 
     link.status = FacilityPatientLinkStatus.UNLINKED;

@@ -1,5 +1,5 @@
 import { CarePackageStatus } from '@/commons/enums/vndoctor.enum';
-import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
+import { Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -37,7 +37,7 @@ export class CarePackagesService {
     // 1. Determine target facility ID
     const facilityId = dto.facilityId || staffFacilityId;
     if (!facilityId) {
-      throw new NotFound('Không xác định được cơ sở y tế cho gói chăm sóc');
+      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
 
     // 2. Validate facility existence
@@ -45,7 +45,7 @@ export class CarePackagesService {
       where: { id: facilityId },
     });
     if (!facility) {
-      throw new NotFound(`Cơ sở y tế với ID ${facilityId} không tồn tại`);
+      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
 
     // 3. Validate unique code
@@ -53,7 +53,7 @@ export class CarePackagesService {
       where: { code: dto.code.trim().toUpperCase() },
     });
     if (existingCode) {
-      throw new Conflict(`Mã gói chăm sóc '${dto.code}' đã tồn tại trong hệ thống`);
+      throw new Conflict(ErrorCode.CARE_PACKAGE_CODE_ALREADY_EXISTS);
     }
 
     // 4. Create and persist care package entity
@@ -135,7 +135,7 @@ export class CarePackagesService {
     });
 
     if (!carePackage) {
-      throw new NotFound(`Gói chăm sóc với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.CARE_PACKAGE_NOT_FOUND);
     }
 
     return carePackage;
@@ -158,7 +158,7 @@ export class CarePackagesService {
 
     // 1. Verify facility ownership if staff facility ID is provided
     if (staffFacilityId && carePackage.facilityId !== staffFacilityId) {
-      throw new Forbidden('Bạn không có quyền chỉnh sửa gói chăm sóc của cơ sở y tế khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     // 2. If code changed, verify unique code
@@ -168,7 +168,7 @@ export class CarePackagesService {
         where: { code: normalizedCode },
       });
       if (existing && existing.id !== id) {
-        throw new Conflict(`Mã gói chăm sóc '${dto.code}' đã tồn tại trong hệ thống`);
+        throw new Conflict(ErrorCode.CARE_PACKAGE_CODE_ALREADY_EXISTS);
       }
       carePackage.code = normalizedCode;
     }
@@ -179,7 +179,7 @@ export class CarePackagesService {
         where: { id: dto.facilityId },
       });
       if (!facility) {
-        throw new NotFound(`Cơ sở y tế với ID ${dto.facilityId} không tồn tại`);
+        throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
       }
       carePackage.facilityId = dto.facilityId;
     }
@@ -211,10 +211,11 @@ export class CarePackagesService {
     const carePackage = await this.findById(id);
 
     if (staffFacilityId && carePackage.facilityId !== staffFacilityId) {
-      throw new Forbidden('Bạn không có quyền cập nhật trạng thái gói chăm sóc của cơ sở y tế khác');
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
     carePackage.status = status;
     return this.carePackageRepo.save(carePackage);
   }
 }
+

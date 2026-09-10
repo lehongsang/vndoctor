@@ -1,7 +1,6 @@
 import {
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -9,6 +8,7 @@ import type { Request } from 'express';
 import { ROLES_KEY } from '@/commons/decorators/roles.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
+import { Forbidden, ErrorCode } from '@/commons/exceptions';
 
 @Injectable()
 export class StaffRolesGuard implements CanActivate {
@@ -28,7 +28,7 @@ export class StaffRolesGuard implements CanActivate {
     const staff = (request as unknown as { staff?: StaffJwtPayload }).staff;
 
     if (!staff || !staff.role) {
-      throw new ForbiddenException('Bạn không có quyền truy cập chức năng này');
+      throw new Forbidden(ErrorCode.FORBIDDEN);
     }
 
     // Root Super Admin (VNDOCTOR_ADMIN) has global administrative access
@@ -38,9 +38,7 @@ export class StaffRolesGuard implements CanActivate {
 
     const hasRole = requiredRoles.includes(staff.role);
     if (!hasRole) {
-      throw new ForbiddenException(
-        `Yêu cầu quyền [${requiredRoles.join(', ')}], vai trò hiện tại của bạn là ${staff.role}`,
-      );
+      throw new Forbidden(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
 
     return true;

@@ -11,6 +11,7 @@ import {
   Conflict,
   Forbidden,
   NotFound,
+  ErrorCode,
 } from '@/commons/exceptions';
 import { ProfileRelationship } from '@/commons/enums/vndoctor.enum';
 import { ChronicDiseasesService } from '@/modules/chronic-diseases/chronic-diseases.service';
@@ -40,7 +41,7 @@ export class HealthProfilesService {
         where: { accountId, relationship: ProfileRelationship.SELF },
       });
       if (existingSelf) {
-        throw new Conflict('Tài khoản đã có hồ sơ sức khỏe cá nhân (SELF)');
+        throw new Conflict(ErrorCode.RESOURCE_ALREADY_EXISTS);
       }
     }
 
@@ -91,11 +92,11 @@ export class HealthProfilesService {
     });
 
     if (!profile) {
-      throw new NotFound(`Không tìm thấy hồ sơ sức khỏe với ID ${id}`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền truy cập hồ sơ sức khỏe này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return profile;
@@ -174,9 +175,10 @@ export class HealthProfilesService {
         where: { accountId: profile.accountId, relationship: ProfileRelationship.SELF },
       });
       if (existingSelf && existingSelf.id !== id) {
-        throw new Conflict('Tài khoản đã có hồ sơ sức khỏe cá nhân (SELF)');
+        throw new Conflict(ErrorCode.RESOURCE_ALREADY_EXISTS);
       }
     }
+
 
     Object.assign(profile, dto);
     await this.healthProfileRepository.save(profile);

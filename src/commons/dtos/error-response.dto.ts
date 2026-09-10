@@ -13,22 +13,9 @@ export class ErrorResponseDto {
   statusCode: number;
 
   /**
-   * Human-readable error message
-   * @example "Invalid input data"
-   */
-  @ApiProperty({ example: 'Error occurred' })
-  message: string;
-
-  /**
    * Machine-readable error code for frontend handling
    * @example "INVALID_INPUT"
    */
   @ApiProperty({ enum: ErrorCode, enumName: 'ErrorCode', example: ErrorCode.INVALID_INPUT })
-  code: ErrorCode;
-
-  /**
-   * Additional error details (optional)
-   */
-  @ApiProperty({ required: false })
-  data?: unknown;
+  errorCode: ErrorCode;
 }

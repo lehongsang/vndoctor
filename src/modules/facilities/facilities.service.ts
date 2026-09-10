@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { Facility } from './entities/facility.entity';
 import { CreateFacilityDto, QueryFacilityDto, UpdateFacilityDto } from './dtos';
-import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
+import { Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 
@@ -31,9 +31,7 @@ export class FacilitiesService {
     });
 
     if (existing) {
-      throw new Conflict(
-        `Cơ sở y tế với mã ${dto.facilityCode} đã tồn tại trong hệ thống`,
-      );
+      throw new Conflict(ErrorCode.FACILITY_CODE_ALREADY_EXISTS);
     }
 
     // 2. Enforce hierarchy rules based on creator's facility & role
@@ -42,9 +40,7 @@ export class FacilitiesService {
     if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && creator.facilityId) {
       // If the creator is a regular Facility Admin, they can ONLY create sub-facilities under their own facility
       if (dto.parentId && dto.parentId !== creator.facilityId) {
-        throw new Forbidden(
-          'Bạn chỉ có quyền tạo cơ sở y tế trực thuộc cơ sở y tế do bạn quản lý',
-        );
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
       targetParentId = creator.facilityId;
     }
@@ -56,15 +52,11 @@ export class FacilitiesService {
       });
 
       if (!parentFacility) {
-        throw new NotFound(
-          `Không tìm thấy cơ sở y tế cấp trên với ID ${targetParentId}`,
-        );
+        throw new NotFound(ErrorCode.FACILITY_PARENT_NOT_FOUND);
       }
 
       if (!parentFacility.isActive) {
-        throw new Forbidden(
-          'Cơ sở y tế cấp trên hiện đang bị vô hiệu hóa, không thể tạo cơ sở trực thuộc',
-        );
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
     }
 
@@ -139,11 +131,12 @@ export class FacilitiesService {
     });
 
     if (!facility) {
-      throw new NotFound(`Không tìm thấy cơ sở y tế với ID ${id}`);
+      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
 
     return facility;
   }
+
 
   /**
    * Gets direct child facilities under a specific parent facility.

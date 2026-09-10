@@ -10,7 +10,7 @@ import {
   UpdatePatientTargetDto,
   VerifyPatientTargetDto,
 } from './dtos';
-import { Forbidden, NotFound } from '@/commons/exceptions';
+import { Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { PatientTargetStatus } from '@/commons/enums/vndoctor.enum';
 
 @Injectable()
@@ -42,11 +42,11 @@ export class TreatmentTargetsService {
     });
 
     if (!profile) {
-      throw new NotFound(`Hồ sơ sức khỏe ${dto.healthProfileId} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền tạo mục tiêu điều trị cho hồ sơ sức khỏe này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     let defaultBpTarget = dto.bpTarget;
@@ -110,7 +110,7 @@ export class TreatmentTargetsService {
     });
 
     if (!target) {
-      throw new NotFound(`Mục tiêu điều trị với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
     }
 
     target.doctorId = doctorId;
@@ -149,11 +149,11 @@ export class TreatmentTargetsService {
     });
 
     if (!target) {
-      throw new NotFound(`Mục tiêu điều trị với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
     }
 
     if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền chỉnh sửa mục tiêu điều trị này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     if (doctorId) {
@@ -224,11 +224,11 @@ export class TreatmentTargetsService {
     });
 
     if (!target) {
-      throw new NotFound(`Mục tiêu điều trị với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
     }
 
     if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền xem mục tiêu điều trị này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return target;

@@ -5,13 +5,12 @@ import { Injectable } from '@nestjs/common';
 import { LoggerService } from '../logger/logger.service';
 import { getCorrelationId } from '../middlewares/correlation-id.middleware';
 import { buildRequestLogMetadata } from './request-log-metadata';
+import { ErrorCode } from '../exceptions/error-codes';
 
 /**
  * Global catch-all exception filter.
  * Catches any exception that is NOT handled by other specific filters
  * (e.g., TypeError, ReferenceError, or any unexpected error).
- *
- * MUST be registered FIRST in useGlobalFilters() so it runs LAST (NestJS checks in reverse order).
  */
 @Catch()
 @Injectable()
@@ -28,40 +27,32 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const fallbackMessage = isError ? exception.message : 'Unknown error';
     const stack = isError ? exception.stack : '';
     const status = this.resolveStatusCode(exception, fallbackMessage);
-    const message = this.resolveResponseMessage(exception, fallbackMessage);
-    const logMessage = Array.isArray(message) ? message.join('; ') : message;
+    const errorCode = this.resolveErrorCode(exception, status);
     const requestMetadata = buildRequestLogMetadata(request, status);
 
     if (status >= 500) {
       this.logger.error(
-        `[UnhandledException] ${logMessage}`,
+        `[UnhandledException] ${fallbackMessage}`,
         requestMetadata,
         correlationId,
         stack || '',
       );
     } else {
       this.logger.warn(
-        `[UnhandledHttpException] ${logMessage}`,
+        `[UnhandledHttpException] ${errorCode}`,
         requestMetadata,
         correlationId,
       );
     }
 
-    // Never leak stack trace or internal details to the client.
-    // Preserve known status codes (e.g. Unauthorized from auth guard).
     response.status(status).json({
       statusCode: status,
-      message: status >= 500 ? 'Internal server error' : message,
-      code: this.resolveErrorCode(exception, status),
+      errorCode,
     });
   }
 
   /**
    * Resolves an HTTP status from unknown exception shapes thrown by external libs/guards.
-   *
-   * @param exception - Unknown exception captured by catch-all filter.
-   * @param message - Safe fallback message extracted from exception.
-   * @returns HTTP status code to send to client.
    */
   private resolveStatusCode(exception: unknown, message: string): number {
     if (exception instanceof HttpException) {
@@ -91,43 +82,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   /**
-   * Extracts the detailed client-facing message from Nest HTTP exceptions.
-   *
-   * @param exception - Unknown exception captured by catch-all filter.
-   * @param fallbackMessage - Message from the thrown Error object.
-   * @returns Specific message or validation messages when available.
-   */
-  private resolveResponseMessage(
-    exception: unknown,
-    fallbackMessage: string,
-  ): string | string[] {
-    if (exception instanceof HttpException) {
-      const exceptionResponse = exception.getResponse();
-      if (typeof exceptionResponse === 'string') {
-        return exceptionResponse;
-      }
-      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-        const responseObject = exceptionResponse as Record<string, unknown>;
-        if (Array.isArray(responseObject.message)) {
-          return responseObject.message.filter(
-            (item): item is string => typeof item === 'string',
-          );
-        }
-        if (typeof responseObject.message === 'string') {
-          return responseObject.message;
-        }
-      }
-    }
-
-    return fallbackMessage;
-  }
-
-  /**
    * Resolves the machine-readable error code, checking custom error properties first.
    */
   private resolveErrorCode(exception: unknown, status: number): string {
     if (typeof exception === 'object' && exception !== null) {
       const errorObject = exception as Record<string, unknown>;
+      if (typeof errorObject.errorCode === 'string') {
+        return errorObject.errorCode;
+      }
       if (typeof errorObject.code === 'string') {
         return errorObject.code;
       }
@@ -136,6 +98,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const res = exception.getResponse();
       if (typeof res === 'object' && res !== null) {
         const resObj = res as Record<string, unknown>;
+        if (typeof resObj.errorCode === 'string') {
+          return resObj.errorCode;
+        }
         if (typeof resObj.code === 'string') {
           return resObj.code;
         }
@@ -146,27 +111,24 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   /**
    * Maps HTTP status to an API error code.
-   *
-   * @param status - HTTP status code.
-   * @returns Standardized error code.
    */
   private mapStatusToCode(status: number): string {
     const statusCodeMap: Record<number, string> = {
-      400: 'BAD_REQUEST',
-      401: 'UNAUTHORIZED',
-      403: 'FORBIDDEN',
-      404: 'NOT_FOUND',
-      405: 'METHOD_NOT_ALLOWED',
-      408: 'REQUEST_TIMEOUT',
-      409: 'CONFLICT',
-      413: 'PAYLOAD_TOO_LARGE',
-      422: 'UNPROCESSABLE_ENTITY',
-      429: 'TOO_MANY_REQUESTS',
-      500: 'INTERNAL_SERVER_ERROR',
-      502: 'BAD_GATEWAY',
-      503: 'SERVICE_UNAVAILABLE',
-      504: 'GATEWAY_TIMEOUT',
+      400: ErrorCode.BAD_REQUEST,
+      401: ErrorCode.UNAUTHORIZED,
+      403: ErrorCode.FORBIDDEN,
+      404: ErrorCode.RESOURCE_NOT_FOUND,
+      405: ErrorCode.METHOD_NOT_ALLOWED,
+      408: ErrorCode.REQUEST_TIMEOUT,
+      409: ErrorCode.RESOURCE_ALREADY_EXISTS,
+      413: ErrorCode.PAYLOAD_TOO_LARGE,
+      422: ErrorCode.UNPROCESSABLE_ENTITY,
+      429: ErrorCode.TOO_MANY_REQUESTS,
+      500: ErrorCode.INTERNAL_SERVER_ERROR,
+      502: ErrorCode.BAD_GATEWAY,
+      503: ErrorCode.SERVICE_UNAVAILABLE,
+      504: ErrorCode.GATEWAY_TIMEOUT,
     };
-    return statusCodeMap[status] || 'HTTP_ERROR';
+    return statusCodeMap[status] || ErrorCode.HTTP_ERROR;
   }
 }

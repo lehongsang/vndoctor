@@ -14,7 +14,7 @@ import {
   UpdateTreatmentPlanDto,
   UpdateTreatmentTemplateDto,
 } from './dtos';
-import { Forbidden, NotFound } from '@/commons/exceptions';
+import { Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { VnDoctorPlanStatus } from '@/commons/enums/vndoctor.enum';
 
 @Injectable()
@@ -55,12 +55,12 @@ export class TreatmentPlansService {
   ): Promise<TreatmentTemplate> {
     const facilityId = dto.facilityId || fallbackFacilityId;
     if (!facilityId) {
-      throw new NotFound('Không xác định được cơ sở y tế cho mẫu phác đồ');
+      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
 
     const facility = await this.facilityRepo.findOne({ where: { id: facilityId } });
     if (!facility) {
-      throw new NotFound(`Cơ sở y tế ${facilityId} không tồn tại`);
+      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
 
     const template = this.templateRepo.create({
@@ -83,7 +83,7 @@ export class TreatmentPlansService {
   ): Promise<TreatmentTemplate> {
     const template = await this.templateRepo.findOne({ where: { id } });
     if (!template) {
-      throw new NotFound(`Mẫu phác đồ với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.TREATMENT_PLAN_NOT_FOUND);
     }
 
     Object.assign(template, dto);
@@ -134,7 +134,7 @@ export class TreatmentPlansService {
     });
 
     if (!template) {
-      throw new NotFound(`Mẫu phác đồ với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.TREATMENT_PLAN_NOT_FOUND);
     }
 
     return template;
@@ -156,7 +156,7 @@ export class TreatmentPlansService {
     });
 
     if (!profile) {
-      throw new NotFound(`Hồ sơ sức khỏe ${dto.healthProfileId} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     if (dto.treatmentTargetId) {
@@ -164,7 +164,7 @@ export class TreatmentPlansService {
         where: { id: dto.treatmentTargetId },
       });
       if (!target) {
-        throw new NotFound(`Mục tiêu điều trị ${dto.treatmentTargetId} không tồn tại`);
+        throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
       }
     }
 
@@ -201,11 +201,11 @@ export class TreatmentPlansService {
     });
 
     if (!plan) {
-      throw new NotFound(`Phác đồ điều trị với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.TREATMENT_PLAN_NOT_FOUND);
     }
 
     if (accountId && plan.healthProfile && plan.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền chỉnh sửa phác đồ điều trị này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     if (doctorId) {
@@ -265,11 +265,11 @@ export class TreatmentPlansService {
     });
 
     if (!plan) {
-      throw new NotFound(`Phác đồ điều trị với ID ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.TREATMENT_PLAN_NOT_FOUND);
     }
 
     if (accountId && plan.healthProfile && plan.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền xem phác đồ điều trị này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     return plan;

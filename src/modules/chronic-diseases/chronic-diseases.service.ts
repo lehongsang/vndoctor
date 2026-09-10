@@ -10,7 +10,7 @@ import {
   QueryChronicDiseaseDto,
   UpdateChronicDiseaseDto,
 } from './dtos';
-import { Conflict, NotFound } from '@/commons/exceptions';
+import { Conflict, NotFound, ErrorCode } from '@/commons/exceptions';
 import { LoggerService } from '@/commons/logger/logger.service';
 
 interface IcdSeedItem {
@@ -132,7 +132,7 @@ export class ChronicDiseasesService implements OnModuleInit {
   async getChronicDiseaseById(id: string): Promise<ChronicDisease> {
     const disease = await this.chronicDiseaseRepository.findOne({ where: { id } });
     if (!disease) {
-      throw new NotFound(`Không tìm thấy bệnh mạn tính với ID ${id}`);
+      throw new NotFound(ErrorCode.CHRONIC_DISEASE_NOT_FOUND);
     }
     return disease;
   }
@@ -149,7 +149,7 @@ export class ChronicDiseasesService implements OnModuleInit {
     });
 
     if (existing) {
-      throw new Conflict(`Mã bệnh mạn tính ${dto.code} đã tồn tại`);
+      throw new Conflict(ErrorCode.CHRONIC_DISEASE_CODE_ALREADY_EXISTS);
     }
 
     const disease = this.chronicDiseaseRepository.create({
@@ -214,7 +214,7 @@ export class ChronicDiseasesService implements OnModuleInit {
         where: { id: In(diseaseIds) },
       });
       if (foundCount !== diseaseIds.length) {
-        throw new NotFound('Một hoặc nhiều mã bệnh mạn tính không tồn tại trong hệ thống');
+        throw new NotFound(ErrorCode.CHRONIC_DISEASE_NOT_FOUND);
       }
     }
 
@@ -235,3 +235,4 @@ export class ChronicDiseasesService implements OnModuleInit {
     return this.profileChronicDiseaseRepository.save(record);
   }
 }
+

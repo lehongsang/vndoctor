@@ -28,6 +28,11 @@ export class QueryPatientLinkDto extends PartialType(GetManyBaseQueryParams) {
   @IsOptional()
   phoneNumber?: string;
 
+  @ApiPropertyOptional({ description: 'Tìm kiếm theo CCCD' })
+  @IsString()
+  @IsOptional()
+  citizenId?: string;
+
   @ApiPropertyOptional({ description: 'Tìm kiếm theo mã bệnh nhân viện cấp' })
   @IsString()
   @IsOptional()

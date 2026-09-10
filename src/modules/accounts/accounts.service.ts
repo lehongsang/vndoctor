@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Account } from './entities/account.entity';
 import { RegisterAppAccountDto } from './dtos/account.dto';
-import { Conflict, NotFound } from '@/commons/exceptions';
+import { Conflict, NotFound, ErrorCode } from '@/commons/exceptions';
 
 @Injectable()
 export class AccountsService {
@@ -25,9 +25,7 @@ export class AccountsService {
     });
 
     if (existing) {
-      throw new Conflict(
-        `Số điện thoại ${dto.phoneNumber} đã được đăng ký tài khoản`,
-      );
+      throw new Conflict(ErrorCode.ACCOUNT_PHONE_ALREADY_EXISTS);
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -72,9 +70,10 @@ export class AccountsService {
     });
 
     if (!account) {
-      throw new NotFound('Không tìm thấy tài khoản bệnh nhân');
+      throw new NotFound(ErrorCode.ACCOUNT_NOT_FOUND);
     }
 
     return account;
   }
 }
+

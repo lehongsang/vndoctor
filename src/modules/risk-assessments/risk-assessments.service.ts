@@ -1,5 +1,5 @@
 import { AssessmentStatus, VnDoctorRiskLevel } from '@/commons/enums/vndoctor.enum';
-import { Forbidden, NotFound } from '@/commons/exceptions';
+import { ErrorCode, Forbidden, NotFound } from '@/commons/exceptions';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { Injectable } from '@nestjs/common';
@@ -179,11 +179,11 @@ export class RiskAssessmentsService {
     });
 
     if (!profile) {
-      throw new NotFound(`Hồ sơ sức khỏe ${dto.healthProfileId} không tồn tại`);
+      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
     if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền thực hiện đánh giá cho hồ sơ sức khỏe này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     if (dto.facilityId) {
@@ -191,7 +191,7 @@ export class RiskAssessmentsService {
         where: { id: dto.facilityId },
       });
       if (!facility) {
-        throw new NotFound(`Cơ sở y tế ${dto.facilityId} không tồn tại`);
+        throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
       }
     }
 
@@ -270,7 +270,7 @@ export class RiskAssessmentsService {
     });
 
     if (!input) {
-      throw new NotFound(`Phiếu đánh giá nguy cơ với id ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.RISK_ASSESSMENT_NOT_FOUND);
     }
 
     let result = input.assessmentResult;
@@ -385,11 +385,11 @@ export class RiskAssessmentsService {
     });
 
     if (!input) {
-      throw new NotFound(`Phiếu đánh giá nguy cơ với id ${id} không tồn tại`);
+      throw new NotFound(ErrorCode.RISK_ASSESSMENT_NOT_FOUND);
     }
 
     if (accountId && input.healthProfile && input.healthProfile.accountId !== accountId) {
-      throw new Forbidden('Bạn không có quyền xem phiếu đánh giá này');
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
     }
 
     const result = await this.resultRepo.findOne({
@@ -398,7 +398,7 @@ export class RiskAssessmentsService {
     });
 
     if (!result) {
-      throw new NotFound(`Kết quả đánh giá nguy cơ cho phiếu ${id} chưa được tạo`);
+      throw new NotFound(ErrorCode.RISK_ASSESSMENT_RESULT_NOT_FOUND);
     }
 
     const { hasWarningAlert, redFlags } = this.calculateRedFlags(input);

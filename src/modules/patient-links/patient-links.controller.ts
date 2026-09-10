@@ -51,8 +51,8 @@ export class PatientLinksController {
     description: 'Tìm kiếm hồ sơ bệnh nhân trên hệ thống để thực hiện liên kết vào cơ sở',
     response: { serialization: HealthProfile, isArray: true },
   })
-  async searchPatients(@Query('keyword') keyword: string) {
-    return this.patientLinksService.searchPatients(keyword);
+  async searchPatients(@Query() query: QueryPatientLinkDto) {
+    return this.patientLinksService.searchPlatformPatients(query);
   }
 
   @Get()
@@ -64,7 +64,7 @@ export class PatientLinksController {
     @Query() query: QueryPatientLinkDto,
     @CurrentStaff() staff: StaffJwtPayload,
   ) {
-    return this.patientLinksService.getFacilityLinks(query, staff);
+    return this.patientLinksService.getFacilityPatients(query, staff);
   }
 
   @Get(':id')

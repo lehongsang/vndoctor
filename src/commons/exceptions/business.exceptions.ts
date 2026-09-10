@@ -6,10 +6,10 @@ import { CustomException } from './custom.exception';
  * Used for validation errors, invalid input
  */
 export class BadRequest extends CustomException {
-  constructor(message: string, code: ErrorCode = ErrorCode.INVALID_INPUT) {
+  constructor(errorCode: ErrorCode | string = ErrorCode.INVALID_INPUT, message?: string) {
     super({
       statusCode: 400,
-      code,
+      errorCode,
       message,
     });
     Object.setPrototypeOf(this, BadRequest.prototype);
@@ -21,13 +21,10 @@ export class BadRequest extends CustomException {
  * Used for authentication failures
  */
 export class Unauthorized extends CustomException {
-  constructor(
-    message: string = 'Unauthorized',
-    code: ErrorCode = ErrorCode.UNAUTHORIZED,
-  ) {
+  constructor(errorCode: ErrorCode | string = ErrorCode.UNAUTHORIZED, message?: string) {
     super({
       statusCode: 401,
-      code,
+      errorCode,
       message,
     });
     Object.setPrototypeOf(this, Unauthorized.prototype);
@@ -39,13 +36,10 @@ export class Unauthorized extends CustomException {
  * Used for authorization failures
  */
 export class Forbidden extends CustomException {
-  constructor(
-    message: string = 'Forbidden',
-    code: ErrorCode = ErrorCode.FORBIDDEN,
-  ) {
+  constructor(errorCode: ErrorCode | string = ErrorCode.FORBIDDEN, message?: string) {
     super({
       statusCode: 403,
-      code,
+      errorCode,
       message,
     });
     Object.setPrototypeOf(this, Forbidden.prototype);
@@ -57,10 +51,10 @@ export class Forbidden extends CustomException {
  * Used when resource doesn't exist
  */
 export class NotFound extends CustomException {
-  constructor(message: string, code: ErrorCode = ErrorCode.RESOURCE_NOT_FOUND) {
+  constructor(errorCode: ErrorCode | string = ErrorCode.RESOURCE_NOT_FOUND, message?: string) {
     super({
       statusCode: 404,
-      code,
+      errorCode,
       message,
     });
     Object.setPrototypeOf(this, NotFound.prototype);
@@ -72,13 +66,10 @@ export class NotFound extends CustomException {
  * Used when resource already exists
  */
 export class Conflict extends CustomException {
-  constructor(
-    message: string,
-    code: ErrorCode = ErrorCode.RESOURCE_ALREADY_EXISTS,
-  ) {
+  constructor(errorCode: ErrorCode | string = ErrorCode.RESOURCE_ALREADY_EXISTS, message?: string) {
     super({
       statusCode: 409,
-      code,
+      errorCode,
       message,
     });
     Object.setPrototypeOf(this, Conflict.prototype);
@@ -90,13 +81,10 @@ export class Conflict extends CustomException {
  * Used for unexpected server errors
  */
 export class InternalError extends CustomException {
-  constructor(
-    message: string = 'Internal server error',
-    code: ErrorCode = ErrorCode.INTERNAL_SERVER_ERROR,
-  ) {
+  constructor(errorCode: ErrorCode | string = ErrorCode.INTERNAL_SERVER_ERROR, message?: string) {
     super({
       statusCode: 500,
-      code,
+      errorCode,
       message,
     });
     Object.setPrototypeOf(this, InternalError.prototype);
@@ -108,10 +96,10 @@ export class InternalError extends CustomException {
  * Used for rate limiting
  */
 export class TooManyRequestsException extends CustomException {
-  constructor(message: string = 'Too many requests') {
+  constructor(errorCode: ErrorCode | string = ErrorCode.TOO_MANY_REQUESTS, message?: string) {
     super({
       statusCode: 429,
-      code: ErrorCode.TOO_MANY_REQUESTS,
+      errorCode,
       message,
     });
     Object.setPrototypeOf(this, TooManyRequestsException.prototype);
