@@ -6,6 +6,7 @@ import * as jwt from 'jsonwebtoken';
 import { VnDoctorAuthService } from './vndoctor-auth.service';
 import { StaffService } from '@/modules/staff/staff.service';
 import { AccountsService } from '@/modules/accounts/accounts.service';
+import { RedisService } from '@/services/redis/redis.service';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 import { Forbidden, Unauthorized } from '@/commons/exceptions';
 
@@ -21,6 +22,11 @@ describe('VnDoctorAuthService', () => {
     register: jest.fn(),
     findByPhoneNumberWithPassword: jest.fn(),
     getAccountById: jest.fn(),
+  };
+
+  const mockRedisService = {
+    get: jest.fn().mockResolvedValue(null),
+    setex: jest.fn().mockResolvedValue('OK'),
   };
 
   const mockConfigService = {
@@ -40,6 +46,7 @@ describe('VnDoctorAuthService', () => {
         { provide: StaffService, useValue: mockStaffService },
         { provide: AccountsService, useValue: mockAccountsService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 
@@ -116,6 +123,7 @@ describe('VnDoctorAuthService', () => {
         { expiresIn: 3600 },
       );
 
+      mockRedisService.get.mockResolvedValue(null);
       mockStaffService.getStaffById.mockResolvedValue({
         id: 'staff-1',
         facilityId: 'fac-1',
@@ -135,13 +143,23 @@ describe('VnDoctorAuthService', () => {
       expect(result.refreshToken).toBeDefined();
     });
 
+    it('should throw Unauthorized if refresh token is blacklisted', async () => {
+      mockRedisService.get.mockResolvedValue('blacklisted');
+
+      await expect(
+        service.refreshStaffToken({ refreshToken: 'some-token' }),
+      ).rejects.toThrow(Unauthorized);
+    });
+
     it('should throw Unauthorized if token is invalid or expired', async () => {
+      mockRedisService.get.mockResolvedValue(null);
       await expect(
         service.refreshStaffToken({ refreshToken: 'invalid.token.here' }),
       ).rejects.toThrow(Unauthorized);
     });
 
     it('should throw Forbidden if staff account is inactive', async () => {
+      mockRedisService.get.mockResolvedValue(null);
       const validRefreshToken = jwt.sign(
         { id: 'staff-1', type: 'STAFF_REFRESH' },
         'test-staff-refresh-secret',
@@ -227,6 +245,7 @@ describe('VnDoctorAuthService', () => {
         { expiresIn: 3600 },
       );
 
+      mockRedisService.get.mockResolvedValue(null);
       mockAccountsService.getAccountById.mockResolvedValue({
         id: 'acc-1',
         phoneNumber: '0987654321',
@@ -243,7 +262,16 @@ describe('VnDoctorAuthService', () => {
       expect(result.refreshToken).toBeDefined();
     });
 
+    it('should throw Unauthorized if app refresh token is blacklisted', async () => {
+      mockRedisService.get.mockResolvedValue('blacklisted');
+
+      await expect(
+        service.refreshAppToken({ refreshToken: 'some-token' }),
+      ).rejects.toThrow(Unauthorized);
+    });
+
     it('should throw Unauthorized if app token has wrong type', async () => {
+      mockRedisService.get.mockResolvedValue(null);
       const staffRefreshToken = jwt.sign(
         { id: 'acc-1', type: 'STAFF_REFRESH' },
         'test-app-refresh-secret',
@@ -255,4 +283,49 @@ describe('VnDoctorAuthService', () => {
       ).rejects.toThrow(Unauthorized);
     });
   });
+
+  describe('logout & blacklist', () => {
+    it('should blacklist access token and refresh token in Redis on logout', async () => {
+      const accessToken = jwt.sign(
+        { id: 'staff-1', type: 'STAFF' },
+        'test-secret',
+        { expiresIn: 3600 },
+      );
+      const refreshToken = jwt.sign(
+        { id: 'staff-1', type: 'STAFF_REFRESH' },
+        'test-secret',
+        { expiresIn: 7200 },
+      );
+
+      const result = await service.logout(accessToken, refreshToken);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Đăng xuất thành công');
+      expect(mockRedisService.setex).toHaveBeenCalledTimes(2);
+    });
+
+    it('should blacklist only access token if refresh token is omitted', async () => {
+      const accessToken = jwt.sign(
+        { id: 'acc-1', type: 'APP_ACCOUNT' },
+        'test-secret',
+        { expiresIn: 3600 },
+      );
+
+      const result = await service.logout(accessToken);
+
+      expect(result.success).toBe(true);
+      expect(mockRedisService.setex).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return true for blacklisted token and false otherwise', async () => {
+      mockRedisService.get.mockResolvedValueOnce('blacklisted').mockResolvedValueOnce(null);
+
+      const isBlacklisted1 = await service.isTokenBlacklisted('blacklisted-token');
+      const isBlacklisted2 = await service.isTokenBlacklisted('clean-token');
+
+      expect(isBlacklisted1).toBe(true);
+      expect(isBlacklisted2).toBe(false);
+    });
+  });
 });
+

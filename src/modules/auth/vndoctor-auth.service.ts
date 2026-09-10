@@ -4,10 +4,13 @@ import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { StaffService } from '@/modules/staff/staff.service';
 import { AccountsService } from '@/modules/accounts/accounts.service';
+import { RedisService } from '@/services/redis/redis.service';
+import { getBlacklistTokenKey } from '@/utils/key-redis';
 import {
   AppAuthResponseDto,
   AppLoginDto,
   AppRegisterDto,
+  LogoutResponseDto,
   RefreshTokenDto,
   StaffAuthResponseDto,
   StaffLoginDto,
@@ -23,6 +26,13 @@ import { AppAccountJwtPayload } from '@/commons/decorators/current-account.decor
 interface RefreshTokenPayload {
   id: string;
   type: 'STAFF_REFRESH' | 'APP_REFRESH';
+  exp?: number;
+}
+
+interface JwtBasePayload {
+  exp?: number;
+  iat?: number;
+  [key: string]: unknown;
 }
 
 @Injectable()
@@ -42,6 +52,7 @@ export class VnDoctorAuthService {
     private readonly staffService: StaffService,
     private readonly accountsService: AccountsService,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {
     const baseSecret =
       this.configService.get<string>('JWT_SECRET') ||
@@ -63,6 +74,7 @@ export class VnDoctorAuthService {
       this.configService.get<string>('JWT_APP_REFRESH_SECRET') ||
       `${this.appSecret}-refresh`;
   }
+
 
   /**
    * Authenticates Medical Staff / Doctor on CMS and generates Access & Refresh token pair.
@@ -128,6 +140,10 @@ export class VnDoctorAuthService {
    * @returns New Token pair
    */
   async refreshStaffToken(dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
+    if (await this.isTokenBlacklisted(dto.refreshToken)) {
+      throw new Unauthorized('Refresh token đã bị vô hiệu hóa do đăng xuất');
+    }
+
     let decoded: RefreshTokenPayload;
     try {
       decoded = jwt.verify(
@@ -279,6 +295,10 @@ export class VnDoctorAuthService {
    * @returns New Token pair
    */
   async refreshAppToken(dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
+    if (await this.isTokenBlacklisted(dto.refreshToken)) {
+      throw new Unauthorized('Refresh token đã bị vô hiệu hóa do đăng xuất');
+    }
+
     let decoded: RefreshTokenPayload;
     try {
       decoded = jwt.verify(
@@ -326,4 +346,56 @@ export class VnDoctorAuthService {
       refreshTokenExpiresIn: this.appRefreshExpiresInSeconds,
     };
   }
+
+  /**
+   * Checks whether a JWT token is in the Redis blacklist.
+   *
+   * @param token - JWT access token or refresh token
+   * @returns boolean true if token is blacklisted
+   */
+  async isTokenBlacklisted(token: string): Promise<boolean> {
+    if (!token) return false;
+    const key = getBlacklistTokenKey(token);
+    const value = await this.redisService.get(key);
+    return value !== null;
+  }
+
+  /**
+   * Invalidates active Access Token and optional Refresh Token by adding them to Redis Blacklist.
+   *
+   * @param accessToken - Raw JWT Access Token from Authorization Header
+   * @param refreshToken - Optional Refresh Token to revoke
+   * @returns Logout confirmation response
+   */
+  async logout(accessToken: string, refreshToken?: string): Promise<LogoutResponseDto> {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+
+    // 1. Blacklist Access Token
+    if (accessToken) {
+      const decodedAccess = jwt.decode(accessToken) as JwtBasePayload | null;
+      const accessRemaining = decodedAccess?.exp
+        ? Math.max(1, decodedAccess.exp - nowInSeconds)
+        : this.staffExpiresInSeconds;
+
+      const accessKey = getBlacklistTokenKey(accessToken);
+      await this.redisService.setex(accessKey, accessRemaining, 'blacklisted');
+    }
+
+    // 2. Blacklist Refresh Token if provided
+    if (refreshToken) {
+      const decodedRefresh = jwt.decode(refreshToken) as JwtBasePayload | null;
+      const refreshRemaining = decodedRefresh?.exp
+        ? Math.max(1, decodedRefresh.exp - nowInSeconds)
+        : this.staffRefreshExpiresInSeconds;
+
+      const refreshKey = getBlacklistTokenKey(refreshToken);
+      await this.redisService.setex(refreshKey, refreshRemaining, 'blacklisted');
+    }
+
+    return {
+      success: true,
+      message: 'Đăng xuất thành công',
+    };
+  }
 }
+

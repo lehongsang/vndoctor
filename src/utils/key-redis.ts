@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 /**
  * Utilities for generating Redis keys.
  */
@@ -13,3 +15,10 @@ export const getOtpAttemptsKey = (email: string): string => {
 export const getRegistrationRateLimitKey = (email: string): string => {
   return `registration_rate_limit:${email.trim().toLowerCase()}`;
 };
+
+export const getBlacklistTokenKey = (token: string): string => {
+  const hash = crypto.createHash('sha256').update(token.trim()).digest('hex');
+  return `blacklist:token:${hash}`;
+};
+
+

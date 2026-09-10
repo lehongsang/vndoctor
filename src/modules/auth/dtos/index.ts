@@ -5,3 +5,5 @@ export * from './app-login.dto';
 export * from './app-auth-response.dto';
 export * from './refresh-token.dto';
 export * from './token-refresh-response.dto';
+export * from './logout.dto';
+

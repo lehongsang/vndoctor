@@ -5,6 +5,8 @@ import {
   AppAuthResponseDto,
   AppLoginDto,
   AppRegisterDto,
+  LogoutDto,
+  LogoutResponseDto,
   RefreshTokenDto,
   StaffAuthResponseDto,
   StaffLoginDto,
@@ -16,6 +18,7 @@ import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { AppAuthGuard } from '@/commons/guards/app-auth.guard';
 import { CurrentStaff, StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { AppAccountJwtPayload, CurrentAccount } from '@/commons/decorators/current-account.decorator';
+import { RawToken } from '@/commons/decorators/raw-token.decorator';
 import { StaffService } from '@/modules/staff/staff.service';
 import { AccountsService } from '@/modules/accounts/accounts.service';
 
@@ -61,6 +64,21 @@ export class VnDoctorAuthController {
     return this.staffService.getStaffById(staff.id);
   }
 
+  @Post('staff/logout')
+  @UseGuards(StaffAuthGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth - Đăng xuất Nhân viên y tế / Bác sĩ (Web CMS)',
+    description: 'Vô hiệu hóa Access Token và Refresh Token hiện tại trên toàn hệ thống thông qua Redis Blacklist',
+    response: { serialization: LogoutResponseDto },
+  })
+  async logoutStaff(
+    @RawToken() token: string,
+    @Body() dto?: LogoutDto,
+  ): Promise<LogoutResponseDto> {
+    return this.authService.logout(token, dto?.refreshToken);
+  }
+
   @Public()
   @Post('app/register')
   @Doc({
@@ -104,4 +122,20 @@ export class VnDoctorAuthController {
   async getAppProfile(@CurrentAccount() account: AppAccountJwtPayload) {
     return this.accountsService.getAccountById(account.id);
   }
+
+  @Post('app/logout')
+  @UseGuards(AppAuthGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'App Auth - Đăng xuất Bệnh nhân (Mobile App)',
+    description: 'Vô hiệu hóa Access Token và Refresh Token hiện tại trên toàn hệ thống thông qua Redis Blacklist',
+    response: { serialization: LogoutResponseDto },
+  })
+  async logoutApp(
+    @RawToken() token: string,
+    @Body() dto?: LogoutDto,
+  ): Promise<LogoutResponseDto> {
+    return this.authService.logout(token, dto?.refreshToken);
+  }
 }
+
