@@ -7,8 +7,10 @@ import { VnDoctorAuthService } from './vndoctor-auth.service';
 import { StaffService } from '@/modules/staff/staff.service';
 import { AccountsService } from '@/modules/accounts/accounts.service';
 import { RedisService } from '@/services/redis/redis.service';
+import { SmsService } from '@/services/sms/sms.service';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
-import { Forbidden, Unauthorized } from '@/commons/exceptions';
+import { BadRequest, Conflict, Forbidden, NotFound, Unauthorized } from '@/commons/exceptions';
+import { OtpPurpose } from './dtos';
 
 describe('VnDoctorAuthService', () => {
   let service: VnDoctorAuthService;
@@ -26,7 +28,13 @@ describe('VnDoctorAuthService', () => {
 
   const mockRedisService = {
     get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue('OK'),
     setex: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+  };
+
+  const mockSmsService = {
+    sendOtp: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockConfigService = {
@@ -47,6 +55,7 @@ describe('VnDoctorAuthService', () => {
         { provide: AccountsService, useValue: mockAccountsService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: RedisService, useValue: mockRedisService },
+        { provide: SmsService, useValue: mockSmsService },
       ],
     }).compile();
 
@@ -177,8 +186,135 @@ describe('VnDoctorAuthService', () => {
     });
   });
 
+  describe('sendAppOtp', () => {
+    it('should generate OTP, save to Redis and send SMS successfully for REGISTER', async () => {
+      mockRedisService.get.mockResolvedValue(null); // No cooldown
+      mockAccountsService.findByPhoneNumberWithPassword.mockResolvedValue(null); // Phone not registered
+
+      const result = await service.sendAppOtp({
+        phoneNumber: '0987654321',
+        type: OtpPurpose.REGISTER,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.expiresInSeconds).toBe(300);
+      expect(result.retryAfterSeconds).toBe(60);
+      expect(mockRedisService.setex).toHaveBeenCalledTimes(3); // otp, attempts, cooldown
+      expect(mockSmsService.sendOtp).toHaveBeenCalledWith(
+        '0987654321',
+        expect.any(String),
+        5,
+      );
+    });
+
+    it('should throw BadRequest if cooldown is still active', async () => {
+      mockRedisService.get.mockResolvedValue('1'); // Cooldown active
+
+      await expect(
+        service.sendAppOtp({
+          phoneNumber: '0987654321',
+          type: OtpPurpose.REGISTER,
+        }),
+      ).rejects.toThrow(BadRequest);
+    });
+
+    it('should throw Conflict if phone already exists when type is REGISTER', async () => {
+      mockRedisService.get.mockResolvedValue(null);
+      mockAccountsService.findByPhoneNumberWithPassword.mockResolvedValue({
+        id: 'acc-1',
+        phoneNumber: '0987654321',
+      });
+
+      await expect(
+        service.sendAppOtp({
+          phoneNumber: '0987654321',
+          type: OtpPurpose.REGISTER,
+        }),
+      ).rejects.toThrow(Conflict);
+    });
+
+    it('should throw NotFound if phone does not exist when type is FORGOT_PASSWORD', async () => {
+      mockRedisService.get.mockResolvedValue(null);
+      mockAccountsService.findByPhoneNumberWithPassword.mockResolvedValue(null);
+
+      await expect(
+        service.sendAppOtp({
+          phoneNumber: '0987654321',
+          type: OtpPurpose.FORGOT_PASSWORD,
+        }),
+      ).rejects.toThrow(NotFound);
+    });
+  });
+
+  describe('verifyAppOtp', () => {
+    it('should verify OTP successfully and return verification token', async () => {
+      mockRedisService.get
+        .mockResolvedValueOnce('123456') // Stored OTP
+        .mockResolvedValueOnce('0'); // Attempts
+
+      const result = await service.verifyAppOtp({
+        phoneNumber: '0987654321',
+        otp: '123456',
+        type: OtpPurpose.REGISTER,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.verificationToken).toBeDefined();
+      expect(result.expiresInSeconds).toBe(600);
+      expect(mockRedisService.del).toHaveBeenCalledTimes(2); // OTP and attempts removed
+    });
+
+    it('should throw BadRequest if OTP is expired or not found', async () => {
+      mockRedisService.get.mockResolvedValue(null);
+
+      await expect(
+        service.verifyAppOtp({
+          phoneNumber: '0987654321',
+          otp: '123456',
+          type: OtpPurpose.REGISTER,
+        }),
+      ).rejects.toThrow(BadRequest);
+    });
+
+    it('should throw BadRequest if OTP does not match', async () => {
+      mockRedisService.get
+        .mockResolvedValueOnce('123456') // Stored OTP
+        .mockResolvedValueOnce('1'); // Current attempts: 1
+
+      await expect(
+        service.verifyAppOtp({
+          phoneNumber: '0987654321',
+          otp: '999999',
+          type: OtpPurpose.REGISTER,
+        }),
+      ).rejects.toThrow(BadRequest);
+
+      expect(mockRedisService.setex).toHaveBeenCalledWith(
+        expect.stringContaining('otp:attempts:register:0987654321'),
+        300,
+        '2',
+      );
+    });
+
+    it('should throw BadRequest and lock if attempts exceed 5', async () => {
+      mockRedisService.get
+        .mockResolvedValueOnce('123456') // Stored OTP
+        .mockResolvedValueOnce('5'); // 5 previous failed attempts
+
+      await expect(
+        service.verifyAppOtp({
+          phoneNumber: '0987654321',
+          otp: '123456',
+          type: OtpPurpose.REGISTER,
+        }),
+      ).rejects.toThrow(BadRequest);
+
+      expect(mockRedisService.del).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('registerApp', () => {
-    it('should register patient account and return token pair', async () => {
+    it('should register patient account with direct phone number and return token pair', async () => {
       mockAccountsService.register.mockResolvedValue({
         id: 'acc-1',
         phoneNumber: '0987654321',
@@ -196,6 +332,65 @@ describe('VnDoctorAuthService', () => {
       expect(result.accessToken).toBeDefined();
       expect(result.refreshToken).toBeDefined();
       expect(result.account.phoneNumber).toBe('0987654321');
+    });
+
+    it('should register patient account using a valid verification token', async () => {
+      const validVerificationToken = jwt.sign(
+        {
+          phoneNumber: '0987654321',
+          purpose: OtpPurpose.REGISTER,
+          type: 'OTP_VERIFICATION',
+        },
+        'test-app-secret',
+        { expiresIn: 600 },
+      );
+
+      mockAccountsService.register.mockResolvedValue({
+        id: 'acc-2',
+        phoneNumber: '0987654321',
+        isActive: true,
+      });
+
+      const result = await service.registerApp({
+        verificationToken: validVerificationToken,
+        password: 'PatientPass@123',
+      });
+
+      expect(result.tokenType).toBe('Bearer');
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+      expect(mockAccountsService.register).toHaveBeenCalledWith({
+        phoneNumber: '0987654321',
+        password: 'PatientPass@123',
+        email: undefined,
+      });
+    });
+
+    it('should throw BadRequest when verification token is invalid or has wrong purpose', async () => {
+      const invalidToken = jwt.sign(
+        {
+          phoneNumber: '0987654321',
+          purpose: OtpPurpose.FORGOT_PASSWORD,
+          type: 'OTP_VERIFICATION',
+        },
+        'test-app-secret',
+        { expiresIn: 600 },
+      );
+
+      await expect(
+        service.registerApp({
+          verificationToken: invalidToken,
+          password: 'PatientPass@123',
+        }),
+      ).rejects.toThrow(BadRequest);
+    });
+
+    it('should throw BadRequest when neither phoneNumber nor verificationToken is provided', async () => {
+      await expect(
+        service.registerApp({
+          password: 'PatientPass@123',
+        }),
+      ).rejects.toThrow(BadRequest);
     });
   });
 

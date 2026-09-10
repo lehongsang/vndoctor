@@ -1,11 +1,19 @@
-import { PickType } from '@nestjs/swagger';
-import { AppRegisterDto } from './app-register.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 /**
  * DTO for Patient Mobile App login.
- * Reuses phoneNumber and password validation from AppRegisterDto.
  */
-export class AppLoginDto extends PickType(AppRegisterDto, [
-  'phoneNumber',
-  'password',
-] as const) {}
+export class AppLoginDto {
+  @ApiProperty({ description: 'Số điện thoại đăng nhập', example: '0987654321' })
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber: string;
+
+  @ApiProperty({ description: 'Mật khẩu đăng nhập', example: 'Pass@123' })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  password: string;
+}
+

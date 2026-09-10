@@ -21,4 +21,17 @@ export const getBlacklistTokenKey = (token: string): string => {
   return `blacklist:token:${hash}`;
 };
 
+export const getAppOtpKey = (purpose: string, phone: string): string => {
+  return `otp:${purpose.toLowerCase()}:${phone.trim()}`;
+};
+
+export const getAppOtpAttemptsKey = (purpose: string, phone: string): string => {
+  return `otp:attempts:${purpose.toLowerCase()}:${phone.trim()}`;
+};
+
+export const getAppOtpCooldownKey = (purpose: string, phone: string): string => {
+  return `otp:cooldown:${purpose.toLowerCase()}:${phone.trim()}`;
+};
+
+
 

@@ -8,9 +8,13 @@ import {
   LogoutDto,
   LogoutResponseDto,
   RefreshTokenDto,
+  SendOtpDto,
+  SendOtpResponseDto,
   StaffAuthResponseDto,
   StaffLoginDto,
   TokenRefreshResponseDto,
+  VerifyOtpDto,
+  VerifyOtpResponseDto,
 } from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
 import { Public } from '@/commons/decorators/public.decorator';
@@ -80,10 +84,32 @@ export class VnDoctorAuthController {
   }
 
   @Public()
+  @Post('app/send-otp')
+  @Doc({
+    summary: 'Public - Gửi mã OTP SMS xác thực số điện thoại (Mobile App)',
+    description: 'Tạo mã OTP 6 số ngẫu nhiên, lưu Redis (5 phút), áp dụng cooldown 60s và gửi qua SMS Brandname',
+    response: { serialization: SendOtpResponseDto },
+  })
+  async sendAppOtp(@Body() dto: SendOtpDto): Promise<SendOtpResponseDto> {
+    return this.authService.sendAppOtp(dto);
+  }
+
+  @Public()
+  @Post('app/verify-otp')
+  @Doc({
+    summary: 'Public - Xác thực mã OTP SMS và nhận Verification Token (Mobile App)',
+    description: 'Kiểm tra mã OTP (giới hạn 5 lần thử), nếu đúng trả về Verification Token có hạn 10 phút để đăng ký tài khoản',
+    response: { serialization: VerifyOtpResponseDto },
+  })
+  async verifyAppOtp(@Body() dto: VerifyOtpDto): Promise<VerifyOtpResponseDto> {
+    return this.authService.verifyAppOtp(dto);
+  }
+
+  @Public()
   @Post('app/register')
   @Doc({
     summary: 'Public - Đăng ký tài khoản Bệnh nhân (Mobile App)',
-    description: 'Đăng ký tài khoản mới trên ứng dụng di động qua số điện thoại & mật khẩu',
+    description: 'Đăng ký tài khoản mới trên ứng dụng di động qua verificationToken hoặc số điện thoại & mật khẩu',
     response: { serialization: AppAuthResponseDto },
   })
   async registerApp(@Body() dto: AppRegisterDto): Promise<AppAuthResponseDto> {
