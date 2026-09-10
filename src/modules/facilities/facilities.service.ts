@@ -15,7 +15,17 @@ export class FacilitiesService {
   ) {}
 
   /**
-   * Creates a new medical facility with hierarchical authorization.
+   * Helper to generate unique facility code (e.g. FAC-20260910-ABCD).
+   */
+  private generateFacilityCode(): string {
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `FAC-${dateStr}-${randomHex}`;
+  }
+
+  /**
+   * Creates a new medical facility with hierarchical authorization and auto-generated facility code.
    *
    * @param dto - Facility creation data.
    * @param creator - Authenticated staff creator info.
@@ -25,12 +35,23 @@ export class FacilitiesService {
     dto: CreateFacilityDto,
     creator?: StaffJwtPayload,
   ): Promise<Facility> {
-    // 1. Check duplicate facilityCode
-    const existing = await this.facilityRepository.findOne({
-      where: { facilityCode: dto.facilityCode },
-    });
+    // 1. Generate unique facilityCode
+    let facilityCode = this.generateFacilityCode();
+    let isCodeUnique = false;
+    let attempts = 0;
+    while (!isCodeUnique && attempts < 5) {
+      const existing = await this.facilityRepository.findOne({
+        where: { facilityCode },
+      });
+      if (!existing) {
+        isCodeUnique = true;
+      } else {
+        facilityCode = this.generateFacilityCode();
+        attempts++;
+      }
+    }
 
-    if (existing) {
+    if (!isCodeUnique) {
       throw new Conflict(ErrorCode.FACILITY_CODE_ALREADY_EXISTS);
     }
 
@@ -63,6 +84,7 @@ export class FacilitiesService {
     // 4. Create & save facility
     const facility = this.facilityRepository.create({
       ...dto,
+      facilityCode,
       parentId: targetParentId,
     });
 

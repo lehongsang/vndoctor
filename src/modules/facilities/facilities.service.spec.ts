@@ -72,7 +72,6 @@ describe('FacilitiesService', () => {
       mockRepository.save.mockResolvedValue(mockParentFacility);
 
       const result = await service.createFacility({
-        facilityCode: 'BV-TINH-01',
         facilityName: 'Bệnh viện Đa khoa Tỉnh',
         facilityType: FacilityType.PROVINCIAL_HOSPITAL,
         address: '123 Đường Tỉnh',
@@ -99,7 +98,6 @@ describe('FacilitiesService', () => {
 
       const result = await service.createFacility(
         {
-          facilityCode: 'BV-TRUNGUONG-01',
           facilityName: 'Bệnh viện Bạch Mai (Trung ương)',
           facilityType: FacilityType.CENTRAL_HOSPITAL,
           address: '78 Giải Phóng, Hà Nội',
@@ -111,6 +109,7 @@ describe('FacilitiesService', () => {
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           parentId: null,
+          facilityCode: expect.stringMatching(/^FAC-\d{8}-[A-Z0-9]+$/),
         }),
       );
     });
@@ -136,7 +135,6 @@ describe('FacilitiesService', () => {
 
       const result = await service.createFacility(
         {
-          facilityCode: 'TTYT-HUYEN-A',
           facilityName: 'Trung tâm Y tế Huyện A',
           facilityType: FacilityType.DISTRICT_HOSPITAL,
           address: '456 Đường Huyện',
@@ -148,6 +146,7 @@ describe('FacilitiesService', () => {
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           parentId: 'provincial-111',
+          facilityCode: expect.stringMatching(/^FAC-\d{8}-[A-Z0-9]+$/),
         }),
       );
     });
@@ -168,7 +167,6 @@ describe('FacilitiesService', () => {
       await expect(
         service.createFacility(
           {
-            facilityCode: 'TTYT-HUYEN-B',
             facilityName: 'Trung tâm Y tế Huyện B',
             facilityType: FacilityType.DISTRICT_HOSPITAL,
             parentId: 'other-provincial-999',
@@ -179,12 +177,11 @@ describe('FacilitiesService', () => {
       ).rejects.toThrow(Forbidden);
     });
 
-    it('should throw Conflict when facilityCode already exists', async () => {
+    it('should throw Conflict when auto-generated facilityCode conflicts persist', async () => {
       mockRepository.findOne.mockResolvedValue(mockParentFacility);
 
       await expect(
         service.createFacility({
-          facilityCode: 'BV-TINH-01',
           facilityName: 'Bệnh viện Đa khoa Tỉnh',
           address: '123 Đường Tỉnh',
         }),

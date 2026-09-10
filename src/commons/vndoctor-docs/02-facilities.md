@@ -83,7 +83,6 @@ Module `facilities` quản lý mạng lưới các cơ sở y tế theo phân tu
 #### 📥 Input (Body - `CreateFacilityDto`)
 ```json
 {
-  "facilityCode": "BV-TINH-01",
   "facilityName": "Bệnh viện Đa khoa Tỉnh",
   "facilityType": "PROVINCIAL_HOSPITAL",
   "phoneNumber": "02363821111",

@@ -11,12 +11,6 @@ import {
 import { FacilityType } from '@/commons/enums/vndoctor.enum';
 
 export class CreateFacilityDto {
-  @ApiProperty({ description: 'Mã cơ sở y tế (duy nhất)', example: 'BV-CHO-RAY' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  facilityCode: string;
-
   @ApiProperty({ description: 'Tên cơ sở y tế', example: 'Bệnh viện Chợ Rẫy' })
   @IsString()
   @IsNotEmpty()
