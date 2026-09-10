@@ -35,6 +35,7 @@ describe('VnDoctorAuthService', () => {
 
   const mockSmsService = {
     sendOtp: jest.fn().mockResolvedValue(undefined),
+    isMockProvider: jest.fn().mockReturnValue(true),
   };
 
   const mockConfigService = {

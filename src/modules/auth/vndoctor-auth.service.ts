@@ -269,6 +269,7 @@ export class VnDoctorAuthService {
       success: true,
       expiresInSeconds: otpTtl,
       retryAfterSeconds: cooldownTtl,
+      otp: this.smsService.isMockProvider() ? otp : undefined,
     };
   }
 

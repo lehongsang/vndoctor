@@ -40,4 +40,11 @@ export class SendOtpResponseDto {
 
   @ApiProperty({ description: 'Thời gian có thể yêu cầu gửi lại OTP (giây)', example: 60 })
   retryAfterSeconds: number;
+
+  @ApiProperty({
+    description: 'Mã OTP trả về khi hệ thống đang ở chế độ mock/test để tiện kiểm thử',
+    example: '123456',
+    required: false,
+  })
+  otp?: string;
 }

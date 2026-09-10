@@ -15,21 +15,36 @@ export class SmsService {
   constructor(private readonly configService: ConfigService) {}
 
   /**
+   * Checks whether the current SMS provider is mock.
+   */
+  isMockProvider(): boolean {
+    const smsProvider = this.configService.get<string>('SMS_PROVIDER', 'mock');
+    return smsProvider === 'mock';
+  }
+
+  /**
    * Sends an OTP message to a phone number.
    */
   async sendOtp(phoneNumber: string, otp: string, ttlMinutes: number): Promise<void> {
     const senderId = this.configService.get<string>('SMS_SENDER_ID', 'NAVI');
     const smsProvider = this.configService.get<string>('SMS_PROVIDER', 'mock');
 
-    // Intentionally avoid logging full OTP/phone in production environments.
-    this.logger.log(
-      `[SMS:${smsProvider}] queued OTP delivery via ${senderId} to ${this.maskPhone(
-        phoneNumber,
-      )} (ttl=${ttlMinutes}m)`,
-    );
-
-    if (this.configService.get<string>('NODE_ENV') !== 'production') {
-      this.logger.debug(`[SMS:${smsProvider}] otp=${otp}`);
+    if (smsProvider === 'mock') {
+      this.logger.log(
+        `[SMS:mock] =======================================================`,
+      );
+      this.logger.log(
+        `[SMS:mock] 📱 MÃ OTP GỬI TỚI ${phoneNumber}: >>> ${otp} <<< (Hạn ${ttlMinutes} phút)`,
+      );
+      this.logger.log(
+        `[SMS:mock] =======================================================`,
+      );
+    } else {
+      this.logger.log(
+        `[SMS:${smsProvider}] queued OTP delivery via ${senderId} to ${this.maskPhone(
+          phoneNumber,
+        )} (ttl=${ttlMinutes}m)`,
+      );
     }
 
     await Promise.resolve();
