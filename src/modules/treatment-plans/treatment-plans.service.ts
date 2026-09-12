@@ -118,6 +118,14 @@ export class TreatmentPlansService {
       qb.andWhere('tmpl.isActive = :isActive', { isActive: query.isActive });
     }
 
+    if (query.search) {
+      const kw = `%${query.search.trim()}%`;
+      qb.andWhere(
+        '(tmpl.templateName ILIKE :kw OR tmpl.diseaseCategory ILIKE :kw)',
+        { kw },
+      );
+    }
+
     qb.orderBy('tmpl.createdAt', 'DESC').skip(skip).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
@@ -245,8 +253,20 @@ export class TreatmentPlansService {
       qb.andWhere('plan.doctorId = :doctorId', { doctorId: query.doctorId });
     }
 
+    if (query.facilityId) {
+      qb.andWhere('doctor.facilityId = :facilityId', { facilityId: query.facilityId });
+    }
+
     if (query.status) {
       qb.andWhere('plan.status = :status', { status: query.status });
+    }
+
+    if (query.search) {
+      const kw = `%${query.search.trim()}%`;
+      qb.andWhere(
+        '(plan.title ILIKE :kw OR plan.planCode ILIKE :kw OR plan.doctorNotes ILIKE :kw)',
+        { kw },
+      );
     }
 
     qb.orderBy('plan.createdAt', 'DESC').skip(skip).take(limit);

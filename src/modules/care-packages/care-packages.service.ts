@@ -24,7 +24,16 @@ export class CarePackagesService {
   ) {}
 
   /**
-   * Create a new Care Package for a facility.
+   * Helper to generate unique care package code (e.g. PKG-20260912-ABCD).
+   */
+  private generatePackageCode(): string {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `PKG-${dateStr}-${randomSuffix}`;
+  }
+
+  /**
+   * Create a new Care Package for a facility with auto-generated unique package code.
    *
    * @param dto Input data for creating care package
    * @param staffFacilityId Facility ID of the authenticated staff
@@ -48,18 +57,29 @@ export class CarePackagesService {
       throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
 
-    // 3. Validate unique code
-    const existingCode = await this.carePackageRepo.findOne({
-      where: { code: dto.code.trim().toUpperCase() },
-    });
-    if (existingCode) {
+    // 3. Generate unique package code
+    let code = this.generatePackageCode();
+    let isUnique = false;
+    let attempts = 0;
+    while (!isUnique && attempts < 5) {
+      const existing = await this.carePackageRepo.findOne({
+        where: { code },
+      });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        code = this.generatePackageCode();
+        attempts++;
+      }
+    }
+    if (!isUnique) {
       throw new Conflict(ErrorCode.CARE_PACKAGE_CODE_ALREADY_EXISTS);
     }
 
     // 4. Create and persist care package entity
     const carePackage = this.carePackageRepo.create({
       facilityId,
-      code: dto.code.trim().toUpperCase(),
+      code,
       name: dto.name.trim(),
       type: dto.type,
       description: dto.description ?? null,
@@ -161,19 +181,7 @@ export class CarePackagesService {
       throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
-    // 2. If code changed, verify unique code
-    if (dto.code && dto.code.trim().toUpperCase() !== carePackage.code) {
-      const normalizedCode = dto.code.trim().toUpperCase();
-      const existing = await this.carePackageRepo.findOne({
-        where: { code: normalizedCode },
-      });
-      if (existing && existing.id !== id) {
-        throw new Conflict(ErrorCode.CARE_PACKAGE_CODE_ALREADY_EXISTS);
-      }
-      carePackage.code = normalizedCode;
-    }
-
-    // 3. If facility ID changed, verify new facility exists
+    // 2. If facility ID changed, verify new facility exists
     if (dto.facilityId && dto.facilityId !== carePackage.facilityId) {
       const facility = await this.facilityRepo.findOne({
         where: { id: dto.facilityId },

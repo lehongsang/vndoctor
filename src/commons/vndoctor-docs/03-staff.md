@@ -18,16 +18,15 @@ Module `staff` quản lý hồ sơ nhân viên y tế, bác sĩ và phân quyề
 - **Quyền**: `StaffAuthGuard` (`ADMIN`)
 - **Mô tả**: Tạo tài khoản cho nhân viên y tế mới gắn liền với cơ sở y tế.
 
-#### 📥 Input (Body - `CreateStaffUserDto`)
+#### 📥 Input (Body - `CreateStaffDto`)
 | Trường | Kiểu | Bắt buộc | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `facilityId` | UUID | Có | ID cơ sở y tế công tác |
-| `staffCode` | string | Có | Mã nhân viên / Số CCHN (Unique) |
-| `username` | string | Có | Tên đăng nhập CMS (Unique) |
-| `password` | string | Có | Mật khẩu khởi tạo |
+| `facilityId` | UUID | Không | ID cơ sở y tế công tác (Tự động gán theo Admin) |
 | `fullName` | string | Có | Họ và tên nhân viên |
+| `email` | string | Có | Email liên hệ (bắt buộc, dùng làm tài khoản) |
+| `username` | string | Không | Tên đăng nhập CMS (Tự động tạo từ email nếu để trống) |
+| `password` | string | Không | Mật khẩu khởi tạo (Mặc định: `vndoctor123`) |
 | `role` | enum | Có | `ADMIN`, `DOCTOR`, `DOCTOR_EXPERT`, `NURSE`, `STAFF` |
-| `email` | string | Có | Email liên hệ (bắt buộc) |
 | `specialty` | string | Không | Chuyên khoa (VD: Tim mạch, Nội tiết) |
 | `phoneNumber`| string | Không | Số điện thoại |
 
@@ -35,13 +34,10 @@ Module `staff` quản lý hồ sơ nhân viên y tế, bác sĩ và phân quyề
 ```json
 {
   "facilityId": "e1112233-4455-6677-8899-aabbccddeeff",
-  "staffCode": "CCHN-08991",
-  "username": "doctor_lan",
-  "password": "Password@123",
   "fullName": "BS. Nguyễn Văn Lan",
+  "email": "doctor_lan@bvdanang.vn",
   "role": "DOCTOR",
   "specialty": "Tim mạch Can thiệp",
-  "email": "doctor_lan@bvdanang.vn",
   "phoneNumber": "0912345678"
 }
 ```

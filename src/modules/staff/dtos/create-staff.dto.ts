@@ -20,11 +20,6 @@ export class CreateStaffDto {
   @IsOptional()
   facilityId?: string;
 
-  @ApiProperty({ description: 'Mã nhân viên / Mã CCHN (Duy nhất)', example: 'CCHN-00123' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  staffCode: string;
 
   @ApiProperty({ description: 'Họ và tên đầy đủ', example: 'BS. CKII Nguyễn Văn An' })
   @IsString()

@@ -18,7 +18,6 @@ Module `care-packages` quản lý danh mục các gói dịch vụ chăm sóc s�
 #### 📥 Input (Body - `CreateCarePackageDto`)
 | Trường | Kiểu | Bắt buộc | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `code` | string | Có | Mã gói duy nhất (VD: `PKG-CARDIO-30D`) |
 | `name` | string | Có | Tên gói chăm sóc |
 | `type` | enum | Không | `STANDARD` hoặc `VIP` (Mặc định: `STANDARD`) |
 | `description` | string | Không | Mô tả chi tiết quyền lợi gói |
@@ -30,7 +29,6 @@ Module `care-packages` quản lý danh mục các gói dịch vụ chăm sóc s�
 *Ví dụ Body:*
 ```json
 {
-  "code": "PKG-CARDIO-30D",
   "name": "Gói Chăm Sóc Tim Mạch Toàn Diện 30 Ngày",
   "type": "STANDARD",
   "description": "Bao gồm theo dõi huyết áp hàng ngày, bác sĩ chuyên khoa tư vấn trực tuyến và điều dưỡng hỗ trợ 24/7.",

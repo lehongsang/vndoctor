@@ -45,7 +45,7 @@ export class FacilitiesController {
   @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân viên - Danh sách cơ sở y tế',
-    description: 'Tìm kiếm, phân trang và lọc theo cấp bậc (facilityType) hoặc cơ sở cha (parentId)',
+    description: 'Tìm kiếm, phân trang và lọc theo cấp bậc (facilityType), cơ sở cha (parentId), hoặc tuyến trung ương (isRoot)',
   })
   async getFacilities(@Query() query: QueryFacilityDto) {
     return this.facilitiesService.getFacilities(query);
@@ -55,20 +55,26 @@ export class FacilitiesController {
   @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân sự - Cây phân cấp cơ sở y tế',
-    description: 'Lấy toàn bộ cây phả hệ mạng lưới cơ sở y tế từ cấp cao nhất xuống xã/phòng khám',
+    description: 'Lấy toàn bộ cây phả hệ mạng lưới cơ sở y tế từ cấp cao nhất xuống xã/phòng khám (hỗ trợ lọc theo rootId và trạng thái)',
   })
-  async getFacilityTree(@Query('rootId') rootId?: string) {
-    return this.facilitiesService.getFacilityTree(rootId);
+  async getFacilityTree(
+    @Query('rootId') rootId?: string,
+    @Query('isActive') isActive?: boolean,
+  ) {
+    return this.facilitiesService.getFacilityTree(rootId, isActive);
   }
 
   @Get(':id/children')
   @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
     summary: 'Role: Tất cả nhân sự - Danh sách cơ sở con trực thuộc',
-    description: 'Lấy danh sách các cơ sở y tế cấp dưới trực tiếp thuộc quản lý của một cơ sở cha',
+    description: 'Lấy danh sách các cơ sở y tế cấp dưới trực tiếp thuộc quản lý của một cơ sở cha (hỗ trợ tìm kiếm, phân trang và lọc theo cấp bậc/trạng thái)',
   })
-  async getChildrenFacilities(@Param('id') id: string) {
-    return this.facilitiesService.getChildrenFacilities(id);
+  async getChildrenFacilities(
+    @Param('id') id: string,
+    @Query() query: QueryFacilityDto,
+  ) {
+    return this.facilitiesService.getChildrenFacilities(id, query);
   }
 
   @Get(':id')

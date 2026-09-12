@@ -110,10 +110,16 @@ export class FacilitiesService {
 
     if (query.search) {
       const keyword = `%${query.search.trim()}%`;
-      qb.where(
-        '(facility.facilityName ILIKE :kw OR facility.facilityCode ILIKE :kw)',
+      qb.andWhere(
+        '(facility.facilityName ILIKE :kw OR facility.facilityCode ILIKE :kw OR facility.address ILIKE :kw OR facility.phoneNumber ILIKE :kw)',
         { kw: keyword },
       );
+    }
+
+    if (query.isRoot === true) {
+      qb.andWhere('facility.parentId IS NULL');
+    } else if (query.isRoot === false) {
+      qb.andWhere('facility.parentId IS NOT NULL');
     }
 
     if (query.facilityType) {
@@ -159,38 +165,74 @@ export class FacilitiesService {
     return facility;
   }
 
-
   /**
-   * Gets direct child facilities under a specific parent facility.
+   * Gets direct child facilities under a specific parent facility with optional filters and pagination.
    *
    * @param parentId - Parent facility UUID.
-   * @returns Array of direct child facilities.
+   * @param query - Filter and pagination criteria.
+   * @returns Paginated child facilities and total count.
    */
-  async getChildrenFacilities(parentId: string): Promise<Facility[]> {
+  async getChildrenFacilities(
+    parentId: string,
+    query?: QueryFacilityDto,
+  ): Promise<{ items: Facility[]; total: number; page: number; limit: number }> {
     await this.getFacilityById(parentId);
-    return this.facilityRepository.find({
-      where: { parentId },
-      order: { facilityName: 'ASC' },
-    });
+
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query?.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const qb = this.facilityRepository
+      .createQueryBuilder('facility')
+      .leftJoinAndSelect('facility.parent', 'parent')
+      .where('facility.parentId = :parentId', { parentId });
+
+    if (query?.search) {
+      const keyword = `%${query.search.trim()}%`;
+      qb.andWhere(
+        '(facility.facilityName ILIKE :kw OR facility.facilityCode ILIKE :kw OR facility.address ILIKE :kw OR facility.phoneNumber ILIKE :kw)',
+        { kw: keyword },
+      );
+    }
+
+    if (query?.facilityType) {
+      qb.andWhere('facility.facilityType = :facilityType', {
+        facilityType: query.facilityType,
+      });
+    }
+
+    if (query?.isActive !== undefined) {
+      qb.andWhere('facility.isActive = :isActive', {
+        isActive: query.isActive,
+      });
+    }
+
+    qb.orderBy('facility.facilityName', 'ASC').skip(skip).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+    return { items, total, page, limit };
   }
 
   /**
    * Gets complete tree structure of facilities starting from root or a specific branch.
    *
    * @param rootId - Optional root facility ID.
+   * @param isActive - Optional filter by active status.
    * @returns Nested tree of facilities.
    */
-  async getFacilityTree(rootId?: string): Promise<Facility[]> {
+  async getFacilityTree(rootId?: string, isActive?: boolean): Promise<Facility[]> {
+    const where: Record<string, unknown> = {};
     if (rootId) {
-      const root = await this.facilityRepository.findOne({
-        where: { id: rootId },
-        relations: ['children', 'children.children'],
-      });
-      return root ? [root] : [];
+      where.id = rootId;
+    } else {
+      where.parentId = IsNull();
+    }
+    if (isActive !== undefined) {
+      where.isActive = isActive;
     }
 
     return this.facilityRepository.find({
-      where: { parentId: IsNull() },
+      where,
       relations: ['children', 'children.children'],
       order: { facilityName: 'ASC' },
     });

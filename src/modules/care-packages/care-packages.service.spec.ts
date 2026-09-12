@@ -1,5 +1,5 @@
 import { CarePackageStatus, CarePackageType } from '@/commons/enums/vndoctor.enum';
-import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
+import { Forbidden, NotFound } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
@@ -75,12 +75,11 @@ describe('CarePackagesService', () => {
   });
 
   describe('create', () => {
-    it('should create a care package successfully', async () => {
+    it('should create a care package successfully with auto-generated code', async () => {
       mockCarePackageRepo.findOne.mockResolvedValueOnce(null); // No duplicate code
 
       const result = await service.create(
         {
-          code: 'PKG-DIABETES-60D',
           name: 'Gói Chăm Sóc Đái Tháo Đường',
           type: CarePackageType.VIP,
           durationDays: 60,
@@ -90,7 +89,6 @@ describe('CarePackagesService', () => {
       );
 
       expect(result).toBeDefined();
-      expect(result.code).toBe('PKG-DIABETES-60D');
       expect(mockCarePackageRepo.save).toHaveBeenCalled();
     });
 
@@ -100,7 +98,6 @@ describe('CarePackagesService', () => {
       await expect(
         service.create(
           {
-            code: 'PKG-NEW',
             name: 'Gói Mới',
             durationDays: 30,
             priceAmount: 1000000,
@@ -108,23 +105,6 @@ describe('CarePackagesService', () => {
           'invalid-facility',
         ),
       ).rejects.toThrow(NotFound);
-    });
-
-    it('should throw Conflict if code already exists', async () => {
-      mockFacilityRepo.findOne.mockResolvedValueOnce({ ...mockFacility });
-      mockCarePackageRepo.findOne.mockResolvedValueOnce({ ...mockCarePackage });
-
-      await expect(
-        service.create(
-          {
-            code: 'PKG-CARDIO-30D',
-            name: 'Trùng mã',
-            durationDays: 30,
-            priceAmount: 1000000,
-          },
-          'facility-1',
-        ),
-      ).rejects.toThrow(Conflict);
     });
   });
 
@@ -161,7 +141,7 @@ describe('CarePackagesService', () => {
   });
 
   describe('update', () => {
-    it('should update care package successfully without code change', async () => {
+    it('should update care package successfully', async () => {
       mockCarePackageRepo.findOne.mockResolvedValueOnce({ ...mockCarePackage }); // findById
 
       const result = await service.update(
@@ -169,23 +149,6 @@ describe('CarePackagesService', () => {
         {
           name: 'Tên gói cập nhật',
           priceAmount: 2000000,
-        },
-        'facility-1',
-      );
-
-      expect(result).toBeDefined();
-      expect(mockCarePackageRepo.save).toHaveBeenCalled();
-    });
-
-    it('should update care package successfully with new unique code', async () => {
-      mockCarePackageRepo.findOne
-        .mockResolvedValueOnce({ ...mockCarePackage }) // findById
-        .mockResolvedValueOnce(null); // code check
-
-      const result = await service.update(
-        'pkg-1',
-        {
-          code: 'PKG-CARDIO-NEW',
         },
         'facility-1',
       );

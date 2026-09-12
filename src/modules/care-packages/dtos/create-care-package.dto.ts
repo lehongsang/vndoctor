@@ -26,15 +26,6 @@ export class CreateCarePackageDto {
   facilityId?: string;
 
   @ApiProperty({
-    description: 'Unique care package code',
-    example: 'PKG-CARDIO-30D',
-  })
-  @IsNotEmpty({ message: 'Code is required' })
-  @IsString({ message: 'Code must be a string' })
-  @MaxLength(50, { message: 'Code cannot exceed 50 characters' })
-  code: string;
-
-  @ApiProperty({
     description: 'Care package name',
     example: 'Gói Chăm Sóc Tim Mạch 30 Ngày',
   })

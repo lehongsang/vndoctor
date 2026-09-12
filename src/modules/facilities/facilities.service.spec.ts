@@ -207,13 +207,26 @@ describe('FacilitiesService', () => {
   });
 
   describe('getChildrenFacilities', () => {
-    it('should return child facilities for given parentId', async () => {
+    it('should return paginated child facilities for given parentId', async () => {
       mockRepository.findOne.mockResolvedValue(mockParentFacility);
-      mockRepository.find.mockResolvedValue([mockDistrictFacility]);
+      const qb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[mockDistrictFacility], 1]),
+      };
+      mockRepository.createQueryBuilder.mockReturnValue(qb);
 
-      const children = await service.getChildrenFacilities('provincial-111');
-      expect(children).toHaveLength(1);
-      expect(children[0].id).toBe('district-222');
+      const result = await service.getChildrenFacilities('provincial-111', {
+        search: 'Huyện A',
+        facilityType: FacilityType.DISTRICT_HOSPITAL,
+      });
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe('district-222');
+      expect(result.total).toBe(1);
     });
   });
 });

@@ -4,6 +4,11 @@ import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 
 export class QueryTreatmentPlanDto extends PartialType(GetManyBaseQueryParams) {
+  @ApiPropertyOptional({ description: 'Filter by Facility ID' })
+  @IsUUID()
+  @IsOptional()
+  facilityId?: string;
+
   @ApiPropertyOptional({ description: 'Filter by Health Profile ID' })
   @IsUUID()
   @IsOptional()

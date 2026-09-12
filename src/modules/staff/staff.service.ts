@@ -33,7 +33,16 @@ export class StaffService {
   ) {}
 
   /**
-   * Registers a single staff/doctor account with automatic default password & email requirement.
+   * Helper to generate unique staff code (e.g. STF-20260912-ABCD).
+   */
+  private generateStaffCode(): string {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `STF-${dateStr}-${randomSuffix}`;
+  }
+
+  /**
+   * Registers a single staff/doctor account with auto-generated staff code, default password & email requirement.
    *
    * @param dto - Staff registration data.
    * @param creator - Authenticated creator info.
@@ -65,21 +74,33 @@ export class StaffService {
       }
     }
 
-    // 2. Resolve username: use provided username or email prefix
+    // 2. Generate unique staffCode
+    let staffCode = this.generateStaffCode();
+    let isUnique = false;
+    let attempts = 0;
+    while (!isUnique && attempts < 5) {
+      const existing = await this.staffRepository.findOne({
+        where: { staffCode },
+      });
+      if (!existing) {
+        isUnique = true;
+      } else {
+        staffCode = this.generateStaffCode();
+        attempts++;
+      }
+    }
+    if (!isUnique) {
+      throw new Conflict(ErrorCode.STAFF_CODE_ALREADY_EXISTS);
+    }
+
+    // 3. Resolve username: use provided username or email prefix
     let resolvedUsername = dto.username?.trim();
     if (!resolvedUsername) {
       const emailPrefix = dto.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '_');
       resolvedUsername = emailPrefix;
     }
 
-    // 3. Check for duplicates (staffCode, email, username)
-    const existingCode = await this.staffRepository.findOne({
-      where: { staffCode: dto.staffCode },
-    });
-    if (existingCode) {
-      throw new Conflict(ErrorCode.STAFF_CODE_ALREADY_EXISTS);
-    }
-
+    // 4. Check for duplicate email and username
     const existingEmail = await this.staffRepository.findOne({
       where: { email: dto.email.toLowerCase().trim() },
     });
@@ -91,18 +112,20 @@ export class StaffService {
       where: { username: resolvedUsername },
     });
     if (existingUsername) {
-      // If username from email is already taken, append staffCode
-      resolvedUsername = `${resolvedUsername}_${dto.staffCode.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+      // If username from email is already taken, append staffCode suffix
+      const suffix = staffCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+      resolvedUsername = `${resolvedUsername}_${suffix}`;
     }
 
-    // 4. Hash password (use provided password or default 'vndoctor123')
+    // 5. Hash password (use provided password or default 'vndoctor123')
     const rawPassword = dto.password?.trim() || StaffService.DEFAULT_STAFF_PASSWORD;
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(rawPassword, salt);
 
-    // 5. Create and save staff
+    // 6. Create and save staff
     const staff = this.staffRepository.create({
       ...dto,
+      staffCode,
       facilityId: targetFacilityId,
       username: resolvedUsername,
       email: dto.email.toLowerCase().trim(),

@@ -78,7 +78,6 @@ describe('StaffService', () => {
 
       const result = await service.createStaff({
         facilityId: 'fac-111',
-        staffCode: 'CCHN-01',
         fullName: 'BS. Nguyễn Văn An',
         email: 'dr.an@hospital.vn',
         role: StaffRole.DOCTOR,
@@ -114,7 +113,6 @@ describe('StaffService', () => {
 
       const result = await service.createStaff(
         {
-          staffCode: 'CCHN-02',
           fullName: 'BS. Trần Văn B',
           email: 'dr.b@hospital.vn',
           role: StaffRole.DOCTOR,
@@ -149,7 +147,6 @@ describe('StaffService', () => {
       const result = await service.createStaff(
         {
           facilityId: 'any-fac-999',
-          staffCode: 'CCHN-ROOT-CREATED',
           fullName: 'BS. Bệnh Viện Khác',
           email: 'dr.other@hospital.vn',
           role: StaffRole.DOCTOR,
@@ -180,7 +177,6 @@ describe('StaffService', () => {
         service.createStaff(
           {
             facilityId: 'other-fac-999',
-            staffCode: 'CCHN-03',
             fullName: 'BS. Khác',
             email: 'dr.other@hospital.vn',
             role: StaffRole.DOCTOR,
@@ -199,7 +195,6 @@ describe('StaffService', () => {
       await expect(
         service.createStaff({
           facilityId: 'fac-111',
-          staffCode: 'CCHN-NEW',
           fullName: 'BS. Mới',
           email: 'dr.an@hospital.vn',
           role: StaffRole.DOCTOR,
