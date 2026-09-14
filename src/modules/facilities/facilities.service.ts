@@ -250,4 +250,46 @@ export class FacilitiesService {
     Object.assign(facility, dto);
     return this.facilityRepository.save(facility);
   }
+
+  /**
+   * Checks if a target facility is a child or descendant of a parent facility in the hierarchy.
+   *
+   * @param facilityId - Target facility ID to verify.
+   * @param parentFacilityId - Expected parent or ancestor facility ID.
+   * @returns True if target facility belongs to parent's hierarchy branch, otherwise false.
+   */
+  async isSubordinateFacility(
+    facilityId: string,
+    parentFacilityId: string,
+  ): Promise<boolean> {
+    if (!facilityId || !parentFacilityId) {
+      return false;
+    }
+    if (facilityId === parentFacilityId) {
+      return true;
+    }
+
+    let currentId: string | null | undefined = facilityId;
+    const visited = new Set<string>();
+
+    while (currentId && !visited.has(currentId)) {
+      visited.add(currentId);
+      const facility = await this.facilityRepository.findOne({
+        where: { id: currentId },
+        select: ['id', 'parentId'],
+      });
+
+      if (!facility || !facility.parentId) {
+        return false;
+      }
+
+      if (facility.parentId === parentFacilityId) {
+        return true;
+      }
+
+      currentId = facility.parentId;
+    }
+
+    return false;
+  }
 }

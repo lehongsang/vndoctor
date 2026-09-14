@@ -13,7 +13,8 @@ import { StaffRole } from '@/commons/enums/vndoctor.enum';
 
 export class CreateStaffDto {
   @ApiPropertyOptional({
-    description: 'ID cơ sở y tế (Nếu là FacilityAdmin tạo, hệ thống sẽ tự động gán viện của Admin)',
+    description:
+      'ID cơ sở y tế (Nếu là FacilityAdmin tạo: mặc định gán viện của Admin nếu để trống, hoặc có thể gán cho cơ sở con trực thuộc)',
     example: 'd3b07384-d113-46fb-a709-a1b74a6fc6d0',
   })
   @IsUUID()

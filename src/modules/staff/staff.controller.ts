@@ -36,9 +36,9 @@ export class StaffController {
   @Post()
   @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN)
   @Doc({
-    summary: 'Role: VNDOCTOR_ADMIN / ADMIN - Tạo tài khoản Bác sĩ / Nhân sự y tế',
+    summary: 'Role: VNDOCTOR_ADMIN / ADMIN - Tạo tài khoản Bác sĩ / Nhân sự / Admin cơ sở',
     description:
-      'VNDOCTOR_ADMIN hoặc FacilityAdmin tạo tài khoản cho bác sĩ/nhân sự. Email là bắt buộc, mật khẩu mặc định tự động là vndoctor123 nếu không truyền.',
+      'VNDOCTOR_ADMIN hoặc FacilityAdmin tạo tài khoản cho bác sĩ/nhân sự/admin cơ sở con. Email là bắt buộc, mật khẩu mặc định tự động là vndoctor123 nếu không truyền.',
     response: { serialization: StaffUser },
   })
   async createStaff(

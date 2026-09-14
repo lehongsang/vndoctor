@@ -48,6 +48,7 @@ describe('StaffService', () => {
 
   const mockFacilitiesService = {
     getFacilityById: jest.fn(),
+    isSubordinateFacility: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -162,7 +163,90 @@ describe('StaffService', () => {
       );
     });
 
-    it('should throw Forbidden if FacilityAdmin tries to create staff for another facilityId', async () => {
+    it('should allow FacilityAdmin to create ADMIN or Staff for a subordinate/child facility', async () => {
+      const parentFacilityAdmin: StaffJwtPayload = {
+        id: 'admin-1',
+        facilityId: 'fac-111',
+        staffCode: 'ADMIN-01',
+        username: 'admin_parent',
+        fullName: 'Parent Facility Admin',
+        role: StaffRole.ADMIN,
+        type: 'STAFF',
+      };
+
+      const mockChildFacility = {
+        id: 'child-fac-222',
+        facilityCode: 'FAC-CHILD-01',
+        facilityName: 'Phòng khám trực thuộc',
+        address: 'Hà Nội',
+        isActive: true,
+      };
+
+      mockFacilitiesService.isSubordinateFacility.mockResolvedValue(true);
+      mockFacilitiesService.getFacilityById.mockResolvedValue(mockChildFacility);
+      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.create.mockReturnValue({
+        ...mockStaff,
+        facilityId: 'child-fac-222',
+        role: StaffRole.ADMIN,
+      });
+      mockRepository.save.mockResolvedValue({
+        ...mockStaff,
+        facilityId: 'child-fac-222',
+        role: StaffRole.ADMIN,
+      });
+
+      const result = await service.createStaff(
+        {
+          facilityId: 'child-fac-222',
+          fullName: 'Admin Cơ sở con',
+          email: 'admin.child@hospital.vn',
+          role: StaffRole.ADMIN,
+        },
+        parentFacilityAdmin,
+      );
+
+      expect(result).toBeDefined();
+      expect(mockFacilitiesService.isSubordinateFacility).toHaveBeenCalledWith(
+        'child-fac-222',
+        'fac-111',
+      );
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          facilityId: 'child-fac-222',
+          role: StaffRole.ADMIN,
+          email: 'admin.child@hospital.vn',
+        }),
+      );
+    });
+
+    it('should throw Forbidden if FacilityAdmin tries to create staff for an unrelated facility', async () => {
+      const facilityAdmin: StaffJwtPayload = {
+        id: 'admin-1',
+        facilityId: 'fac-111',
+        staffCode: 'ADMIN-01',
+        username: 'admin_fac',
+        fullName: 'Facility Admin',
+        role: StaffRole.ADMIN,
+        type: 'STAFF',
+      };
+
+      mockFacilitiesService.isSubordinateFacility.mockResolvedValue(false);
+
+      await expect(
+        service.createStaff(
+          {
+            facilityId: 'unrelated-fac-999',
+            fullName: 'BS. Khác',
+            email: 'dr.other@hospital.vn',
+            role: StaffRole.DOCTOR,
+          },
+          facilityAdmin,
+        ),
+      ).rejects.toThrow(Forbidden);
+    });
+
+    it('should throw Forbidden if non-VNDOCTOR_ADMIN tries to create a VNDOCTOR_ADMIN account', async () => {
       const facilityAdmin: StaffJwtPayload = {
         id: 'admin-1',
         facilityId: 'fac-111',
@@ -176,10 +260,10 @@ describe('StaffService', () => {
       await expect(
         service.createStaff(
           {
-            facilityId: 'other-fac-999',
-            fullName: 'BS. Khác',
-            email: 'dr.other@hospital.vn',
-            role: StaffRole.DOCTOR,
+            facilityId: 'fac-111',
+            fullName: 'Root Admin Impersonator',
+            email: 'impersonator@vndoctor.vn',
+            role: StaffRole.VNDOCTOR_ADMIN,
           },
           facilityAdmin,
         ),

@@ -229,4 +229,52 @@ describe('FacilitiesService', () => {
       expect(result.total).toBe(1);
     });
   });
+
+  describe('isSubordinateFacility', () => {
+    it('should return true if facilityId is equal to parentFacilityId', async () => {
+      const result = await service.isSubordinateFacility('fac-1', 'fac-1');
+      expect(result).toBe(true);
+    });
+
+    it('should return true for a direct child facility', async () => {
+      mockRepository.findOne.mockResolvedValueOnce({
+        id: 'child-1',
+        parentId: 'parent-1',
+      });
+
+      const result = await service.isSubordinateFacility('child-1', 'parent-1');
+      expect(result).toBe(true);
+    });
+
+    it('should return true for a grandchild facility (nested hierarchy)', async () => {
+      mockRepository.findOne
+        .mockResolvedValueOnce({
+          id: 'grandchild-1',
+          parentId: 'child-1',
+        })
+        .mockResolvedValueOnce({
+          id: 'child-1',
+          parentId: 'root-1',
+        });
+
+      const result = await service.isSubordinateFacility('grandchild-1', 'root-1');
+      expect(result).toBe(true);
+    });
+
+    it('should return false for unrelated facilities', async () => {
+      mockRepository.findOne.mockResolvedValueOnce({
+        id: 'other-facility',
+        parentId: null,
+      });
+
+      const result = await service.isSubordinateFacility('other-facility', 'parent-1');
+      expect(result).toBe(false);
+    });
+
+    it('should return false if facilityId or parentFacilityId is missing', async () => {
+      expect(await service.isSubordinateFacility('', 'parent-1')).toBe(false);
+      expect(await service.isSubordinateFacility('child-1', '')).toBe(false);
+    });
+  });
 });
+

@@ -42,7 +42,8 @@ export class StaffService {
   }
 
   /**
-   * Registers a single staff/doctor account with auto-generated staff code, default password & email requirement.
+   * Registers a single staff/doctor/admin account with auto-generated staff code, default password & email requirement.
+   * Supports facility admin creating accounts for their facility or subordinate (child) facilities.
    *
    * @param dto - Staff registration data.
    * @param creator - Authenticated creator info.
@@ -52,14 +53,34 @@ export class StaffService {
     dto: CreateStaffDto,
     creator?: StaffJwtPayload,
   ): Promise<StaffUser> {
-    // 1. Determine target facility ID based on creator scope
+    // 1. Role restriction: non-VNDOCTOR_ADMIN cannot create VNDOCTOR_ADMIN accounts
+    if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && dto.role === StaffRole.VNDOCTOR_ADMIN) {
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+    }
+
+    // 2. Determine target facility ID based on creator scope and hierarchy
     let targetFacilityId = dto.facilityId;
 
-    if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && creator.facilityId) {
-      if (dto.facilityId && dto.facilityId !== creator.facilityId) {
+    if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN) {
+      if (!creator.facilityId) {
         throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
-      targetFacilityId = creator.facilityId;
+
+      if (!dto.facilityId || dto.facilityId === creator.facilityId) {
+        targetFacilityId = creator.facilityId;
+      } else {
+        // Creator is creating an account for another facility -> verify if it's a subordinate/child facility
+        const isSubordinate = await this.facilitiesService.isSubordinateFacility(
+          dto.facilityId,
+          creator.facilityId,
+        );
+
+        if (!isSubordinate) {
+          throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        }
+
+        targetFacilityId = dto.facilityId;
+      }
     }
 
     if (!targetFacilityId && dto.role !== StaffRole.VNDOCTOR_ADMIN) {
