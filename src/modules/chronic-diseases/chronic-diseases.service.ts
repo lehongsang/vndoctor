@@ -177,6 +177,20 @@ export class ChronicDiseasesService implements OnModuleInit {
   }
 
   /**
+   * Soft delete a chronic disease from catalogue.
+   *
+   * @param id - Disease UUID.
+   * @returns Soft deletion result.
+   */
+  async deleteChronicDisease(id: string): Promise<{ success: boolean; message: string }> {
+    const disease = await this.getChronicDiseaseById(id);
+    disease.isActive = false;
+    await this.chronicDiseaseRepository.save(disease);
+    await this.chronicDiseaseRepository.softRemove(disease);
+    return { success: true, message: 'Chronic disease deleted successfully' };
+  }
+
+  /**
    * Retrieves selected chronic diseases associated with a Health Profile.
    *
    * @param healthProfileId - Health Profile UUID.

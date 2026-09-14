@@ -8,6 +8,7 @@ import {
   ProfileBloodType,
   ProfileGender,
   ProfileRelationship,
+  StaffRole,
 } from '@/commons/enums/vndoctor.enum';
 import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
 
@@ -137,6 +138,60 @@ describe('HealthProfilesService', () => {
       await expect(service.getProfileById('non-existent')).rejects.toThrow(
         NotFound,
       );
+    });
+  });
+
+  describe('getFacilityProfiles', () => {
+    it('should return paginated health profiles linked to staff facility', async () => {
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        innerJoin: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[mockProfile], 1]),
+      };
+      mockRepository.createQueryBuilder.mockReturnValue(mockQb);
+
+      const result = await service.getFacilityProfiles(
+        { page: 1, limit: 10 },
+        {
+          id: 'staff-1',
+          facilityId: 'facility-1',
+          staffCode: 'STAFF01',
+          fullName: 'Nguyễn Văn Admin',
+          role: StaffRole.ADMIN,
+          username: 'admin',
+          type: 'STAFF',
+        },
+      );
+
+      expect(result.items).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(mockQb.innerJoin).toHaveBeenCalledWith(
+        'profile.facilityLinks',
+        'activeLink',
+        'activeLink.facilityId = :facilityId AND activeLink.status = :linkStatus',
+        { facilityId: 'facility-1', linkStatus: 'ACTIVE' },
+      );
+    });
+
+    it('should throw Forbidden when regular staff attempts to query another facility', async () => {
+      await expect(
+        service.getFacilityProfiles(
+          { facilityId: 'facility-other' },
+          {
+            id: 'staff-1',
+            facilityId: 'facility-1',
+            staffCode: 'DOC01',
+            fullName: 'BS. Nguyễn Văn A',
+            role: StaffRole.DOCTOR,
+            username: 'doc',
+            type: 'STAFF',
+          },
+        ),
+      ).rejects.toThrow(Forbidden);
     });
   });
 });

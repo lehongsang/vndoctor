@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -109,5 +110,17 @@ export class ChronicDiseasesController {
     @Body() dto: UpdateChronicDiseaseDto,
   ) {
     return this.chronicDiseasesService.updateChronicDisease(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Role: ADMIN - Xóa mềm bệnh mạn tính',
+    description: 'Xóa mềm bệnh mạn tính khỏi danh mục hoạt động',
+  })
+  async deleteChronicDisease(@Param('id') id: string) {
+    return this.chronicDiseasesService.deleteChronicDisease(id);
   }
 }

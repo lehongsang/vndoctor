@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BeforeInsert, Column, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { BeforeInsert, Column, DeleteDateColumn, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 import { v7 as uuidv7 } from 'uuid';
 
 export class BaseEntity {
@@ -21,4 +21,8 @@ export class BaseEntity {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ApiProperty({ required: false, nullable: true })
+  @DeleteDateColumn({ nullable: true })
+  deletedAt?: Date | null;
 }

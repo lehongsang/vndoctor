@@ -435,5 +435,20 @@ export class CareRequestsService {
     careRequest.status = dto.status;
     return this.careRequestRepo.save(careRequest);
   }
+
+  /**
+   * Soft delete a care request.
+   *
+   * @param id Care Request UUID
+   * @param staffFacilityId Facility ID of authenticated staff
+   * @returns Soft deletion status
+   */
+  async softDelete(id: string, staffFacilityId?: string): Promise<{ success: boolean; message: string }> {
+    const careRequest = await this.findById(id, staffFacilityId);
+    careRequest.status = CareRequestStatus.CANCELLED;
+    await this.careRequestRepo.save(careRequest);
+    await this.careRequestRepo.softRemove(careRequest);
+    return { success: true, message: 'Care request deleted successfully' };
+  }
 }
 

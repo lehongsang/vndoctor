@@ -323,5 +323,45 @@ export class StaffService {
 
     return { success: true, message: 'Đổi mật khẩu thành công' };
   }
+
+  /**
+   * Soft deletes / deactivates a staff account.
+   *
+   * @param id - Staff UUID to delete.
+   * @param currentStaff - Current authenticated staff executing the action.
+   * @returns Success response.
+   */
+  async softDeleteStaff(
+    id: string,
+    currentStaff?: StaffJwtPayload,
+  ): Promise<{ success: boolean; message: string }> {
+    const staff = await this.getStaffById(id);
+
+    // Prevent staff from deleting themselves
+    if (currentStaff && currentStaff.id === id) {
+      throw new BadRequest(ErrorCode.STAFF_CANNOT_DELETE_SELF);
+    }
+
+    // Facility permission check
+    if (currentStaff && currentStaff.role !== StaffRole.VNDOCTOR_ADMIN) {
+      if (!currentStaff.facilityId) {
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      }
+      if (staff.facilityId !== currentStaff.facilityId) {
+        const isSubordinate = staff.facilityId
+          ? await this.facilitiesService.isSubordinateFacility(staff.facilityId, currentStaff.facilityId)
+          : false;
+        if (!isSubordinate) {
+          throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        }
+      }
+    }
+
+    staff.isActive = false;
+    await this.staffRepository.save(staff);
+    await this.staffRepository.softRemove(staff);
+
+    return { success: true, message: 'Tài khoản nhân sự đã được vô hiệu hóa thành công' };
+  }
 }
 

@@ -1,11 +1,16 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { GetManyBaseQueryParams } from '@/commons/dtos/get-many-base.dto';
-import { ProfileRelationship } from '@/commons/enums/vndoctor.enum';
+import { FacilityPatientLinkStatus, ProfileRelationship } from '@/commons/enums/vndoctor.enum';
 
 export class QueryHealthProfileDto extends PartialType(GetManyBaseQueryParams) {
+  @ApiPropertyOptional({ description: 'ID cơ sở y tế (Chỉ định CSYT khi là Admin hệ thống)' })
+  @IsUUID('all')
+  @IsOptional()
+  facilityId?: string;
+
   @ApiPropertyOptional({ description: 'ID tài khoản sở hữu' })
-  @IsUUID()
+  @IsUUID('all')
   @IsOptional()
   accountId?: string;
 
@@ -17,6 +22,15 @@ export class QueryHealthProfileDto extends PartialType(GetManyBaseQueryParams) {
   @IsEnum(ProfileRelationship)
   @IsOptional()
   relationship?: ProfileRelationship;
+
+  @ApiPropertyOptional({
+    enum: FacilityPatientLinkStatus,
+    enumName: 'FacilityPatientLinkStatus',
+    description: 'Lọc theo trạng thái liên kết với cơ sở y tế (Mặc định: ACTIVE)',
+  })
+  @IsEnum(FacilityPatientLinkStatus)
+  @IsOptional()
+  linkStatus?: FacilityPatientLinkStatus;
 
   @ApiPropertyOptional({ description: 'Tìm kiếm theo CCCD' })
   @IsString()

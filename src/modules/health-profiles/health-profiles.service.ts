@@ -13,8 +13,9 @@ import {
   NotFound,
   ErrorCode,
 } from '@/commons/exceptions';
-import { ProfileRelationship } from '@/commons/enums/vndoctor.enum';
+import { FacilityPatientLinkStatus, ProfileRelationship, StaffRole } from '@/commons/enums/vndoctor.enum';
 import { ChronicDiseasesService } from '@/modules/chronic-diseases/chronic-diseases.service';
+import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 
 @Injectable()
 export class HealthProfilesService {
@@ -100,6 +101,86 @@ export class HealthProfilesService {
     }
 
     return profile;
+  }
+
+  /**
+   * Retrieves paginated health profiles linked to a medical facility.
+   * Enforces facility isolation: Staff can only view health profiles linked to their own facility.
+   *
+   * @param query - Filter parameters.
+   * @param staff - Authenticated Staff context.
+   * @returns Paginated list of HealthProfile objects.
+   */
+  async getFacilityProfiles(
+    query: QueryHealthProfileDto,
+    staff?: StaffJwtPayload,
+  ): Promise<{ items: HealthProfile[]; total: number; page: number; limit: number }> {
+    let targetFacilityId = query.facilityId;
+
+    if (staff && staff.facilityId) {
+      if (query.facilityId && query.facilityId !== staff.facilityId && staff.role !== StaffRole.VNDOCTOR_ADMIN) {
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      }
+      if (staff.role !== StaffRole.VNDOCTOR_ADMIN) {
+        targetFacilityId = staff.facilityId;
+      }
+    }
+
+    if (!targetFacilityId && staff?.role !== StaffRole.VNDOCTOR_ADMIN) {
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+    }
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const qb = this.healthProfileRepository
+      .createQueryBuilder('profile')
+      .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
+      .leftJoinAndSelect('profile.facilityLinks', 'facilityLinks')
+      .leftJoinAndSelect('facilityLinks.facility', 'facility');
+
+    const linkStatus = query.linkStatus || FacilityPatientLinkStatus.ACTIVE;
+
+    if (targetFacilityId) {
+      qb.innerJoin(
+        'profile.facilityLinks',
+        'activeLink',
+        'activeLink.facilityId = :facilityId AND activeLink.status = :linkStatus',
+        { facilityId: targetFacilityId, linkStatus },
+      );
+    }
+
+    if (query.accountId) {
+      qb.andWhere('profile.accountId = :accountId', { accountId: query.accountId });
+    }
+
+    if (query.relationship) {
+      qb.andWhere('profile.relationship = :relationship', {
+        relationship: query.relationship,
+      });
+    }
+
+    if (query.citizenId) {
+      qb.andWhere('profile.citizenId = :citizenId', { citizenId: query.citizenId.trim() });
+    }
+
+    if (query.phoneNumber) {
+      qb.andWhere('profile.phoneNumber = :phoneNumber', { phoneNumber: query.phoneNumber.trim() });
+    }
+
+    if (query.search) {
+      const kw = `%${query.search.trim()}%`;
+      qb.andWhere(
+        '(profile.fullName ILIKE :kw OR profile.citizenId ILIKE :kw OR profile.phoneNumber ILIKE :kw)',
+        { kw },
+      );
+    }
+
+    qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+    return { items, total, page, limit };
   }
 
   /**
@@ -195,14 +276,14 @@ export class HealthProfilesService {
   }
 
   /**
-   * Deletes a Health Profile.
+   * Soft deletes a Health Profile.
    *
    * @param id - Profile UUID.
    * @param accountId - Owning Account ID.
    */
   async deleteProfile(id: string, accountId: string): Promise<{ success: boolean }> {
     const profile = await this.getProfileById(id, accountId);
-    await this.healthProfileRepository.remove(profile);
+    await this.healthProfileRepository.softRemove(profile);
     return { success: true };
   }
 }

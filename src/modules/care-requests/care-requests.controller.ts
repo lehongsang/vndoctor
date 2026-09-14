@@ -9,6 +9,7 @@ import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -145,5 +146,20 @@ export class CareRequestsController {
     @CurrentStaff() staff: StaffJwtPayload,
   ): Promise<PatientCareRequest> {
     return this.careRequestsService.resolve(id, dto, staff.facilityId, staff.id);
+  }
+
+  @Delete(':id')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.NURSE)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'CMS Staff - Xóa mềm yêu cầu hỗ trợ chăm sóc y tế',
+    description: 'Xóa mềm yêu cầu chăm sóc của bệnh nhân.',
+  })
+  async delete(
+    @Param('id') id: string,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.careRequestsService.softDelete(id, staff.facilityId);
   }
 }

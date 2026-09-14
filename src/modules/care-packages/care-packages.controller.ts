@@ -9,6 +9,7 @@ import { CombinedAuthGuard } from '@/commons/guards/combined-auth.guard';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -112,5 +113,20 @@ export class CarePackagesController {
     @CurrentStaff() staff: StaffJwtPayload,
   ): Promise<CarePackage> {
     return this.carePackagesService.updateStatus(id, dto.status, staff.facilityId);
+  }
+
+  @Delete(':id')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Facility Admin Auth - Xóa mềm gói chăm sóc sức khỏe',
+    description: 'Chỉ Admin của cơ sở y tế sở hữu gói mới có quyền xóa mềm gói chăm sóc',
+  })
+  async delete(
+    @Param('id') id: string,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.carePackagesService.softDelete(id, staff.facilityId);
   }
 }

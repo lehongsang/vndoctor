@@ -9,6 +9,7 @@ import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -117,5 +118,23 @@ export class ExaminationsController {
     @Body() dto: UpdateExaminationDto,
   ) {
     return this.examinationsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.DOCTOR, StaffRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth (Doctor/Admin) - Xóa mềm phiếu khám bệnh',
+    description: 'Xóa mềm phiếu khám bệnh và chuyển trạng thái sang CANCELLED',
+  })
+  async delete(
+    @Param('id') id: string,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.examinationsService.remove(
+      id,
+      staff.role !== StaffRole.ADMIN ? staff.facilityId : undefined,
+    );
   }
 }

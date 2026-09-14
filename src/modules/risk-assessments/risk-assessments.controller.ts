@@ -1,14 +1,17 @@
 import { AppAccountJwtPayload, CurrentAccount } from '@/commons/decorators/current-account.decorator';
+import { AuthUserContext, CurrentAuthUser } from '@/commons/decorators/current-auth-user.decorator';
 import { CurrentStaff, StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { Roles } from '@/commons/decorators/roles.decorator';
 import { Doc } from '@/commons/docs/doc.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 import { AppAuthGuard } from '@/commons/guards/app-auth.guard';
+import { CombinedAuthGuard } from '@/commons/guards/combined-auth.guard';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -107,5 +110,22 @@ export class RiskAssessmentsController {
     @CurrentStaff() staff: StaffJwtPayload,
   ) {
     return this.riskAssessmentsService.evaluate(id, dto, staff.id);
+  }
+
+  @Delete(':id')
+  @UseGuards(CombinedAuthGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Dual Auth - Xóa mềm phiếu đánh giá nguy cơ',
+    description: 'Bệnh nhân (sở hữu hồ sơ) hoặc Bác sĩ/Admin xóa mềm phiếu đánh giá nguy cơ',
+  })
+  async delete(
+    @Param('id') id: string,
+    @CurrentAuthUser() user: AuthUserContext,
+  ) {
+    return this.riskAssessmentsService.remove(
+      id,
+      user.type === 'APP_ACCOUNT' ? user.account?.id : undefined,
+    );
   }
 }

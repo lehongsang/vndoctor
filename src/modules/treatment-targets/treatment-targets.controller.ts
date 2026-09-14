@@ -9,6 +9,7 @@ import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -164,5 +165,31 @@ export class TreatmentTargetsController {
     @CurrentAccount() account: AppAccountJwtPayload,
   ) {
     return this.treatmentTargetsService.update(id, dto, undefined, account.id);
+  }
+
+  @Delete('my-targets/:id')
+  @UseGuards(AppAuthGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'App Auth - Bệnh nhân xóa mềm mục tiêu điều trị',
+    description: 'Bệnh nhân xóa mục tiêu điều trị thuộc hồ sơ sức khỏe của mình',
+  })
+  async deleteByPatient(
+    @Param('id') id: string,
+    @CurrentAccount() account: AppAccountJwtPayload,
+  ) {
+    return this.treatmentTargetsService.remove(id, account.id);
+  }
+
+  @Delete(':id')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.DOCTOR, StaffRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth (Doctor/Admin) - Xóa mềm mục tiêu điều trị',
+    description: 'Bác sĩ hoặc Quản trị viên xóa mềm mục tiêu điều trị',
+  })
+  async deleteByStaff(@Param('id') id: string) {
+    return this.treatmentTargetsService.remove(id);
   }
 }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -116,5 +117,18 @@ export class StaffController {
     @Body() dto: ChangeStaffPasswordDto,
   ) {
     return this.staffService.changePassword(staff.id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN)
+  @Doc({
+    summary: 'Role: VNDOCTOR_ADMIN / ADMIN - Xóa mềm nhân viên y tế',
+    description: 'Xóa mềm tài khoản nhân viên y tế (không được tự xóa chính mình).',
+  })
+  async deleteStaff(
+    @Param('id') id: string,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.staffService.softDeleteStaff(id, staff);
   }
 }

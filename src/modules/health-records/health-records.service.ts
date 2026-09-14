@@ -157,14 +157,14 @@ export class HealthRecordsService {
   }
 
   /**
-   * Delete a health record.
+   * Soft delete a health record.
    *
    * @param id - Record UUID
    * @param accountId - Optional account ID to restrict access
    */
   async remove(id: string, accountId?: string): Promise<void> {
     const record = await this.findOne(id, accountId);
-    await this.healthRecordRepo.remove(record);
+    await this.healthRecordRepo.softRemove(record);
   }
 
   /**

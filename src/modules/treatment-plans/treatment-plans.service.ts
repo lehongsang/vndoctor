@@ -148,6 +148,17 @@ export class TreatmentPlansService {
     return template;
   }
 
+  /**
+   * Soft delete a clinical treatment template.
+   */
+  async deleteTemplate(id: string): Promise<{ success: boolean; message: string }> {
+    const template = await this.findTemplateById(id);
+    template.isActive = false;
+    await this.templateRepo.save(template);
+    await this.templateRepo.softRemove(template);
+    return { success: true, message: 'Treatment template deleted successfully' };
+  }
+
   // ==========================================
   // PATIENT TREATMENT PLANS (PHÁC ĐỒ BỆNH NHÂN)
   // ==========================================
@@ -293,5 +304,16 @@ export class TreatmentPlansService {
     }
 
     return plan;
+  }
+
+  /**
+   * Soft delete a treatment plan.
+   */
+  async deletePlan(id: string): Promise<{ success: boolean; message: string }> {
+    const plan = await this.findPlanById(id);
+    plan.status = VnDoctorPlanStatus.DISCONTINUED;
+    await this.planRepo.save(plan);
+    await this.planRepo.softRemove(plan);
+    return { success: true, message: 'Treatment plan deleted successfully' };
   }
 }

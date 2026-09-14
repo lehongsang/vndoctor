@@ -233,4 +233,29 @@ export class TreatmentTargetsService {
 
     return target;
   }
+
+  /**
+   * Soft delete a treatment target.
+   *
+   * @param id - Target UUID
+   * @param accountId - Optional App Account ID for ownership check
+   * @returns Deletion status
+   */
+  async remove(id: string, accountId?: string): Promise<{ success: boolean; message: string }> {
+    const target = await this.targetRepo.findOne({
+      where: { id },
+      relations: ['healthProfile'],
+    });
+
+    if (!target) {
+      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
+    }
+
+    if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+    }
+
+    await this.targetRepo.softRemove(target);
+    return { success: true, message: 'Treatment target deleted successfully' };
+  }
 }

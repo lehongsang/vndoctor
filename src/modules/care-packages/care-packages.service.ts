@@ -297,5 +297,29 @@ export class CarePackagesService {
     carePackage.status = status;
     return this.carePackageRepo.save(carePackage);
   }
+
+  /**
+   * Soft delete a Care Package by deactivating and setting deletedAt.
+   *
+   * @param id Care Package UUID
+   * @param staffFacilityId Facility ID of the authenticated staff
+   * @returns Soft deletion result
+   */
+  async softDelete(
+    id: string,
+    staffFacilityId?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const carePackage = await this.findById(id);
+
+    if (staffFacilityId && carePackage.facilityId !== staffFacilityId) {
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+    }
+
+    carePackage.status = CarePackageStatus.INACTIVE;
+    await this.carePackageRepo.save(carePackage);
+    await this.carePackageRepo.softRemove(carePackage);
+
+    return { success: true, message: 'Care package deleted successfully' };
+  }
 }
 

@@ -9,6 +9,7 @@ import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -92,6 +93,18 @@ export class TreatmentPlansController {
     @Body() dto: UpdateTreatmentTemplateDto,
   ) {
     return this.treatmentPlansService.updateTemplate(id, dto);
+  }
+
+  @Delete('templates/:id')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth - Xóa mềm mẫu phác đồ điều trị',
+    description: 'Xóa mềm mẫu phác đồ của cơ sở y tế',
+  })
+  async deleteTemplate(@Param('id') id: string) {
+    return this.treatmentPlansService.deleteTemplate(id);
   }
 
   // ==========================================
@@ -183,5 +196,17 @@ export class TreatmentPlansController {
     @CurrentStaff() staff: StaffJwtPayload,
   ) {
     return this.treatmentPlansService.updatePlan(id, dto, staff.id);
+  }
+
+  @Delete(':id')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.DOCTOR, StaffRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth (Doctor/Admin) - Xóa mềm phác đồ điều trị',
+    description: 'Xóa mềm phác đồ điều trị của bệnh nhân',
+  })
+  async deletePlan(@Param('id') id: string) {
+    return this.treatmentPlansService.deletePlan(id);
   }
 }

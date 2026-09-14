@@ -66,7 +66,7 @@ Module `health-profiles` quản lý các hồ sơ sức khỏe cá nhân và ng�
 
 ### 2. Danh sách Hồ sơ sức khỏe của tôi (App)
 - **Method**: `GET`
-- **Path**: `/health-profiles/my-profiles`
+- **Path**: `/health-profiles/me`
 - **Quyền**: `AppAuthGuard`
 
 #### 📤 Output (200 OK)
@@ -74,6 +74,23 @@ Trả về mảng danh sách các hồ sơ sức khỏe thuộc tài khoản c�
 
 ---
 
-### 3. Xem chi tiết / Cập nhật Hồ sơ sức khỏe
-- **Xem chi tiết**: `GET /health-profiles/:id` (`AppAuthGuard` / `StaffAuthGuard`)
-- **Cập nhật**: `PATCH /health-profiles/:id` (`AppAuthGuard` / `StaffAuthGuard`)
+### 3. Danh sách Hồ sơ sức khỏe thuộc Cơ sở Y tế (Web CMS)
+- **Method**: `GET`
+- **Path**: `/health-profiles`
+- **Quyền**: `StaffAuthGuard`
+- **Quy tắc bảo mật**: Nhân viên thuộc cơ sở y tế nào chỉ được xem các hồ sơ sức khỏe đã được liên kết với cơ sở đó (`facilityLinks.status = 'ACTIVE'`).
+- **Input (Query - `QueryHealthProfileDto`)**:
+  - `search`: Tìm kiếm theo Họ tên, CCCD hoặc SĐT
+  - `citizenId`: Lọc theo CCCD
+  - `phoneNumber`: Lọc theo SĐT
+  - `relationship`: `SELF`, `FATHER`, `MOTHER`, `CHILD`, `SPOUSE`, `OTHER`
+  - `linkStatus`: Trạng thái liên kết (Mặc định: `ACTIVE`)
+  - `page`: Số trang (Mặc định: 1)
+  - `limit`: Số phần tử trên trang (Mặc định: 20)
+
+---
+
+### 4. Xem chi tiết / Cập nhật / Xóa Hồ sơ sức khỏe
+- **Xem chi tiết**: `GET /health-profiles/:id` (Public / App / CMS)
+- **Cập nhật**: `PATCH /health-profiles/:id` (`AppAuthGuard`)
+- **Xóa**: `DELETE /health-profiles/:id` (`AppAuthGuard`)

@@ -477,6 +477,21 @@ export class CareSubscriptionsService {
   }
 
   /**
+   * Soft delete a subscription.
+   *
+   * @param id Subscription UUID
+   * @param staffFacilityId Facility ID of authenticated staff
+   * @returns Soft deletion status
+   */
+  async softDelete(id: string, staffFacilityId?: string): Promise<{ success: boolean; message: string }> {
+    const subscription = await this.findById(id, staffFacilityId);
+    subscription.status = CareSubscriptionStatus.CANCELLED;
+    await this.subscriptionRepo.save(subscription);
+    await this.subscriptionRepo.softRemove(subscription);
+    return { success: true, message: 'Care subscription deleted successfully' };
+  }
+
+  /**
    * Scheduled job method to automatically mark expired subscriptions as EXPIRED.
    *
    * @returns Number of subscriptions marked as expired

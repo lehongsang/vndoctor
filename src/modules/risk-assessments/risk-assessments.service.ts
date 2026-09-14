@@ -408,4 +408,33 @@ export class RiskAssessmentsService {
       redFlags,
     });
   }
+
+  /**
+   * Soft delete a risk assessment input and its associated result.
+   *
+   * @param id - Assessment input UUID
+   * @param accountId - Optional account ID for patient access
+   * @returns Deletion status
+   */
+  async remove(id: string, accountId?: string): Promise<{ success: boolean; message: string }> {
+    const input = await this.inputRepo.findOne({
+      where: { id },
+      relations: ['healthProfile', 'assessmentResult'],
+    });
+
+    if (!input) {
+      throw new NotFound(ErrorCode.RISK_ASSESSMENT_NOT_FOUND);
+    }
+
+    if (accountId && input.healthProfile && input.healthProfile.accountId !== accountId) {
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+    }
+
+    if (input.assessmentResult) {
+      await this.resultRepo.softRemove(input.assessmentResult);
+    }
+    await this.inputRepo.softRemove(input);
+
+    return { success: true, message: 'Risk assessment deleted successfully' };
+  }
 }

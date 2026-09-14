@@ -6,15 +6,19 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { HealthProfilesService } from './health-profiles.service';
-import { CreateHealthProfileDto, UpdateHealthProfileDto } from './dtos';
+import { CreateHealthProfileDto, QueryHealthProfileDto, UpdateHealthProfileDto } from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
 import { HealthProfile } from './entities/health-profile.entity';
 import { AppAuthGuard } from '@/commons/guards/app-auth.guard';
+import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
+import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import { AppAccountJwtPayload, CurrentAccount } from '@/commons/decorators/current-account.decorator';
+import { CurrentStaff, StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { Public } from '@/commons/decorators/public.decorator';
 
 @ApiTags('Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)')
@@ -23,6 +27,21 @@ export class HealthProfilesController {
   constructor(
     private readonly healthProfilesService: HealthProfilesService,
   ) {}
+
+  @Get()
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth - Lấy tất cả hồ sơ sức khỏe đã gắn với cơ sở y tế',
+    description: 'Nhân viên y tế lấy danh sách các hồ sơ sức khỏe đã được liên kết vào cơ sở y tế của mình (Facility nào chỉ xem hồ sơ của Facility đó).',
+    response: { serialization: HealthProfile, isArray: true },
+  })
+  async getFacilityProfiles(
+    @Query() query: QueryHealthProfileDto,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.healthProfilesService.getFacilityProfiles(query, staff);
+  }
 
   @Post()
   @UseGuards(AppAuthGuard)

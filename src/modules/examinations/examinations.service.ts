@@ -1,4 +1,5 @@
 import { BadRequest, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
+import { ExaminationStatus } from '@/commons/enums/vndoctor.enum';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
@@ -264,4 +265,30 @@ export class ExaminationsService {
     return exam;
   }
 
+  /**
+   * Soft delete an examination record.
+   *
+   * @param id - Examination UUID
+   * @param staffFacilityId - Optional facility ID for authorization check
+   * @returns Deletion status
+   */
+  async remove(id: string, staffFacilityId?: string): Promise<{ success: boolean; message: string }> {
+    const exam = await this.examRepo.findOne({
+      where: { id },
+    });
+
+    if (!exam) {
+      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
+    }
+
+    if (staffFacilityId && exam.facilityId !== staffFacilityId) {
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+    }
+
+    exam.status = ExaminationStatus.CANCELLED;
+    await this.examRepo.save(exam);
+    await this.examRepo.softRemove(exam);
+
+    return { success: true, message: 'Examination deleted successfully' };
+  }
 }
