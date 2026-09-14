@@ -26,7 +26,7 @@ export class QueryCareSubscriptionDto {
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'facilityId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'facilityId phải là UUID hợp lệ' })
   facilityId?: string;
 
   @ApiPropertyOptional({
@@ -43,7 +43,7 @@ export class QueryCareSubscriptionDto {
     example: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'healthProfileId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'healthProfileId phải là UUID hợp lệ' })
   healthProfileId?: string;
 
   @ApiPropertyOptional({
@@ -51,7 +51,7 @@ export class QueryCareSubscriptionDto {
     example: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'doctorId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'doctorId phải là UUID hợp lệ' })
   doctorId?: string;
 
   @ApiPropertyOptional({
@@ -59,7 +59,7 @@ export class QueryCareSubscriptionDto {
     example: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'nurseId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'nurseId phải là UUID hợp lệ' })
   nurseId?: string;
 
   @ApiPropertyOptional({

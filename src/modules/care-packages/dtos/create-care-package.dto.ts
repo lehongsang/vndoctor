@@ -22,7 +22,7 @@ export class CreateCarePackageDto {
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'facilityId must be a valid UUID' })
+  @IsUUID('all', { message: 'facilityId must be a valid UUID' })
   facilityId?: string;
 
   @ApiProperty({
@@ -43,6 +43,14 @@ export class CreateCarePackageDto {
   @IsOptional()
   @IsEnum(CarePackageType, { message: 'Type must be STANDARD or VIP' })
   type?: CarePackageType;
+
+  @ApiPropertyOptional({
+    description: 'ID Bác sĩ Chuyên gia (Bắt buộc nếu type=VIP, phải để trống/null nếu type=STANDARD)',
+    example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+  })
+  @IsOptional()
+  @IsUUID('all', { message: 'doctorExpertId phải là UUID hợp lệ' })
+  doctorExpertId?: string | null;
 
   @ApiPropertyOptional({
     description: 'Detailed description and benefits',

@@ -20,13 +20,14 @@ Module `care-packages` quản lý danh mục các gói dịch vụ chăm sóc s�
 | :--- | :--- | :--- | :--- |
 | `name` | string | Có | Tên gói chăm sóc |
 | `type` | enum | Không | `STANDARD` hoặc `VIP` (Mặc định: `STANDARD`) |
+| `doctorExpertId` | UUID | Theo type | ID Bác sĩ chuyên gia (**Bắt buộc** nếu `type=VIP`, **phải là null/không nhập** nếu `type=STANDARD`) |
 | `description` | string | Không | Mô tả chi tiết quyền lợi gói |
 | `durationDays` | number | Có | Thời hạn gói tính theo ngày (30, 90, 180, 365) |
 | `priceAmount` | number | Có | Giá niêm yết của gói (VND) |
 | `facilityId` | UUID | Không | ID cơ sở y tế (Mặc định lấy theo staff đăng nhập) |
 | `status` | enum | Không | `ACTIVE`, `INACTIVE` (Mặc định: `ACTIVE`) |
 
-*Ví dụ Body:*
+*Ví dụ Body (Gói STANDARD):*
 ```json
 {
   "name": "Gói Chăm Sóc Tim Mạch Toàn Diện 30 Ngày",
@@ -34,6 +35,19 @@ Module `care-packages` quản lý danh mục các gói dịch vụ chăm sóc s�
   "description": "Bao gồm theo dõi huyết áp hàng ngày, bác sĩ chuyên khoa tư vấn trực tuyến và điều dưỡng hỗ trợ 24/7.",
   "durationDays": 30,
   "priceAmount": 1500000,
+  "status": "ACTIVE"
+}
+```
+
+*Ví dụ Body (Gói VIP):*
+```json
+{
+  "name": "Gói Chăm Sóc Đái Tháo Đường Cao Cấp 90 Ngày",
+  "type": "VIP",
+  "doctorExpertId": "01a08454-a217-70cc-9ff2-c03053354a22",
+  "description": "Bao gồm theo dõi chỉ số đường huyết liên tục và hội chẩn định kỳ cùng Bác sĩ chuyên gia.",
+  "durationDays": 90,
+  "priceAmount": 5000000,
   "status": "ACTIVE"
 }
 ```

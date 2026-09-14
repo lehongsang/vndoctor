@@ -95,7 +95,7 @@ export class CareSubscriptionsService {
       throw new Conflict(ErrorCode.CARE_SUBSCRIPTION_ALREADY_ACTIVE);
     }
 
-    // 4. Create subscription in PENDING status (dates and care team are null until assignment)
+    // 4. Create subscription in PENDING status (assignedExpertId automatically inherited from care package)
     const subscription = this.subscriptionRepo.create({
       healthProfileId: dto.healthProfileId,
       carePackageId: dto.carePackageId,
@@ -104,7 +104,7 @@ export class CareSubscriptionsService {
       expiresAt: null,
       assignedDoctorId: null,
       assignedNurseId: null,
-      assignedExpertId: null,
+      assignedExpertId: carePackage.doctorExpertId ?? null,
     });
 
     return this.subscriptionRepo.save(subscription);
@@ -266,8 +266,9 @@ export class CareSubscriptionsService {
         throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
       }
 
-      // 2. Validate VIP package requirement
-      if (carePackage.type === CarePackageType.VIP && !dto.assignedExpertId) {
+      // 2. Validate VIP package requirement & determine effective expert
+      const effectiveExpertId = dto.assignedExpertId || subscription.assignedExpertId || carePackage.doctorExpertId || null;
+      if (carePackage.type === CarePackageType.VIP && !effectiveExpertId) {
         throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
       }
 
@@ -305,20 +306,17 @@ export class CareSubscriptionsService {
         throw new BadRequest(ErrorCode.STAFF_INACTIVE);
       }
 
-      // 5. Validate Assigned Expert (if provided)
+      // 5. Validate Assigned Expert (if provided or inherited from care package)
       let expert: StaffUser | null = null;
-      if (dto.assignedExpertId) {
+      if (effectiveExpertId) {
         expert = await manager.findOne(StaffUser, {
-          where: { id: dto.assignedExpertId },
+          where: { id: effectiveExpertId },
         });
         if (!expert) {
           throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
         }
         if (expert.facilityId !== facilityId) {
           throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
-        }
-        if (expert.role !== StaffRole.DOCTOR && expert.role !== StaffRole.ADMIN) {
-          throw new BadRequest(ErrorCode.BAD_REQUEST);
         }
         if (!expert.isActive) {
           throw new BadRequest(ErrorCode.STAFF_INACTIVE);
@@ -334,7 +332,7 @@ export class CareSubscriptionsService {
       // 7. Update subscription fields
       subscription.assignedDoctorId = dto.assignedDoctorId;
       subscription.assignedNurseId = dto.assignedNurseId;
-      subscription.assignedExpertId = dto.assignedExpertId ?? null;
+      subscription.assignedExpertId = effectiveExpertId;
       subscription.status = CareSubscriptionStatus.ACTIVE;
       subscription.startedAt = now;
       subscription.expiresAt = expiresAt;

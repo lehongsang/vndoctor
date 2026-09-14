@@ -10,7 +10,7 @@ export class AssignCareRequestDto {
     example: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
   })
   @IsNotEmpty({ message: 'assignedUserId không được để trống' })
-  @IsUUID('4', { message: 'assignedUserId phải là UUID v4 hợp lệ' })
+  @IsUUID(undefined, { message: 'assignedUserId phải là UUID hợp lệ' })
   assignedUserId: string;
 
   @ApiPropertyOptional({

@@ -9,17 +9,17 @@ import { IsDate, IsEnum, IsInt, IsOptional, IsUUID, Min } from 'class-validator'
 export class QueryRiskAssessmentDto {
   @ApiPropertyOptional({ description: 'Filter by Health Profile ID (UUID)' })
   @IsOptional()
-  @IsUUID('4', { message: 'healthProfileId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'healthProfileId must be a valid UUID' })
   healthProfileId?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Facility ID (UUID)' })
   @IsOptional()
-  @IsUUID('4', { message: 'facilityId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'facilityId must be a valid UUID' })
   facilityId?: string;
 
   @ApiPropertyOptional({ description: 'Filter by Evaluating Doctor ID (UUID)' })
   @IsOptional()
-  @IsUUID('4', { message: 'doctorId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'doctorId must be a valid UUID' })
   doctorId?: string;
 
   @ApiPropertyOptional({ enum: AssessmentStatus, enumName: 'AssessmentStatus' })

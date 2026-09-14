@@ -16,18 +16,18 @@ import {
  */
 export class CreateExaminationDto {
   @ApiProperty({ description: 'Health Profile ID (UUID)', example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' })
-  @IsUUID('4', { message: 'healthProfileId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'healthProfileId must be a valid UUID' })
   @IsNotEmpty({ message: 'healthProfileId is required' })
   healthProfileId: string;
 
   @ApiPropertyOptional({ description: 'Facility ID (UUID). If omitted, defaults to doctor current facility' })
   @IsOptional()
-  @IsUUID('4', { message: 'facilityId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'facilityId must be a valid UUID' })
   facilityId?: string;
 
   @ApiPropertyOptional({ description: 'Linked Risk Factor Assessment Input ID (UUID)' })
   @IsOptional()
-  @IsUUID('4', { message: 'assessmentInputId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'assessmentInputId must be a valid UUID' })
   assessmentInputId?: string;
 
   @ApiPropertyOptional({ description: 'Heart rate (bpm)', example: 78 })

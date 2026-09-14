@@ -1,6 +1,7 @@
 import { CarePackageStatus, CarePackageType, StaffRole } from '@/commons/enums/vndoctor.enum';
-import { Forbidden, NotFound } from '@/commons/exceptions';
+import { BadRequest, Forbidden, NotFound } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
+import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -15,12 +16,21 @@ describe('CarePackagesService', () => {
     facilityName: 'Bệnh viện Đa khoa Quốc tế',
   };
 
+  const mockExpertDoctor: Partial<StaffUser> = {
+    id: 'expert-1',
+    facilityId: 'facility-1',
+    fullName: 'BS. CKII Lê Văn Chuyên Gia',
+    role: StaffRole.DOCTOR_EXPERT,
+    isActive: true,
+  };
+
   const mockCarePackage: Partial<CarePackage> = {
     id: 'pkg-1',
     facilityId: 'facility-1',
     code: 'PKG-CARDIO-30D',
     name: 'Gói Chăm Sóc Tim Mạch 30 Ngày',
     type: CarePackageType.STANDARD,
+    doctorExpertId: null,
     durationDays: 30,
     priceAmount: 1500000,
     status: CarePackageStatus.ACTIVE,
@@ -54,6 +64,15 @@ describe('CarePackagesService', () => {
     }),
   };
 
+  const mockStaffRepo = {
+    findOne: jest.fn().mockImplementation((options: { where: Record<string, unknown> }) => {
+      if (options.where.id === 'expert-1') {
+        return Promise.resolve({ ...mockExpertDoctor });
+      }
+      return Promise.resolve(null);
+    }),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -68,6 +87,10 @@ describe('CarePackagesService', () => {
           provide: getRepositoryToken(Facility),
           useValue: mockFacilityRepo,
         },
+        {
+          provide: getRepositoryToken(StaffUser),
+          useValue: mockStaffRepo,
+        },
       ],
     }).compile();
 
@@ -75,15 +98,62 @@ describe('CarePackagesService', () => {
   });
 
   describe('create', () => {
-    it('should create a care package successfully with auto-generated code', async () => {
+    it('should create a STANDARD care package successfully with auto-generated code', async () => {
       mockCarePackageRepo.findOne.mockResolvedValueOnce(null); // No duplicate code
 
       const result = await service.create(
         {
           name: 'Gói Chăm Sóc Đái Tháo Đường',
-          type: CarePackageType.VIP,
+          type: CarePackageType.STANDARD,
           durationDays: 60,
           priceAmount: 3000000,
+        },
+        'facility-1',
+      );
+
+      expect(result).toBeDefined();
+      expect(mockCarePackageRepo.save).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequest if doctorExpertId is provided for STANDARD package', async () => {
+      await expect(
+        service.create(
+          {
+            name: 'Gói Chăm Sóc Tiêu Chuẩn',
+            type: CarePackageType.STANDARD,
+            doctorExpertId: 'expert-1',
+            durationDays: 30,
+            priceAmount: 1000000,
+          },
+          'facility-1',
+        ),
+      ).rejects.toThrow(BadRequest);
+    });
+
+    it('should throw BadRequest if doctorExpertId is missing for VIP package', async () => {
+      await expect(
+        service.create(
+          {
+            name: 'Gói Chăm Sóc VIP',
+            type: CarePackageType.VIP,
+            durationDays: 90,
+            priceAmount: 5000000,
+          },
+          'facility-1',
+        ),
+      ).rejects.toThrow(BadRequest);
+    });
+
+    it('should create a VIP care package successfully when doctorExpertId is valid', async () => {
+      mockCarePackageRepo.findOne.mockResolvedValueOnce(null); // No duplicate code
+
+      const result = await service.create(
+        {
+          name: 'Gói Chăm Sóc VIP',
+          type: CarePackageType.VIP,
+          doctorExpertId: 'expert-1',
+          durationDays: 90,
+          priceAmount: 5000000,
         },
         'facility-1',
       );

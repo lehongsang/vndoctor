@@ -44,7 +44,7 @@ export class QueryConversationDto {
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'facilityId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'facilityId phải là UUID hợp lệ' })
   facilityId?: string;
 
   @ApiPropertyOptional({

@@ -1,6 +1,7 @@
 import { BaseEntity } from '@/commons/entities/base.entity';
 import { CarePackageStatus, CarePackageType } from '@/commons/enums/vndoctor.enum';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
+import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
@@ -49,6 +50,17 @@ export class CarePackage extends BaseEntity {
     default: CarePackageType.STANDARD,
   })
   type: CarePackageType;
+
+  @ApiPropertyOptional({
+    description: 'Bác sĩ chuyên gia phụ trách gói (Bắt buộc nếu type=VIP, null nếu type=STANDARD)',
+    example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+  })
+  @Column({ type: 'uuid', nullable: true, name: 'doctor_expert_id' })
+  doctorExpertId?: string | null;
+
+  @ManyToOne(() => StaffUser, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'doctor_expert_id' })
+  doctorExpert?: StaffUser | null;
 
   @ApiPropertyOptional({
     description: 'Detailed description of package benefits and rights',

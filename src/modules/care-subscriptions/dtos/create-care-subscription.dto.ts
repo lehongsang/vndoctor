@@ -10,7 +10,7 @@ export class CreateCareSubscriptionDto {
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
   @IsNotEmpty({ message: 'healthProfileId không được để trống' })
-  @IsUUID('4', { message: 'healthProfileId phải là UUID v4 hợp lệ' })
+  @IsUUID(undefined, { message: 'healthProfileId phải là UUID hợp lệ' })
   healthProfileId: string;
 
   @ApiProperty({
@@ -18,6 +18,6 @@ export class CreateCareSubscriptionDto {
     example: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
   })
   @IsNotEmpty({ message: 'carePackageId không được để trống' })
-  @IsUUID('4', { message: 'carePackageId phải là UUID v4 hợp lệ' })
+  @IsUUID(undefined, { message: 'carePackageId phải là UUID hợp lệ' })
   carePackageId: string;
 }

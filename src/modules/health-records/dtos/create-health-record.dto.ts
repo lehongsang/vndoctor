@@ -8,7 +8,7 @@ import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } fr
  */
 export class CreateHealthRecordDto {
   @ApiProperty({ description: 'Health Profile ID (UUID)', example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' })
-  @IsUUID('4', { message: 'healthProfileId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'healthProfileId must be a valid UUID' })
   @IsNotEmpty({ message: 'healthProfileId is required' })
   healthProfileId: string;
 

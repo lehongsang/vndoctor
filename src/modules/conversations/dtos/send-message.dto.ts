@@ -29,7 +29,7 @@ export class SendMessageDto {
     example: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'resourceId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'resourceId phải là UUID hợp lệ' })
   resourceId?: string;
 
   @ApiPropertyOptional({
@@ -45,6 +45,6 @@ export class SendMessageDto {
     example: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'replyToMessageId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'replyToMessageId phải là UUID hợp lệ' })
   replyToMessageId?: string;
 }

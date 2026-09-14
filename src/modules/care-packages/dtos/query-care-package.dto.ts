@@ -11,7 +11,7 @@ export class QueryCarePackageDto extends PartialType(GetManyBaseQueryParams) {
     description: 'Filter by Facility ID',
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
-  @IsUUID('4', { message: 'facilityId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'facilityId must be a valid UUID' })
   @IsOptional()
   facilityId?: string;
 

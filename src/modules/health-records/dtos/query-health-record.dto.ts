@@ -9,7 +9,7 @@ import { IsDate, IsEnum, IsInt, IsOptional, IsUUID, Min } from 'class-validator'
 export class QueryHealthRecordDto {
   @ApiPropertyOptional({ description: 'Filter by Health Profile ID (UUID)' })
   @IsOptional()
-  @IsUUID('4', { message: 'healthProfileId must be a valid UUID' })
+  @IsUUID(undefined, { message: 'healthProfileId must be a valid UUID' })
   healthProfileId?: string;
 
   @ApiPropertyOptional({

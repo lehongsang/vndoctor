@@ -10,7 +10,7 @@ export class CreateDirectConversationDto {
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
   @IsNotEmpty({ message: 'healthProfileId không được để trống' })
-  @IsUUID('4', { message: 'healthProfileId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'healthProfileId phải là UUID hợp lệ' })
   healthProfileId: string;
 
   @ApiProperty({
@@ -18,6 +18,6 @@ export class CreateDirectConversationDto {
     example: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
   })
   @IsNotEmpty({ message: 'directUserId không được để trống' })
-  @IsUUID('4', { message: 'directUserId phải là UUID hợp lệ' })
+  @IsUUID(undefined, { message: 'directUserId phải là UUID hợp lệ' })
   directUserId: string;
 }

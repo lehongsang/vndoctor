@@ -1,6 +1,7 @@
-import { CarePackageStatus, StaffRole } from '@/commons/enums/vndoctor.enum';
-import { Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
+import { CarePackageStatus, CarePackageType, StaffRole } from '@/commons/enums/vndoctor.enum';
+import { BadRequest, Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
+import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,6 +22,8 @@ export class CarePackagesService {
     private readonly carePackageRepo: Repository<CarePackage>,
     @InjectRepository(Facility)
     private readonly facilityRepo: Repository<Facility>,
+    @InjectRepository(StaffUser)
+    private readonly staffRepo: Repository<StaffUser>,
   ) {}
 
   /**
@@ -34,6 +37,8 @@ export class CarePackagesService {
 
   /**
    * Create a new Care Package for a facility with auto-generated unique package code.
+   * - Type STANDARD: doctorExpertId must be null (forbidden).
+   * - Type VIP: doctorExpertId is required and must exist.
    *
    * @param dto Input data for creating care package
    * @param staffFacilityId Facility ID of the authenticated staff
@@ -57,7 +62,31 @@ export class CarePackagesService {
       throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
     }
 
-    // 3. Generate unique package code
+    // 3. Validate package type and doctorExpertId
+    const packageType = dto.type ?? CarePackageType.STANDARD;
+    if (packageType === CarePackageType.STANDARD) {
+      if (dto.doctorExpertId) {
+        throw new BadRequest(ErrorCode.BAD_REQUEST);
+      }
+    } else if (packageType === CarePackageType.VIP) {
+      if (!dto.doctorExpertId) {
+        throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+      const expert = await this.staffRepo.findOne({
+        where: { id: dto.doctorExpertId },
+      });
+      if (!expert) {
+        throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+      }
+      if (expert.facilityId && expert.facilityId !== facilityId) {
+        throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
+      }
+      if (!expert.isActive) {
+        throw new BadRequest(ErrorCode.STAFF_INACTIVE);
+      }
+    }
+
+    // 4. Generate unique package code
     let code = this.generatePackageCode();
     let isUnique = false;
     let attempts = 0;
@@ -76,12 +105,13 @@ export class CarePackagesService {
       throw new Conflict(ErrorCode.CARE_PACKAGE_CODE_ALREADY_EXISTS);
     }
 
-    // 4. Create and persist care package entity
+    // 5. Create and persist care package entity
     const carePackage = this.carePackageRepo.create({
       facilityId,
       code,
       name: dto.name.trim(),
-      type: dto.type,
+      type: packageType,
+      doctorExpertId: packageType === CarePackageType.VIP ? dto.doctorExpertId : null,
       description: dto.description ?? null,
       durationDays: dto.durationDays,
       priceAmount: dto.priceAmount,
@@ -110,7 +140,8 @@ export class CarePackagesService {
 
     const qb = this.carePackageRepo
       .createQueryBuilder('pkg')
-      .leftJoinAndSelect('pkg.facility', 'facility');
+      .leftJoinAndSelect('pkg.facility', 'facility')
+      .leftJoinAndSelect('pkg.doctorExpert', 'doctorExpert');
 
     // If caller is Staff and has facilityId (and not VNDOCTOR_ADMIN), enforce their own facility
     if (caller?.type === 'STAFF' && caller.facilityId && caller.role !== StaffRole.VNDOCTOR_ADMIN) {
@@ -161,7 +192,7 @@ export class CarePackagesService {
   async findById(id: string): Promise<CarePackage> {
     const carePackage = await this.carePackageRepo.findOne({
       where: { id },
-      relations: ['facility'],
+      relations: ['facility', 'doctorExpert'],
     });
 
     if (!carePackage) {
@@ -200,6 +231,37 @@ export class CarePackagesService {
         throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
       }
       carePackage.facilityId = dto.facilityId;
+    }
+
+    // 3. Validate package type and doctorExpertId
+    const targetType = dto.type !== undefined ? dto.type : carePackage.type;
+    const targetFacilityId = carePackage.facilityId;
+
+    if (targetType === CarePackageType.STANDARD) {
+      if (dto.doctorExpertId) {
+        throw new BadRequest(ErrorCode.BAD_REQUEST);
+      }
+      carePackage.doctorExpertId = null;
+    } else if (targetType === CarePackageType.VIP) {
+      const expertIdToCheck = dto.doctorExpertId !== undefined ? dto.doctorExpertId : carePackage.doctorExpertId;
+      if (!expertIdToCheck) {
+        throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+      if (dto.doctorExpertId && dto.doctorExpertId !== carePackage.doctorExpertId) {
+        const expert = await this.staffRepo.findOne({
+          where: { id: dto.doctorExpertId },
+        });
+        if (!expert) {
+          throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+        }
+        if (expert.facilityId && expert.facilityId !== targetFacilityId) {
+          throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
+        }
+        if (!expert.isActive) {
+          throw new BadRequest(ErrorCode.STAFF_INACTIVE);
+        }
+      }
+      carePackage.doctorExpertId = expertIdToCheck;
     }
 
     // 4. Update fields

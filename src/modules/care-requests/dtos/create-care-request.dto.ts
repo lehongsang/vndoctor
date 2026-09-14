@@ -10,7 +10,7 @@ export class CreateCareRequestDto {
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
   @IsNotEmpty({ message: 'subscriptionId không được để trống' })
-  @IsUUID('4', { message: 'subscriptionId phải là UUID v4 hợp lệ' })
+  @IsUUID(undefined, { message: 'subscriptionId phải là UUID hợp lệ' })
   subscriptionId: string;
 
   @ApiProperty({

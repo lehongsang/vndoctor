@@ -10,7 +10,7 @@ export class AssignAndActivateCareSubscriptionDto {
     example: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
   })
   @IsNotEmpty({ message: 'assignedDoctorId không được để trống' })
-  @IsUUID('4', { message: 'assignedDoctorId phải là UUID v4 hợp lệ' })
+  @IsUUID(undefined, { message: 'assignedDoctorId phải là UUID hợp lệ' })
   assignedDoctorId: string;
 
   @ApiProperty({
@@ -18,7 +18,7 @@ export class AssignAndActivateCareSubscriptionDto {
     example: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
   })
   @IsNotEmpty({ message: 'assignedNurseId không được để trống' })
-  @IsUUID('4', { message: 'assignedNurseId phải là UUID v4 hợp lệ' })
+  @IsUUID(undefined, { message: 'assignedNurseId phải là UUID hợp lệ' })
   assignedNurseId: string;
 
   @ApiPropertyOptional({
@@ -26,6 +26,6 @@ export class AssignAndActivateCareSubscriptionDto {
     example: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
   })
   @IsOptional()
-  @IsUUID('4', { message: 'assignedExpertId phải là UUID v4 hợp lệ' })
+  @IsUUID(undefined, { message: 'assignedExpertId phải là UUID hợp lệ' })
   assignedExpertId?: string;
 }
