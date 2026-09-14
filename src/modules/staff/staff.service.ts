@@ -138,10 +138,9 @@ export class StaffService {
       resolvedUsername = `${resolvedUsername}_${suffix}`;
     }
 
-    // 5. Hash password (use provided password or default 'vndoctor123')
-    const rawPassword = dto.password?.trim() || StaffService.DEFAULT_STAFF_PASSWORD;
+    // 5. Hash default password 'vndoctor123'
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(rawPassword, salt);
+    const passwordHash = await bcrypt.hash(StaffService.DEFAULT_STAFF_PASSWORD, salt);
 
     // 6. Create and save staff
     const staff = this.staffRepository.create({

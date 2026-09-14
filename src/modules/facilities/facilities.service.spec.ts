@@ -4,7 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { FacilitiesService } from './facilities.service';
 import { Facility } from './entities/facility.entity';
 import { FacilityType, StaffRole } from '@/commons/enums/vndoctor.enum';
-import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
+import { BadRequest, Conflict, Forbidden, NotFound } from '@/commons/exceptions';
 import type { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 
 describe('FacilitiesService', () => {
@@ -45,6 +45,7 @@ describe('FacilitiesService', () => {
   const mockRepository = {
     findOne: jest.fn(),
     find: jest.fn(),
+    count: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     createQueryBuilder: jest.fn(),
@@ -274,6 +275,106 @@ describe('FacilitiesService', () => {
     it('should return false if facilityId or parentFacilityId is missing', async () => {
       expect(await service.isSubordinateFacility('', 'parent-1')).toBe(false);
       expect(await service.isSubordinateFacility('child-1', '')).toBe(false);
+    });
+  });
+
+  describe('softDeleteFacility', () => {
+    const rootAdmin: StaffJwtPayload = {
+      id: 'root-01',
+      staffCode: 'ROOT-001',
+      username: 'vndoctor_admin',
+      fullName: 'Quản trị viên Hệ thống VNDoctor',
+      role: StaffRole.VNDOCTOR_ADMIN,
+      type: 'STAFF',
+    };
+
+    const facilityAdmin: StaffJwtPayload = {
+      id: 'staff-admin-01',
+      facilityId: 'provincial-111',
+      staffCode: 'ADMIN-001',
+      username: 'provincial_admin',
+      fullName: 'Quản lý BV Tỉnh',
+      role: StaffRole.ADMIN,
+      type: 'STAFF',
+    };
+
+    it('should allow VNDOCTOR_ADMIN to soft delete any facility', async () => {
+      const facilityToDelete = { ...mockDistrictFacility, isActive: true };
+      mockRepository.findOne.mockResolvedValueOnce(facilityToDelete);
+      mockRepository.count.mockResolvedValueOnce(0);
+      mockRepository.save.mockImplementationOnce((fac) => Promise.resolve(fac));
+
+      const result = await service.softDeleteFacility('district-222', rootAdmin);
+
+      expect(result).toEqual({
+        success: true,
+        message: 'Facility deactivated successfully',
+      });
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'district-222', isActive: false }),
+      );
+    });
+
+    it('should allow Facility Admin to soft delete a subordinate facility', async () => {
+      const facilityToDelete = { ...mockDistrictFacility, isActive: true };
+      mockRepository.findOne
+        .mockResolvedValueOnce(facilityToDelete) // getFacilityById
+        .mockResolvedValueOnce({ id: 'district-222', parentId: 'provincial-111' }); // isSubordinateFacility
+      mockRepository.count.mockResolvedValueOnce(0);
+      mockRepository.save.mockImplementationOnce((fac) => Promise.resolve(fac));
+
+      const result = await service.softDeleteFacility('district-222', facilityAdmin);
+
+      expect(result).toEqual({
+        success: true,
+        message: 'Facility deactivated successfully',
+      });
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'district-222', isActive: false }),
+      );
+    });
+
+    it('should throw Forbidden if Facility Admin attempts to delete their own facility', async () => {
+      const selfFacility = { ...mockParentFacility, isActive: true };
+      mockRepository.findOne.mockResolvedValueOnce(selfFacility);
+
+      await expect(
+        service.softDeleteFacility('provincial-111', facilityAdmin),
+      ).rejects.toThrow(Forbidden);
+    });
+
+    it('should throw Forbidden if Facility Admin attempts to delete an unrelated facility', async () => {
+      const unrelatedFacility = {
+        ...mockDistrictFacility,
+        id: 'unrelated-999',
+        parentId: 'other-root-888',
+      };
+      mockRepository.findOne
+        .mockResolvedValueOnce(unrelatedFacility) // getFacilityById
+        .mockResolvedValueOnce({ id: 'unrelated-999', parentId: 'other-root-888' }) // isSubordinateFacility step 1
+        .mockResolvedValueOnce({ id: 'other-root-888', parentId: null }); // isSubordinateFacility step 2
+
+      await expect(
+        service.softDeleteFacility('unrelated-999', facilityAdmin),
+      ).rejects.toThrow(Forbidden);
+    });
+
+    it('should throw BadRequest if facility has active child facilities', async () => {
+      const facilityWithChildren = { ...mockParentFacility, isActive: true };
+      mockRepository.findOne.mockResolvedValueOnce(facilityWithChildren);
+      mockRepository.count.mockResolvedValueOnce(2); // 2 active child facilities
+
+      await expect(
+        service.softDeleteFacility('provincial-111', rootAdmin),
+      ).rejects.toThrow(BadRequest);
+    });
+
+    it('should throw NotFound if facility does not exist', async () => {
+      mockRepository.findOne.mockResolvedValueOnce(null);
+
+      await expect(
+        service.softDeleteFacility('non-existent-id', rootAdmin),
+      ).rejects.toThrow(NotFound);
     });
   });
 });

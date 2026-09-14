@@ -4,10 +4,10 @@ import { CreateStaffDto } from './create-staff.dto';
 
 /**
  * DTO updating staff details.
- * Reuses CreateStaffDto omitting immutable fields (facilityId, username, password).
+ * Reuses CreateStaffDto omitting immutable fields (facilityId, username).
  */
 export class UpdateStaffDto extends PartialType(
-  OmitType(CreateStaffDto, ['facilityId', 'username', 'password'] as const),
+  OmitType(CreateStaffDto, ['facilityId', 'username'] as const),
 ) {
   @ApiPropertyOptional({ description: 'Trạng thái hoạt động' })
   @IsBoolean()

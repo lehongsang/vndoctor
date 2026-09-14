@@ -7,7 +7,6 @@ import {
   IsString,
   IsUUID,
   MaxLength,
-  MinLength,
 } from 'class-validator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 
@@ -20,7 +19,6 @@ export class CreateStaffDto {
   @IsUUID()
   @IsOptional()
   facilityId?: string;
-
 
   @ApiProperty({ description: 'Họ và tên đầy đủ', example: 'BS. CKII Nguyễn Văn An' })
   @IsString()
@@ -42,16 +40,6 @@ export class CreateStaffDto {
   @IsOptional()
   @MaxLength(50)
   username?: string;
-
-  @ApiPropertyOptional({
-    description: 'Mật khẩu khởi tạo (Mặc định là vndoctor123 nếu không truyền)',
-    example: 'vndoctor123',
-    default: 'vndoctor123',
-  })
-  @IsString()
-  @IsOptional()
-  @MinLength(6)
-  password?: string;
 
   @ApiProperty({
     enum: StaffRole,

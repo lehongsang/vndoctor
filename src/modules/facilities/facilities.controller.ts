@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -18,6 +20,7 @@ import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import { Roles } from '@/commons/decorators/roles.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 import { CurrentStaff, StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
+import { ErrorCode } from '@/commons/exceptions/error-codes';
 
 @ApiTags('Facilities (Cơ sở y tế & Phân cấp)')
 @ApiBearerAuth('access-token')
@@ -97,5 +100,36 @@ export class FacilitiesController {
   })
   async updateFacility(@Param('id') id: string, @Body() dto: UpdateFacilityDto) {
     return this.facilitiesService.updateFacility(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN)
+  @Doc({
+    summary: 'Role: VNDOCTOR_ADMIN / ADMIN - Xóa mềm (vô hiệu hóa) cơ sở y tế',
+    description:
+      'Vô hiệu hóa cơ sở y tế (soft delete). VNDOCTOR_ADMIN có thể xóa bất kỳ cơ sở nào. FacilityAdmin chỉ có thể xóa cơ sở con trực thuộc. Không thể xóa nếu cơ sở đang có cơ sở con đang hoạt động.',
+    errors: [
+      {
+        status: HttpStatus.NOT_FOUND,
+        errorCode: ErrorCode.FACILITY_NOT_FOUND,
+        message: 'Cơ sở y tế không tồn tại',
+      },
+      {
+        status: HttpStatus.FORBIDDEN,
+        errorCode: ErrorCode.FACILITY_ACCESS_DENIED,
+        message: 'Không có quyền thao tác trên cơ sở y tế này',
+      },
+      {
+        status: HttpStatus.BAD_REQUEST,
+        errorCode: ErrorCode.FACILITY_HAS_CHILDREN,
+        message: 'Không thể xóa cơ sở y tế đang có cơ sở con hoạt động',
+      },
+    ],
+  })
+  async deleteFacility(
+    @Param('id') id: string,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.facilitiesService.softDeleteFacility(id, staff);
   }
 }

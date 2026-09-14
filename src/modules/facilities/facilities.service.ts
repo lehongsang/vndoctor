@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { Facility } from './entities/facility.entity';
 import { CreateFacilityDto, QueryFacilityDto, UpdateFacilityDto } from './dtos';
-import { Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
+import { BadRequest, Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 
@@ -291,5 +291,56 @@ export class FacilitiesService {
     }
 
     return false;
+  }
+
+  /**
+   * Soft deletes (deactivates) a medical facility.
+   *
+   * @param id - UUID of facility to deactivate.
+   * @param staff - Current authenticated staff user.
+   * @returns Success status and confirmation message.
+   */
+  async softDeleteFacility(
+    id: string,
+    staff?: StaffJwtPayload,
+  ): Promise<{ success: boolean; message: string }> {
+    // 1. Verify target facility exists
+    const facility = await this.getFacilityById(id);
+
+    // 2. Validate authorization & hierarchy permissions
+    if (staff && staff.role !== StaffRole.VNDOCTOR_ADMIN) {
+      if (!staff.facilityId) {
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      }
+
+      // Facility Admin cannot deactivate their own primary facility
+      if (staff.facilityId === id) {
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      }
+
+      // Facility Admin can only deactivate subordinate facilities
+      const isSubordinate = await this.isSubordinateFacility(id, staff.facilityId);
+      if (!isSubordinate) {
+        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      }
+    }
+
+    // 3. Ensure no active child facilities exist under this facility
+    const activeChildrenCount = await this.facilityRepository.count({
+      where: { parentId: id, isActive: true },
+    });
+
+    if (activeChildrenCount > 0) {
+      throw new BadRequest(ErrorCode.FACILITY_HAS_CHILDREN);
+    }
+
+    // 4. Perform soft delete by setting isActive to false
+    facility.isActive = false;
+    await this.facilityRepository.save(facility);
+
+    return {
+      success: true,
+      message: 'Facility deactivated successfully',
+    };
   }
 }
