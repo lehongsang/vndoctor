@@ -1,4 +1,4 @@
-import { CarePackageStatus, CarePackageType } from '@/commons/enums/vndoctor.enum';
+import { CarePackageStatus, CarePackageType, StaffRole } from '@/commons/enums/vndoctor.enum';
 import { Forbidden, NotFound } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import type { TestingModule } from '@nestjs/testing';
@@ -121,6 +121,32 @@ describe('CarePackagesService', () => {
       expect(result.total).toBe(1);
       expect(result.page).toBe(1);
       expect(result.limit).toBe(10);
+    });
+
+    it('should enforce facilityId when called by regular facility Staff', async () => {
+      const qb = mockCarePackageRepo.createQueryBuilder();
+      await service.findAll(
+        { page: 1, limit: 10 },
+        { type: 'STAFF', facilityId: 'facility-1', role: StaffRole.ADMIN },
+      );
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'pkg.facilityId = :facilityId',
+        { facilityId: 'facility-1' },
+      );
+    });
+
+    it('should allow App Account to query across all facilities', async () => {
+      const qb = mockCarePackageRepo.createQueryBuilder();
+      await service.findAll(
+        { page: 1, limit: 10 },
+        { type: 'APP_ACCOUNT' },
+      );
+
+      expect(qb.andWhere).not.toHaveBeenCalledWith(
+        'pkg.facilityId = :facilityId',
+        expect.anything(),
+      );
     });
   });
 

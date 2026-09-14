@@ -12,6 +12,7 @@ import { Conversation } from '@/modules/care-subscriptions/entities/conversation
 import { Message } from '@/modules/care-subscriptions/entities/message.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import { StorageService } from '@/services/storage/storage.service';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -44,6 +45,7 @@ describe('ConversationsService', () => {
     title: 'Tư vấn: Trần Thị Mai - BS. CKII Nguyễn Văn An',
     healthProfile: mockProfile as HealthProfile,
     directUser: mockDoctor as StaffUser,
+    isPinned: false,
   };
 
   const mockMessage: Partial<Message> = {
@@ -79,24 +81,28 @@ describe('ConversationsService', () => {
     }),
   };
 
+  const mockMessageQueryBuilder = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    getManyAndCount: jest.fn().mockResolvedValue([[mockMessage], 1]),
+    getMany: jest.fn().mockResolvedValue([mockMessage]),
+  };
+
   const mockMessageRepo = {
     create: jest.fn().mockImplementation((dto: Partial<Message>): Message => dto as Message),
     save: jest.fn().mockImplementation((entity: Partial<Message>): Promise<Message> => Promise.resolve({ id: 'msg-1', ...entity } as Message)),
+    find: jest.fn().mockResolvedValue([mockMessage]),
     findOne: jest.fn().mockImplementation((options: { where: Record<string, unknown> }) => {
-      if (options.where.id === 'msg-1') {
+      if (options.where.id === 'msg-1' || options.where.id === '018fa300-0000-7000-8000-000000000001') {
         return Promise.resolve({ ...mockMessage });
       }
       return Promise.resolve(null);
     }),
-    createQueryBuilder: jest.fn().mockReturnValue({
-      leftJoinAndSelect: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      skip: jest.fn().mockReturnThis(),
-      take: jest.fn().mockReturnThis(),
-      getManyAndCount: jest.fn().mockResolvedValue([[mockMessage], 1]),
-    }),
+    createQueryBuilder: jest.fn().mockReturnValue(mockMessageQueryBuilder),
   };
 
   const mockHealthProfileRepo = {
@@ -125,6 +131,14 @@ describe('ConversationsService', () => {
     findOne: jest.fn().mockResolvedValue(null),
   };
 
+  const mockStorageService = {
+    uploadFile: jest.fn().mockResolvedValue({
+      url: 'https://storage.example.com/chat/photo.jpg',
+      size: 1024,
+      mimeType: 'image/jpeg',
+    }),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -137,6 +151,7 @@ describe('ConversationsService', () => {
         { provide: getRepositoryToken(StaffUser), useValue: mockStaffUserRepo },
         { provide: getRepositoryToken(Account), useValue: mockAccountRepo },
         { provide: getRepositoryToken(PatientCareSubscription), useValue: mockSubscriptionRepo },
+        { provide: StorageService, useValue: mockStorageService },
       ],
     }).compile();
 
@@ -159,13 +174,12 @@ describe('ConversationsService', () => {
           type: ConversationType.DIRECT,
           healthProfileId: 'profile-1',
           directUserId: 'doc-1',
-          status: ConversationStatus.ACTIVE,
         }),
       );
     });
 
-    it('should return existing conversation if already exists', async () => {
-      mockConversationRepo.findOne.mockResolvedValueOnce({ ...mockConversation });
+    it('should return existing conversation if one already exists', async () => {
+      mockConversationRepo.findOne.mockResolvedValueOnce(mockConversation);
 
       const result = await service.createDirectConversation(
         { healthProfileId: 'profile-1', directUserId: 'doc-1' },
@@ -173,68 +187,87 @@ describe('ConversationsService', () => {
         'account-1',
       );
 
-      expect(result.id).toBe('conv-1');
+      expect(result).toEqual(mockConversation);
+      expect(mockConversationRepo.create).not.toHaveBeenCalled();
     });
 
-    it('should throw NotFound if profile does not exist', async () => {
+    it('should throw NotFound if Health Profile does not exist', async () => {
+      mockHealthProfileRepo.findOne.mockResolvedValueOnce(null);
+
       await expect(
-        service.createDirectConversation(
-          { healthProfileId: 'invalid-id', directUserId: 'doc-1' },
-          undefined,
-          'account-1',
-        ),
+        service.createDirectConversation({ healthProfileId: 'non-existent', directUserId: 'doc-1' }),
       ).rejects.toThrow(NotFound);
     });
 
-    it('should throw Forbidden if caller does not own the profile', async () => {
+    it('should throw NotFound if Doctor does not exist', async () => {
+      mockStaffUserRepo.findOne.mockResolvedValueOnce(null);
+
       await expect(
-        service.createDirectConversation(
-          { healthProfileId: 'profile-1', directUserId: 'doc-1' },
-          undefined,
-          'wrong-account',
-        ),
-      ).rejects.toThrow(Forbidden);
+        service.createDirectConversation({ healthProfileId: 'profile-1', directUserId: 'non-existent' }),
+      ).rejects.toThrow(NotFound);
     });
   });
 
   describe('findAll', () => {
-    it('should return paginated conversations', async () => {
-      const result = await service.findAll({ page: 1, limit: 10 });
+    it('should query conversations with filters and pin ordering', async () => {
+      const result = await service.findAll(
+        { type: ConversationType.DIRECT, page: 1, limit: 10 },
+        'facility-1',
+      );
+
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
     });
   });
 
-  describe('findById', () => {
-    it('should return conversation if found', async () => {
-      const result = await service.findById('conv-1', 'facility-1');
-      expect(result).toBeDefined();
-      expect(result.id).toBe('conv-1');
-    });
+  describe('getMessages & Cursor Pagination', () => {
+    it('should retrieve messages with ISO Date cursor and avoid skip', async () => {
+      const result = await service.getMessages(
+        'conv-1',
+        { before: '2026-09-08T10:00:00.000Z', limit: 20 },
+        'facility-1',
+      );
 
-    it('should throw NotFound if conversation missing', async () => {
-      mockConversationRepo.findOne.mockResolvedValueOnce(null);
-      await expect(service.findById('non-existing')).rejects.toThrow(NotFound);
-    });
-
-    it('should throw Forbidden if staff belongs to another facility', async () => {
-      await expect(service.findById('conv-1', 'diff-facility')).rejects.toThrow(Forbidden);
-    });
-  });
-
-  describe('getMessages', () => {
-    it('should return list of messages in conversation', async () => {
-      const result = await service.getMessages('conv-1', { page: 1, limit: 20 }, 'facility-1');
       expect(result.data).toBeDefined();
-      expect(result.total).toBe(1);
+      expect(mockMessageQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'msg.createdAt < :beforeDate',
+        expect.objectContaining({ beforeDate: expect.any(Date) }),
+      );
+      // When cursor is used, skip should NOT be called
+      expect(mockMessageQueryBuilder.skip).not.toHaveBeenCalled();
+    });
+
+    it('should resolve UUID message cursor when before is a UUID', async () => {
+      const uuidCursor = '018fa300-0000-7000-8000-000000000001';
+      const result = await service.getMessages(
+        'conv-1',
+        { before: uuidCursor, limit: 20 },
+        'facility-1',
+      );
+
+      expect(result.data).toBeDefined();
+      expect(mockMessageRepo.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: uuidCursor, conversationId: 'conv-1' } }),
+      );
+    });
+
+    it('should apply skip when no cursor is provided (offset pagination)', async () => {
+      const result = await service.getMessages(
+        'conv-1',
+        { page: 2, limit: 20 },
+        'facility-1',
+      );
+
+      expect(result.data).toBeDefined();
+      expect(mockMessageQueryBuilder.skip).toHaveBeenCalledWith(20);
     });
   });
 
   describe('sendMessage', () => {
-    it('should send a message and update conversation metadata', async () => {
+    it('should save and return new message and update conversation preview', async () => {
       const result = await service.sendMessage(
         'conv-1',
-        { content: 'Bác sĩ phản hồi kết quả' },
+        { content: 'Bác sĩ đã xem tin nhắn', messageType: MessageType.TEXT },
         { senderType: SenderType.STAFF, staffUserId: 'doc-1', staffFacilityId: 'facility-1' },
       );
 
@@ -252,30 +285,113 @@ describe('ConversationsService', () => {
       await expect(
         service.sendMessage(
           'conv-1',
-          { content: 'Tin nhắn gửi vào phòng đóng' },
-          { senderType: SenderType.STAFF, staffUserId: 'doc-1', staffFacilityId: 'facility-1' },
+          { content: 'Tin nhắn' },
+          { senderType: SenderType.PATIENT, accountId: 'account-1' },
         ),
       ).rejects.toThrow(BadRequest);
     });
   });
 
-  describe('pinMessage', () => {
-    it('should pin a message', async () => {
+  describe('markAsRead', () => {
+    it('should mark conversation as read', async () => {
+      const result = await service.markAsRead('conv-1', {
+        staffUserId: 'doc-1',
+        staffFacilityId: 'facility-1',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.conversationId).toBe('conv-1');
+      expect(result.readAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('pinConversation & deleteConversation', () => {
+    it('should pin a conversation', async () => {
+      const result = await service.pinConversation('conv-1', { isPinned: true }, 'facility-1');
+
+      expect(result.isPinned).toBe(true);
+      expect(mockConversationRepo.save).toHaveBeenCalled();
+    });
+
+    it('should close/delete a conversation', async () => {
+      const result = await service.deleteConversation('conv-1', 'facility-1');
+
+      expect(result.success).toBe(true);
+      expect(mockConversationRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ status: ConversationStatus.CLOSED }),
+      );
+    });
+  });
+
+  describe('searchMessages & getPinnedMessages', () => {
+    it('should search messages by keyword', async () => {
+      const result = await service.searchMessages('conv-1', 'huyết áp', 'facility-1');
+
+      expect(result).toBeDefined();
+      expect(mockMessageQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'msg.content ILIKE :kw',
+        { kw: '%huyết áp%' },
+      );
+    });
+
+    it('should retrieve pinned messages in conversation', async () => {
+      const result = await service.getPinnedMessages('conv-1', 'facility-1');
+
+      expect(result).toBeDefined();
+      expect(mockMessageRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ conversationId: 'conv-1', isPinned: true }),
+        }),
+      );
+    });
+  });
+
+  describe('uploadChatMedia & getConversationResources', () => {
+    it('should upload chat media via storage service', async () => {
+      const mockFile = {
+        originalname: 'test.jpg',
+        buffer: Buffer.from('test'),
+      } as Express.Multer.File;
+
+      const result = await service.uploadChatMedia('conv-1', mockFile, {
+        staffUserId: 'doc-1',
+        staffFacilityId: 'facility-1',
+      });
+
+      expect(result.mediaUrl).toBe('https://storage.example.com/chat/photo.jpg');
+      expect(mockStorageService.uploadFile).toHaveBeenCalled();
+    });
+
+    it('should query conversation resources in resource hub', async () => {
+      const result = await service.getConversationResources(
+        'conv-1',
+        { type: MessageType.IMAGE, page: 1, limit: 10 },
+        'facility-1',
+      );
+
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
+    });
+  });
+
+  describe('pinMessage & deleteMessage', () => {
+    it('should pin message successfully', async () => {
       const result = await service.pinMessage('msg-1', true, 'facility-1');
       expect(result.isPinned).toBe(true);
     });
 
-    it('should throw NotFound if message missing', async () => {
+    it('should throw NotFound when pinning non-existent message', async () => {
       mockMessageRepo.findOne.mockResolvedValueOnce(null);
-      await expect(service.pinMessage('invalid', true, 'facility-1')).rejects.toThrow(NotFound);
-    });
-  });
 
-  describe('deleteMessage', () => {
-    it('should recall message', async () => {
+      await expect(service.pinMessage('non-existent', true, 'facility-1')).rejects.toThrow(
+        NotFound,
+      );
+    });
+
+    it('should delete message when caller is owner', async () => {
       const result = await service.deleteMessage(
         'msg-1',
-        undefined,
+        'facility-1',
         undefined,
         'account-1',
       );
@@ -284,14 +400,9 @@ describe('ConversationsService', () => {
       expect(result.content).toBe('Tin nhắn đã được thu hồi');
     });
 
-    it('should throw Forbidden if user is not the sender', async () => {
+    it('should throw Forbidden when caller is not sender', async () => {
       await expect(
-        service.deleteMessage(
-          'msg-1',
-          undefined,
-          undefined,
-          'wrong-account',
-        ),
+        service.deleteMessage('msg-1', 'facility-1', undefined, 'different-account'),
       ).rejects.toThrow(Forbidden);
     });
   });

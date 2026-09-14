@@ -1,4 +1,4 @@
-import { CarePackageStatus } from '@/commons/enums/vndoctor.enum';
+import { CarePackageStatus, StaffRole } from '@/commons/enums/vndoctor.enum';
 import { Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { Injectable } from '@nestjs/common';
@@ -92,13 +92,17 @@ export class CarePackagesService {
   }
 
   /**
-   * Find Care Packages with filtering, searching, and pagination.
+   * Find Care Packages with filtering, searching, and pagination based on caller context.
+   * - Staff users only see packages of their own facility (unless VNDOCTOR_ADMIN).
+   * - App users (Account) can view all packages across all facilities.
    *
    * @param query Query filters
+   * @param caller Context of authenticated caller
    * @returns Paginated list of Care Packages
    */
   async findAll(
     query: QueryCarePackageDto,
+    caller?: { type?: 'STAFF' | 'APP_ACCOUNT'; facilityId?: string; role?: StaffRole },
   ): Promise<{ data: CarePackage[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
@@ -108,7 +112,13 @@ export class CarePackagesService {
       .createQueryBuilder('pkg')
       .leftJoinAndSelect('pkg.facility', 'facility');
 
-    if (query.facilityId) {
+    // If caller is Staff and has facilityId (and not VNDOCTOR_ADMIN), enforce their own facility
+    if (caller?.type === 'STAFF' && caller.facilityId && caller.role !== StaffRole.VNDOCTOR_ADMIN) {
+      qb.andWhere('pkg.facilityId = :facilityId', {
+        facilityId: caller.facilityId,
+      });
+    } else if (query.facilityId) {
+      // For App Account or VNDOCTOR_ADMIN, filter by query.facilityId if provided
       qb.andWhere('pkg.facilityId = :facilityId', {
         facilityId: query.facilityId,
       });

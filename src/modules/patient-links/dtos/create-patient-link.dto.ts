@@ -1,11 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import { FacilityPatientLinkStatus } from '@/commons/enums/vndoctor.enum';
 
 export class CreatePatientLinkDto {
   @ApiPropertyOptional({
@@ -32,4 +34,13 @@ export class CreatePatientLinkDto {
   @IsOptional()
   @MaxLength(50)
   hospitalPatientCode?: string;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái liên kết (ACTIVE: liên kết ngay, PENDING: gửi lời mời tới app)',
+    enum: FacilityPatientLinkStatus,
+    default: FacilityPatientLinkStatus.ACTIVE,
+  })
+  @IsOptional()
+  @IsEnum(FacilityPatientLinkStatus)
+  status?: FacilityPatientLinkStatus;
 }

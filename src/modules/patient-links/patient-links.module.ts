@@ -5,6 +5,7 @@ import { PatientLinksService } from './patient-links.service';
 import { PatientLinksController } from './patient-links.controller';
 import { FacilitiesModule } from '@/modules/facilities/facilities.module';
 import { HealthProfilesModule } from '@/modules/health-profiles/health-profiles.module';
+import { PatientLinksSseService } from './patient-links-sse.service';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { HealthProfilesModule } from '@/modules/health-profiles/health-profiles.
     HealthProfilesModule,
   ],
   controllers: [PatientLinksController],
-  providers: [PatientLinksService],
-  exports: [PatientLinksService],
+  providers: [PatientLinksService, PatientLinksSseService],
+  exports: [PatientLinksService, PatientLinksSseService],
 })
 export class PatientLinksModule {}

@@ -62,4 +62,10 @@ export class Facility extends BaseEntity {
 
   @OneToMany(() => StaffUser, (staff) => staff.facility)
   staffUsers: StaffUser[];
+
+  @ApiPropertyOptional({
+    description: 'Thông tin Quản trị viên (Admin) của cơ sở y tế',
+    type: () => StaffUser,
+  })
+  admin?: StaffUser | null;
 }

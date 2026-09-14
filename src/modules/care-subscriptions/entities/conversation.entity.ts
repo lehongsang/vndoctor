@@ -100,4 +100,12 @@ export class Conversation extends BaseEntity {
   @ApiPropertyOptional({ description: 'Đoạn trích dẫn tin nhắn mới nhất' })
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'last_message_preview' })
   lastMessagePreview?: string | null;
+
+  @ApiProperty({ description: 'Hội thoại đã được ghim lên đầu hay chưa', default: false })
+  @Column({ type: 'boolean', default: false, name: 'is_pinned' })
+  isPinned: boolean;
+
+  @ApiPropertyOptional({ description: 'Thời điểm ghim hội thoại' })
+  @Column({ type: 'timestamptz', nullable: true, name: 'pinned_at' })
+  pinnedAt?: Date | null;
 }

@@ -6,6 +6,7 @@ import { CreateFacilityDto, QueryFacilityDto, UpdateFacilityDto } from './dtos';
 import { BadRequest, Conflict, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
+import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 
 @Injectable()
 export class FacilitiesService {
@@ -185,6 +186,13 @@ export class FacilitiesService {
     const qb = this.facilityRepository
       .createQueryBuilder('facility')
       .leftJoinAndSelect('facility.parent', 'parent')
+      .leftJoinAndMapOne(
+        'facility.admin',
+        StaffUser,
+        'admin',
+        'admin.facilityId = facility.id AND admin.role = :adminRole AND admin.isActive = true',
+        { adminRole: StaffRole.ADMIN },
+      )
       .where('facility.parentId = :parentId', { parentId });
 
     if (query?.search) {

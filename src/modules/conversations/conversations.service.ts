@@ -11,12 +11,16 @@ import { Conversation } from '@/modules/care-subscriptions/entities/conversation
 import { Message } from '@/modules/care-subscriptions/entities/message.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import { StorageService } from '@/services/storage/storage.service';
+import { StoragePath } from '@/services/storage/storage.enums';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   CreateDirectConversationDto,
+  PinConversationDto,
   QueryConversationDto,
+  QueryConversationResourceDto,
   QueryMessageDto,
   SendMessageDto,
 } from './dtos';
@@ -41,7 +45,18 @@ export class ConversationsService {
     private readonly accountRepo: Repository<Account>,
     @InjectRepository(PatientCareSubscription)
     private readonly subscriptionRepo: Repository<PatientCareSubscription>,
+    private readonly storageService: StorageService,
   ) {}
+
+  /**
+   * Helper to check if a string is a valid UUID v4 / v7.
+   *
+   * @param str Candidate string
+   * @returns True if UUID format
+   */
+  private isUuid(str: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+  }
 
   /**
    * Create or retrieve an existing direct 1-1 conversation between Doctor and Patient.
@@ -102,6 +117,7 @@ export class ConversationsService {
       healthProfileId: dto.healthProfileId,
       directUserId: dto.directUserId,
       title: `Tư vấn: ${profile.fullName} - ${doctor.fullName}`,
+      isPinned: false,
     });
 
     return this.conversationRepo.save(conversation);
@@ -166,7 +182,9 @@ export class ConversationsService {
       );
     }
 
-    qb.orderBy('conv.lastMessageAt', 'DESC', 'NULLS LAST')
+    // Pinned conversations float to top, followed by latest message time
+    qb.orderBy('conv.isPinned', 'DESC')
+      .addOrderBy('conv.lastMessageAt', 'DESC', 'NULLS LAST')
       .addOrderBy('conv.createdAt', 'DESC')
       .skip(skip)
       .take(limit);
@@ -208,7 +226,7 @@ export class ConversationsService {
       throw new NotFound(ErrorCode.CONVERSATION_NOT_FOUND);
     }
 
-    if (staffFacilityId && conversation.facilityId !== staffFacilityId) {
+    if (staffFacilityId && conversation.facilityId && conversation.facilityId !== staffFacilityId) {
       throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
@@ -227,12 +245,14 @@ export class ConversationsService {
 
   /**
    * Get messages inside a conversation with cursor / pagination.
+   * Resolves before/after either as ISO Date or as Message UUID.
+   * Avoids skip duplication when cursor is used.
    *
    * @param conversationId Conversation UUID
-   * @param query Pagination params
+   * @param query Pagination and cursor params
    * @param staffFacilityId Staff facility
    * @param accountId Patient account ID
-   * @returns List of messages
+   * @returns List of messages in chronological order
    */
   async getMessages(
     conversationId: string,
@@ -240,7 +260,7 @@ export class ConversationsService {
     staffFacilityId?: string,
     accountId?: string,
   ): Promise<{ data: Message[]; total: number; page: number; limit: number }> {
-    // Validate conversation access
+    // 1. Validate conversation access
     await this.findById(conversationId, staffFacilityId, accountId);
 
     const page = Math.max(1, Number(query.page) || 1);
@@ -253,13 +273,66 @@ export class ConversationsService {
       .leftJoinAndSelect('msg.senderAccount', 'senderAccount')
       .where('msg.conversationId = :conversationId', { conversationId });
 
+    let hasCursor = false;
+
+    // 2. Resolve 'before' cursor (Load older messages)
     if (query.before) {
-      qb.andWhere('msg.createdAt < :before', { before: query.before });
+      let beforeDate: Date | undefined;
+      if (this.isUuid(query.before)) {
+        const refMessage = await this.messageRepo.findOne({
+          where: { id: query.before, conversationId },
+        });
+        if (refMessage) {
+          beforeDate = refMessage.createdAt;
+        }
+      } else {
+        const parsed = new Date(query.before);
+        if (!isNaN(parsed.getTime())) {
+          beforeDate = parsed;
+        }
+      }
+
+      if (beforeDate) {
+        qb.andWhere('msg.createdAt < :beforeDate', { beforeDate });
+        hasCursor = true;
+      }
     }
 
-    qb.orderBy('msg.createdAt', 'DESC')
-      .skip(skip)
-      .take(limit);
+    // 3. Resolve 'after' cursor (Load newer messages)
+    if (query.after) {
+      let afterDate: Date | undefined;
+      if (this.isUuid(query.after)) {
+        const refMessage = await this.messageRepo.findOne({
+          where: { id: query.after, conversationId },
+        });
+        if (refMessage) {
+          afterDate = refMessage.createdAt;
+        }
+      } else {
+        const parsed = new Date(query.after);
+        if (!isNaN(parsed.getTime())) {
+          afterDate = parsed;
+        }
+      }
+
+      if (afterDate) {
+        qb.andWhere('msg.createdAt > :afterDate', { afterDate });
+        hasCursor = true;
+      }
+    }
+
+    // 4. Keyword search filter
+    if (query.keyword) {
+      qb.andWhere('msg.content ILIKE :kw', { kw: `%${query.keyword.trim()}%` });
+    }
+
+    // 5. Pagination: If cursor is used, do NOT apply skip to prevent skipping items
+    qb.orderBy('msg.createdAt', 'DESC');
+
+    if (!hasCursor) {
+      qb.skip(skip);
+    }
+    qb.take(limit);
 
     const [data, total] = await qb.getManyAndCount();
 
@@ -331,6 +404,209 @@ export class ConversationsService {
   }
 
   /**
+   * Mark a conversation as read by the authenticated user.
+   *
+   * @param conversationId Conversation UUID
+   * @param reader Reader context
+   * @returns Success status with read timestamp
+   */
+  async markAsRead(
+    conversationId: string,
+    reader: { staffUserId?: string; accountId?: string; staffFacilityId?: string },
+  ): Promise<{ success: boolean; conversationId: string; readAt: Date }> {
+    await this.findById(conversationId, reader.staffFacilityId, reader.accountId);
+
+    return {
+      success: true,
+      conversationId,
+      readAt: new Date(),
+    };
+  }
+
+  /**
+   * Pin or unpin a conversation for fast access.
+   *
+   * @param conversationId Conversation UUID
+   * @param dto Pin/Unpin flag
+   * @param staffFacilityId Optional staff facility
+   * @param accountId Optional account ID
+   * @returns Updated Conversation
+   */
+  async pinConversation(
+    conversationId: string,
+    dto: PinConversationDto,
+    staffFacilityId?: string,
+    accountId?: string,
+  ): Promise<Conversation> {
+    const conversation = await this.findById(conversationId, staffFacilityId, accountId);
+
+    conversation.isPinned = dto.isPinned;
+    conversation.pinnedAt = dto.isPinned ? new Date() : null;
+    return this.conversationRepo.save(conversation);
+  }
+
+  /**
+   * Soft delete / Close a conversation.
+   *
+   * @param conversationId Conversation UUID
+   * @param staffFacilityId Optional staff facility
+   * @param accountId Optional account ID
+   * @returns Success status
+   */
+  async deleteConversation(
+    conversationId: string,
+    staffFacilityId?: string,
+    accountId?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const conversation = await this.findById(conversationId, staffFacilityId, accountId);
+
+    conversation.status = ConversationStatus.CLOSED;
+    await this.conversationRepo.save(conversation);
+
+    return {
+      success: true,
+      message: 'Conversation closed successfully',
+    };
+  }
+
+  /**
+   * Search messages across a conversation by keyword.
+   *
+   * @param conversationId Conversation UUID
+   * @param keyword Search term
+   * @param staffFacilityId Optional staff facility
+   * @param accountId Optional account ID
+   * @returns Matching messages
+   */
+  async searchMessages(
+    conversationId: string,
+    keyword: string,
+    staffFacilityId?: string,
+    accountId?: string,
+  ): Promise<Message[]> {
+    await this.findById(conversationId, staffFacilityId, accountId);
+
+    if (!keyword || !keyword.trim()) {
+      return [];
+    }
+
+    return this.messageRepo
+      .createQueryBuilder('msg')
+      .leftJoinAndSelect('msg.senderUser', 'senderUser')
+      .leftJoinAndSelect('msg.senderAccount', 'senderAccount')
+      .where('msg.conversationId = :conversationId', { conversationId })
+      .andWhere('msg.isDeleted = false')
+      .andWhere('msg.content ILIKE :kw', { kw: `%${keyword.trim()}%` })
+      .orderBy('msg.createdAt', 'DESC')
+      .take(50)
+      .getMany();
+  }
+
+  /**
+   * Get all pinned messages in a conversation.
+   *
+   * @param conversationId Conversation UUID
+   * @param staffFacilityId Optional staff facility
+   * @param accountId Optional account ID
+   * @returns Pinned messages list
+   */
+  async getPinnedMessages(
+    conversationId: string,
+    staffFacilityId?: string,
+    accountId?: string,
+  ): Promise<Message[]> {
+    await this.findById(conversationId, staffFacilityId, accountId);
+
+    return this.messageRepo.find({
+      where: {
+        conversationId,
+        isPinned: true,
+        isDeleted: false,
+      },
+      relations: ['senderUser', 'senderAccount'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * Upload media / file attachment for chat.
+   *
+   * @param conversationId Conversation UUID
+   * @param file Uploaded file
+   * @param uploader Uploader context
+   * @returns Media URL and metadata
+   */
+  async uploadChatMedia(
+    conversationId: string,
+    file: Express.Multer.File,
+    uploader: { staffUserId?: string; accountId?: string; staffFacilityId?: string },
+  ): Promise<{ mediaUrl: string; size: number; mimeType: string }> {
+    await this.findById(conversationId, uploader.staffFacilityId, uploader.accountId);
+
+    if (!file) {
+      throw new BadRequest(ErrorCode.FILE_REQUIRED);
+    }
+
+    const uploaded = await this.storageService.uploadFile(
+      file,
+      true,
+      StoragePath.CHAT,
+      { allowAnyMime: true },
+    );
+
+    return {
+      mediaUrl: uploaded.url,
+      size: uploaded.size,
+      mimeType: uploaded.mimeType,
+    };
+  }
+
+  /**
+   * Resource Hub: Retrieve shared attachments, examinations, records, and reports in a conversation.
+   *
+   * @param conversationId Conversation UUID
+   * @param query Resource query filters and pagination
+   * @param staffFacilityId Optional staff facility
+   * @param accountId Optional account ID
+   * @returns Paginated list of shared resources
+   */
+  async getConversationResources(
+    conversationId: string,
+    query: QueryConversationResourceDto,
+    staffFacilityId?: string,
+    accountId?: string,
+  ): Promise<{ data: Message[]; total: number; page: number; limit: number }> {
+    await this.findById(conversationId, staffFacilityId, accountId);
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const qb = this.messageRepo
+      .createQueryBuilder('msg')
+      .leftJoinAndSelect('msg.senderUser', 'senderUser')
+      .leftJoinAndSelect('msg.senderAccount', 'senderAccount')
+      .where('msg.conversationId = :conversationId', { conversationId })
+      .andWhere('msg.isDeleted = false');
+
+    if (query.type) {
+      qb.andWhere('msg.messageType = :type', { type: query.type });
+    } else {
+      // Return all non-text or attachment messages
+      qb.andWhere(
+        '(msg.resourceId IS NOT NULL OR msg.mediaUrl IS NOT NULL OR msg.messageType != :textType)',
+        { textType: MessageType.TEXT },
+      );
+    }
+
+    qb.orderBy('msg.createdAt', 'DESC').skip(skip).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return { data, total, page, limit };
+  }
+
+  /**
    * Pin or unpin a message.
    *
    * @param messageId Message UUID
@@ -352,7 +628,7 @@ export class ConversationsService {
       throw new NotFound(ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND);
     }
 
-    if (staffFacilityId && message.conversation?.facilityId !== staffFacilityId) {
+    if (staffFacilityId && message.conversation?.facilityId && message.conversation.facilityId !== staffFacilityId) {
       throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
@@ -384,11 +660,11 @@ export class ConversationsService {
       throw new NotFound(ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND);
     }
 
-    if (staffFacilityId && message.conversation?.facilityId !== staffFacilityId) {
+    if (staffFacilityId && message.conversation?.facilityId && message.conversation.facilityId !== staffFacilityId) {
       throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
-    // Ownership check
+    // Ownership check: only sender can delete
     if (staffUserId && message.senderUserId && message.senderUserId !== staffUserId) {
       throw new Forbidden(ErrorCode.CONVERSATION_MESSAGE_CANNOT_DELETE);
     }

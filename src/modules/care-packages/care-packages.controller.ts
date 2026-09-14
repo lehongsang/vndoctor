@@ -1,9 +1,11 @@
 import { CurrentStaff, StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
+import { AuthUserContext, CurrentAuthUser } from '@/commons/decorators/current-auth-user.decorator';
 import { Roles } from '@/commons/decorators/roles.decorator';
 import { Doc } from '@/commons/docs/doc.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
+import { CombinedAuthGuard } from '@/commons/guards/combined-auth.guard';
 import {
   Body,
   Controller,
@@ -49,13 +51,23 @@ export class CarePackagesController {
   }
 
   @Get()
+  @UseGuards(CombinedAuthGuard)
+  @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'Public / All - Danh sách gói chăm sóc sức khỏe',
-    description: 'Lấy danh sách các gói chăm sóc có phân trang, lọc theo cơ sở y tế, loại gói (STANDARD/VIP), trạng thái (ACTIVE/INACTIVE) và tìm kiếm',
+    summary: 'Dual Auth - Danh sách gói chăm sóc sức khỏe',
+    description:
+      'Lấy danh sách các gói chăm sóc. Nhân viên cơ sở y tế chỉ xem được các gói của cơ sở mình. Người dùng App (bệnh nhân) xem được tất cả các gói của mọi cơ sở.',
     response: { serialization: CarePackage, isArray: true },
   })
-  async findAll(@Query() query: QueryCarePackageDto) {
-    return this.carePackagesService.findAll(query);
+  async findAll(
+    @Query() query: QueryCarePackageDto,
+    @CurrentAuthUser() user: AuthUserContext,
+  ) {
+    return this.carePackagesService.findAll(query, {
+      type: user.type,
+      facilityId: user.facilityId,
+      role: user.staff?.role,
+    });
   }
 
   @Get(':id')

@@ -212,6 +212,7 @@ describe('FacilitiesService', () => {
       mockRepository.findOne.mockResolvedValue(mockParentFacility);
       const qb = {
         leftJoinAndSelect: jest.fn().mockReturnThis(),
+        leftJoinAndMapOne: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),

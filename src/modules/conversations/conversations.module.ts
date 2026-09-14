@@ -4,6 +4,7 @@ import { Conversation } from '@/modules/care-subscriptions/entities/conversation
 import { Message } from '@/modules/care-subscriptions/entities/message.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import { StorageModule } from '@/services/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConversationsController } from './conversations.controller';
@@ -20,6 +21,7 @@ import { ChatGateway } from './gateways/chat.gateway';
       Account,
       PatientCareSubscription,
     ]),
+    StorageModule,
   ],
   controllers: [ConversationsController],
   providers: [ConversationsService, ChatGateway],

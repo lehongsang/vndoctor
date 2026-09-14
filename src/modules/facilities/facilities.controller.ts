@@ -70,8 +70,8 @@ export class FacilitiesController {
   @Get(':id/children')
   @Roles(StaffRole.VNDOCTOR_ADMIN, StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.DOCTOR_EXPERT, StaffRole.NURSE, StaffRole.STAFF)
   @Doc({
-    summary: 'Role: Tất cả nhân sự - Danh sách cơ sở con trực thuộc',
-    description: 'Lấy danh sách các cơ sở y tế cấp dưới trực tiếp thuộc quản lý của một cơ sở cha (hỗ trợ tìm kiếm, phân trang và lọc theo cấp bậc/trạng thái)',
+    summary: 'Role: Tất cả nhân sự - Danh sách cơ sở con trực thuộc (kèm Admin)',
+    description: 'Lấy danh sách các cơ sở y tế cấp dưới trực tiếp thuộc quản lý của một cơ sở cha, kèm thông tin quản trị viên (Admin) của từng cơ sở con (hỗ trợ tìm kiếm, phân trang và lọc theo cấp bậc/trạng thái)',
   })
   async getChildrenFacilities(
     @Param('id') id: string,

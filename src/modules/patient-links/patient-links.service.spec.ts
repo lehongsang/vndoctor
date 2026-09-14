@@ -8,6 +8,7 @@ import { HealthProfilesService } from '@/modules/health-profiles/health-profiles
 import { FacilityPatientLinkStatus } from '@/commons/enums/vndoctor.enum';
 import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
 import type { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
+import { PatientLinksSseService } from './patient-links-sse.service';
 
 describe('PatientLinksService', () => {
   let service: PatientLinksService;
@@ -22,6 +23,7 @@ describe('PatientLinksService', () => {
 
   const mockProfile = {
     id: 'profile-111',
+    accountId: 'account-111',
     fullName: 'Nguyễn Văn Bệnh Nhân',
     phoneNumber: '0987654321',
   };
@@ -41,12 +43,23 @@ describe('PatientLinksService', () => {
     generateId: () => {},
   };
 
+  const mockQueryBuilder = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    getManyAndCount: jest.fn().mockResolvedValue([[mockLink], 1]),
+    getMany: jest.fn().mockResolvedValue([mockLink]),
+  };
+
   const mockRepository = {
     findOne: jest.fn(),
     find: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
   };
 
   const mockFacilitiesService = {
@@ -56,6 +69,12 @@ describe('PatientLinksService', () => {
   const mockHealthProfilesService = {
     getProfileById: jest.fn(),
     getProfiles: jest.fn(),
+  };
+
+  const mockSseService = {
+    emitInvitation: jest.fn(),
+    emitStatusChange: jest.fn(),
+    subscribe: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -74,6 +93,10 @@ describe('PatientLinksService', () => {
           provide: HealthProfilesService,
           useValue: mockHealthProfilesService,
         },
+        {
+          provide: PatientLinksSseService,
+          useValue: mockSseService,
+        },
       ],
     }).compile();
 
@@ -82,22 +105,31 @@ describe('PatientLinksService', () => {
   });
 
   describe('createLink', () => {
-    it('should link patient profile to facility successfully', async () => {
+    it('should link patient profile to facility successfully and emit SSE when PENDING', async () => {
       mockFacilitiesService.getFacilityById.mockResolvedValue(mockFacility);
       mockHealthProfilesService.getProfileById.mockResolvedValue(mockProfile);
       mockRepository.findOne.mockResolvedValue(null);
-      mockRepository.create.mockReturnValue(mockLink);
-      mockRepository.save.mockResolvedValue(mockLink);
+      const pendingLink = { ...mockLink, status: FacilityPatientLinkStatus.PENDING };
+      mockRepository.create.mockReturnValue(pendingLink);
+      mockRepository.save.mockResolvedValue(pendingLink);
 
       const result = await service.createLink({
         facilityId: 'fac-111',
         healthProfileId: 'profile-111',
         phoneNumber: '0987654321',
         hospitalPatientCode: 'BN-001',
+        status: FacilityPatientLinkStatus.PENDING,
       });
 
       expect(result.id).toBe('link-01');
       expect(mockRepository.save).toHaveBeenCalled();
+      expect(mockSseService.emitInvitation).toHaveBeenCalledWith(
+        'account-111',
+        expect.objectContaining({
+          linkId: 'link-01',
+          facilityId: 'fac-111',
+        }),
+      );
     });
 
     it('should throw Conflict if link is already active', async () => {
@@ -134,6 +166,71 @@ describe('PatientLinksService', () => {
           },
           staff,
         ),
+      ).rejects.toThrow(Forbidden);
+    });
+  });
+
+  describe('getMyInvitations & getMyLinks', () => {
+    it('should retrieve pending invitations for patient account', async () => {
+      const result = await service.getMyInvitations('account-111');
+      expect(result).toBeDefined();
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
+    });
+
+    it('should retrieve active links for patient account', async () => {
+      const result = await service.getMyLinks('account-111');
+      expect(result).toBeDefined();
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
+    });
+  });
+
+  describe('acceptInvitation & rejectInvitation', () => {
+    it('should accept pending invitation successfully and emit SSE', async () => {
+      const pendingLink = {
+        ...mockLink,
+        status: FacilityPatientLinkStatus.PENDING,
+        healthProfile: mockProfile,
+      };
+      mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockRepository.save.mockImplementation((link) => Promise.resolve(link));
+
+      const result = await service.acceptInvitation('link-01', 'account-111');
+
+      expect(result.status).toBe(FacilityPatientLinkStatus.ACTIVE);
+      expect(mockSseService.emitStatusChange).toHaveBeenCalledWith(
+        'account-111',
+        expect.objectContaining({ linkId: 'link-01', status: 'ACTIVE' }),
+      );
+    });
+
+    it('should reject pending invitation successfully and emit SSE', async () => {
+      const pendingLink = {
+        ...mockLink,
+        status: FacilityPatientLinkStatus.PENDING,
+        healthProfile: mockProfile,
+      };
+      mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockRepository.save.mockImplementation((link) => Promise.resolve(link));
+
+      const result = await service.rejectInvitation('link-01', 'account-111');
+
+      expect(result.success).toBe(true);
+      expect(mockSseService.emitStatusChange).toHaveBeenCalledWith(
+        'account-111',
+        expect.objectContaining({ linkId: 'link-01', status: 'UNLINKED' }),
+      );
+    });
+
+    it('should throw Forbidden if account does not own the profile', async () => {
+      const pendingLink = {
+        ...mockLink,
+        status: FacilityPatientLinkStatus.PENDING,
+        healthProfile: mockProfile,
+      };
+      mockRepository.findOne.mockResolvedValue(pendingLink);
+
+      await expect(
+        service.acceptInvitation('link-01', 'other-account-999'),
       ).rejects.toThrow(Forbidden);
     });
   });

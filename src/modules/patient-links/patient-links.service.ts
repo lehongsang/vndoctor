@@ -19,6 +19,7 @@ import { FacilitiesService } from '@/modules/facilities/facilities.service';
 import { HealthProfilesService } from '@/modules/health-profiles/health-profiles.service';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
+import { PatientLinksSseService } from './patient-links-sse.service';
 
 @Injectable()
 export class PatientLinksService {
@@ -27,10 +28,12 @@ export class PatientLinksService {
     private readonly linkRepository: Repository<FacilityPatientLink>,
     private readonly facilitiesService: FacilitiesService,
     private readonly healthProfilesService: HealthProfilesService,
+    private readonly sseService: PatientLinksSseService,
   ) {}
 
   /**
    * Links a Patient Health Profile to a Medical Facility.
+   * If status is PENDING, emits an SSE invitation event to the target patient.
    *
    * @param dto - Linking payload.
    * @param staff - Current staff context.
@@ -54,10 +57,10 @@ export class PatientLinksService {
     }
 
     // Verify facility exists
-    await this.facilitiesService.getFacilityById(targetFacilityId);
+    const facility = await this.facilitiesService.getFacilityById(targetFacilityId);
 
     // Verify health profile exists
-    await this.healthProfilesService.getProfileById(dto.healthProfileId);
+    const profile = await this.healthProfilesService.getProfileById(dto.healthProfileId);
 
     // Check duplicate link
     const existing = await this.linkRepository.findOne({
@@ -67,19 +70,33 @@ export class PatientLinksService {
       },
     });
 
+    const targetStatus = dto.status || FacilityPatientLinkStatus.ACTIVE;
+
     if (existing) {
       if (existing.status === FacilityPatientLinkStatus.ACTIVE) {
         throw new Conflict(ErrorCode.PATIENT_ALREADY_LINKED);
       }
 
-      // Reactivate previously unlinked link
-      existing.status = FacilityPatientLinkStatus.ACTIVE;
+      // Reactivate previously unlinked or pending link
+      existing.status = targetStatus;
       existing.phoneNumber = dto.phoneNumber;
       if (dto.hospitalPatientCode) {
         existing.hospitalPatientCode = dto.hospitalPatientCode;
       }
       existing.linkedAt = new Date();
-      return this.linkRepository.save(existing);
+      const updated = await this.linkRepository.save(existing);
+
+      if (targetStatus === FacilityPatientLinkStatus.PENDING && profile.accountId) {
+        this.sseService.emitInvitation(profile.accountId, {
+          linkId: updated.id,
+          facilityId: facility.id,
+          facilityName: facility.facilityName,
+          healthProfileId: profile.id,
+          hospitalPatientCode: updated.hospitalPatientCode,
+        });
+      }
+
+      return updated;
     }
 
     const link = this.linkRepository.create({
@@ -87,11 +104,24 @@ export class PatientLinksService {
       healthProfileId: dto.healthProfileId,
       phoneNumber: dto.phoneNumber.trim(),
       hospitalPatientCode: dto.hospitalPatientCode || null,
-      status: FacilityPatientLinkStatus.ACTIVE,
+      status: targetStatus,
       linkedAt: new Date(),
     });
 
-    return this.linkRepository.save(link);
+    const savedLink = await this.linkRepository.save(link);
+
+    // If link created with PENDING status, send real-time notification to patient via SSE
+    if (targetStatus === FacilityPatientLinkStatus.PENDING && profile.accountId) {
+      this.sseService.emitInvitation(profile.accountId, {
+        linkId: savedLink.id,
+        facilityId: facility.id,
+        facilityName: facility.facilityName,
+        healthProfileId: profile.id,
+        hospitalPatientCode: savedLink.hospitalPatientCode,
+      });
+    }
+
+    return savedLink;
   }
 
   /**
@@ -159,6 +189,110 @@ export class PatientLinksService {
 
     const [items, total] = await qb.getManyAndCount();
     return { items, total, page, limit };
+  }
+
+  /**
+   * Gets pending invitations for authenticated mobile app user.
+   *
+   * @param accountId - Authenticated App Account ID
+   * @returns List of pending invitations
+   */
+  async getMyInvitations(accountId: string): Promise<FacilityPatientLink[]> {
+    return this.linkRepository
+      .createQueryBuilder('link')
+      .leftJoinAndSelect('link.facility', 'facility')
+      .leftJoinAndSelect('link.healthProfile', 'profile')
+      .where('profile.accountId = :accountId', { accountId })
+      .andWhere('link.status = :status', { status: FacilityPatientLinkStatus.PENDING })
+      .orderBy('link.createdAt', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Gets active facility links for authenticated mobile app user.
+   *
+   * @param accountId - Authenticated App Account ID
+   * @returns List of active links
+   */
+  async getMyLinks(accountId: string): Promise<FacilityPatientLink[]> {
+    return this.linkRepository
+      .createQueryBuilder('link')
+      .leftJoinAndSelect('link.facility', 'facility')
+      .leftJoinAndSelect('link.healthProfile', 'profile')
+      .where('profile.accountId = :accountId', { accountId })
+      .andWhere('link.status = :status', { status: FacilityPatientLinkStatus.ACTIVE })
+      .orderBy('link.linkedAt', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Accepts a pending facility link invitation from mobile app.
+   *
+   * @param id - Link UUID
+   * @param accountId - Authenticated App Account ID
+   * @returns Updated link
+   */
+  async acceptInvitation(id: string, accountId: string): Promise<FacilityPatientLink> {
+    const link = await this.linkRepository.findOne({
+      where: { id },
+      relations: ['healthProfile', 'facility'],
+    });
+
+    if (!link) {
+      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
+    }
+
+    if (link.healthProfile.accountId !== accountId) {
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+    }
+
+    link.status = FacilityPatientLinkStatus.ACTIVE;
+    link.linkedAt = new Date();
+    const updated = await this.linkRepository.save(link);
+
+    this.sseService.emitStatusChange(accountId, {
+      linkId: link.id,
+      facilityId: link.facilityId,
+      status: FacilityPatientLinkStatus.ACTIVE,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Rejects a pending facility link invitation from mobile app.
+   *
+   * @param id - Link UUID
+   * @param accountId - Authenticated App Account ID
+   * @returns Success response
+   */
+  async rejectInvitation(id: string, accountId: string): Promise<{ success: boolean; message: string }> {
+    const link = await this.linkRepository.findOne({
+      where: { id },
+      relations: ['healthProfile', 'facility'],
+    });
+
+    if (!link) {
+      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
+    }
+
+    if (link.healthProfile.accountId !== accountId) {
+      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+    }
+
+    link.status = FacilityPatientLinkStatus.UNLINKED;
+    await this.linkRepository.save(link);
+
+    this.sseService.emitStatusChange(accountId, {
+      linkId: link.id,
+      facilityId: link.facilityId,
+      status: FacilityPatientLinkStatus.UNLINKED,
+    });
+
+    return {
+      success: true,
+      message: 'Invitation rejected successfully',
+    };
   }
 
   /**
