@@ -17,8 +17,10 @@ import { HealthProfile } from './entities/health-profile.entity';
 import { AppAuthGuard } from '@/commons/guards/app-auth.guard';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
+import { CombinedAuthGuard } from '@/commons/guards/combined-auth.guard';
 import { AppAccountJwtPayload, CurrentAccount } from '@/commons/decorators/current-account.decorator';
 import { CurrentStaff, StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
+import { AuthUserContext, CurrentAuthUser } from '@/commons/decorators/current-auth-user.decorator';
 import { Public } from '@/commons/decorators/public.decorator';
 
 @ApiTags('Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)')
@@ -44,18 +46,18 @@ export class HealthProfilesController {
   }
 
   @Post()
-  @UseGuards(AppAuthGuard)
+  @UseGuards(CombinedAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'App Auth - Tạo mới hồ sơ sức khỏe (Bản thân hoặc người thân)',
-    description: 'Bệnh nhân tạo hồ sơ sức khỏe mới thuộc tài khoản của mình (quan hệ SELF, FATHER, MOTHER...)',
+    summary: 'App / Staff Auth - Tạo mới hồ sơ sức khỏe',
+    description: 'Bệnh nhân tạo hồ sơ mới cho bản thân/người thân hoặc Nhân viên y tế tạo hồ sơ cho bệnh nhân.',
     response: { serialization: HealthProfile },
   })
   async createProfile(
     @Body() dto: CreateHealthProfileDto,
-    @CurrentAccount() account: AppAccountJwtPayload,
+    @CurrentAuthUser() user: AuthUserContext,
   ) {
-    return this.healthProfilesService.createProfile(dto, account.id);
+    return this.healthProfilesService.createProfile(dto, user);
   }
 
   @Get('me')
@@ -82,32 +84,32 @@ export class HealthProfilesController {
   }
 
   @Patch(':id')
-  @UseGuards(AppAuthGuard)
+  @UseGuards(CombinedAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'App Auth - Cập nhật hồ sơ sức khỏe',
-    description: 'Cập nhật thông tin nhân khẩu học, nhóm máu, dị ứng hoặc bệnh mạn tính',
+    summary: 'App / Staff Auth - Cập nhật hồ sơ sức khỏe',
+    description: 'Bệnh nhân hoặc Nhân viên y tế cập nhật thông tin nhân khẩu học, nhóm máu, dị ứng hoặc bệnh mạn tính',
     response: { serialization: HealthProfile },
   })
   async updateProfile(
     @Param('id') id: string,
     @Body() dto: UpdateHealthProfileDto,
-    @CurrentAccount() account: AppAccountJwtPayload,
+    @CurrentAuthUser() user: AuthUserContext,
   ) {
-    return this.healthProfilesService.updateProfile(id, dto, account.id);
+    return this.healthProfilesService.updateProfile(id, dto, user);
   }
 
   @Delete(':id')
-  @UseGuards(AppAuthGuard)
+  @UseGuards(CombinedAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'App Auth - Xóa hồ sơ sức khỏe',
-    description: 'Xóa một hồ sơ sức khỏe của người thân khỏi tài khoản',
+    summary: 'App / Staff Auth - Xóa hồ sơ sức khỏe',
+    description: 'Xóa một hồ sơ sức khỏe khỏi tài khoản hoặc hệ thống',
   })
   async deleteProfile(
     @Param('id') id: string,
-    @CurrentAccount() account: AppAccountJwtPayload,
+    @CurrentAuthUser() user: AuthUserContext,
   ) {
-    return this.healthProfilesService.deleteProfile(id, account.id);
+    return this.healthProfilesService.deleteProfile(id, user);
   }
 }

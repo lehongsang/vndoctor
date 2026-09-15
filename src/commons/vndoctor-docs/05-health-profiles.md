@@ -13,10 +13,10 @@ Module `health-profiles` quản lý các hồ sơ sức khỏe cá nhân và ng�
 
 ## 🚀 Danh sách API
 
-### 1. Tạo mới Hồ sơ sức khỏe (App)
+### 1. Tạo mới Hồ sơ sức khỏe (App / Staff)
 - **Method**: `POST`
 - **Path**: `/health-profiles`
-- **Quyền**: `AppAuthGuard`
+- **Quyền**: `CombinedAuthGuard` (App Account hoặc Staff)
 
 #### 📥 Input (Body - `CreateHealthProfileDto`)
 | Trường | Kiểu | Bắt buộc | Mô tả |
@@ -31,6 +31,9 @@ Module `health-profiles` quản lý các hồ sơ sức khỏe cá nhân và ng�
 | `bloodType` | enum | Không | `A`, `B`, `AB`, `O`, `UNKNOWN` |
 | `allergy` | string | Không | Tiền sử dị ứng thuốc, thức ăn |
 | `medicalHistory`| string | Không | Tiền sử bệnh lý bản thân & gia đình |
+| `chronicDiseaseIds` | string[] | Không | Danh sách UUID bệnh mạn tính |
+| `accountId` | string (UUID) | Không | UUID tài khoản (Staff truyền khi tạo hồ sơ cho tài khoản cụ thể) |
+| `hospitalPatientCode` | string | Không | Mã bệnh nhân nội bộ tại cơ sở y tế |
 
 *Ví dụ Body:*
 ```json
@@ -92,5 +95,5 @@ Trả về mảng danh sách các hồ sơ sức khỏe thuộc tài khoản c�
 
 ### 4. Xem chi tiết / Cập nhật / Xóa Hồ sơ sức khỏe
 - **Xem chi tiết**: `GET /health-profiles/:id` (Public / App / CMS)
-- **Cập nhật**: `PATCH /health-profiles/:id` (`AppAuthGuard`)
-- **Xóa**: `DELETE /health-profiles/:id` (`AppAuthGuard`)
+- **Cập nhật**: `PATCH /health-profiles/:id` (`CombinedAuthGuard` - App Account hoặc Staff)
+- **Xóa**: `DELETE /health-profiles/:id` (`CombinedAuthGuard` - App Account hoặc Staff)

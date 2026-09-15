@@ -18,6 +18,23 @@ import {
 } from '@/commons/enums/vndoctor.enum';
 
 export class CreateHealthProfileDto {
+  @ApiPropertyOptional({
+    description: 'Account UUID của bệnh nhân (Staff truyền khi tạo hồ sơ cho tài khoản bệnh nhân cụ thể)',
+    example: '018e6e5a-1234-7000-8000-000000000001',
+  })
+  @IsUUID('all')
+  @IsOptional()
+  accountId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Mã hồ sơ bệnh nhân tại cơ sở y tế (Mã BN nội bộ bệnh viện)',
+    example: 'BN-2026-00123',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  hospitalPatientCode?: string;
+
   @ApiProperty({
     enum: ProfileRelationship,
     enumName: 'ProfileRelationship',

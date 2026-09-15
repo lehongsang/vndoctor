@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HealthProfile } from './entities/health-profile.entity';
+import { Account } from '@/modules/accounts/entities/account.entity';
+import { FacilityPatientLink } from '@/modules/patient-links/entities/facility-patient-link.entity';
 import {
   CreateHealthProfileDto,
   QueryHealthProfileDto,
   UpdateHealthProfileDto,
 } from './dtos';
 import {
+  BadRequest,
   Conflict,
   Forbidden,
   NotFound,
@@ -16,30 +19,68 @@ import {
 import { FacilityPatientLinkStatus, ProfileRelationship, StaffRole } from '@/commons/enums/vndoctor.enum';
 import { ChronicDiseasesService } from '@/modules/chronic-diseases/chronic-diseases.service';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
+import { AuthUserContext } from '@/commons/decorators/current-auth-user.decorator';
 
 @Injectable()
 export class HealthProfilesService {
   constructor(
     @InjectRepository(HealthProfile)
     private readonly healthProfileRepository: Repository<HealthProfile>,
+    @InjectRepository(Account)
+    private readonly accountRepository: Repository<Account>,
+    @InjectRepository(FacilityPatientLink)
+    private readonly linkRepository: Repository<FacilityPatientLink>,
     private readonly chronicDiseasesService: ChronicDiseasesService,
   ) {}
 
   /**
-   * Creates a new Health Profile for an App Account.
+   * Creates a new Health Profile for an App Account or by Staff on behalf of a patient.
    *
    * @param dto - Health Profile data.
-   * @param accountId - Owning Account UUID.
+   * @param userOrAccountId - Authenticated user context (App Account or Staff) or account ID string.
    * @returns Newly created HealthProfile.
    */
   async createProfile(
     dto: CreateHealthProfileDto,
-    accountId: string,
+    userOrAccountId: AuthUserContext | string,
   ): Promise<HealthProfile> {
+    let targetAccountId: string;
+    let staffContext: AuthUserContext | undefined;
+
+    if (typeof userOrAccountId === 'string') {
+      targetAccountId = userOrAccountId;
+    } else if (userOrAccountId.type === 'APP_ACCOUNT') {
+      targetAccountId = userOrAccountId.userId;
+    } else {
+      // Authenticated as STAFF
+      staffContext = userOrAccountId;
+      if (dto.accountId) {
+        targetAccountId = dto.accountId;
+      } else if (dto.phoneNumber) {
+        const existingAccount = await this.accountRepository.findOne({
+          where: { phoneNumber: dto.phoneNumber.trim() },
+        });
+        if (existingAccount) {
+          targetAccountId = existingAccount.id;
+        } else {
+          // Create patient account with phone number
+          const newAccount = this.accountRepository.create({
+            phoneNumber: dto.phoneNumber.trim(),
+            passwordHash: 'PATIENT_STAFF_CREATED',
+            isActive: true,
+          });
+          const savedAccount = await this.accountRepository.save(newAccount);
+          targetAccountId = savedAccount.id;
+        }
+      } else {
+        throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+      }
+    }
+
     // 1. If relationship is SELF, check if account already has a SELF profile
     if (dto.relationship === ProfileRelationship.SELF) {
       const existingSelf = await this.healthProfileRepository.findOne({
-        where: { accountId, relationship: ProfileRelationship.SELF },
+        where: { accountId: targetAccountId, relationship: ProfileRelationship.SELF },
       });
       if (existingSelf) {
         throw new Conflict(ErrorCode.RESOURCE_ALREADY_EXISTS);
@@ -48,8 +89,17 @@ export class HealthProfilesService {
 
     // 2. Create profile
     const profile = this.healthProfileRepository.create({
-      ...dto,
-      accountId,
+      relationship: dto.relationship,
+      fullName: dto.fullName,
+      dob: dto.dob,
+      gender: dto.gender,
+      citizenId: dto.citizenId,
+      phoneNumber: dto.phoneNumber,
+      address: dto.address,
+      bloodType: dto.bloodType,
+      allergy: dto.allergy,
+      medicalHistory: dto.medicalHistory,
+      accountId: targetAccountId,
     });
 
     const savedProfile = await this.healthProfileRepository.save(profile);
@@ -60,6 +110,27 @@ export class HealthProfilesService {
         savedProfile.id,
         dto.chronicDiseaseIds,
       );
+    }
+
+    // 4. If created by Staff at a facility, automatically create an active link
+    if (staffContext?.facilityId) {
+      const existingLink = await this.linkRepository.findOne({
+        where: {
+          facilityId: staffContext.facilityId,
+          healthProfileId: savedProfile.id,
+        },
+      });
+      if (!existingLink) {
+        const link = this.linkRepository.create({
+          facilityId: staffContext.facilityId,
+          healthProfileId: savedProfile.id,
+          phoneNumber: dto.phoneNumber ? dto.phoneNumber.trim() : '',
+          hospitalPatientCode: dto.hospitalPatientCode || null,
+          status: FacilityPatientLinkStatus.ACTIVE,
+          linkedAt: new Date(),
+        });
+        await this.linkRepository.save(link);
+      }
     }
 
     return this.getProfileById(savedProfile.id);
@@ -83,10 +154,13 @@ export class HealthProfilesService {
    * Finds a Health Profile by UUID.
    *
    * @param id - Profile UUID.
-   * @param accountId - Optional account ID for ownership verification.
+   * @param userOrAccountId - Optional authenticated user context or account ID for ownership/facility verification.
    * @returns HealthProfile entity.
    */
-  async getProfileById(id: string, accountId?: string): Promise<HealthProfile> {
+  async getProfileById(
+    id: string,
+    userOrAccountId?: AuthUserContext | string,
+  ): Promise<HealthProfile> {
     const profile = await this.healthProfileRepository.findOne({
       where: { id },
       relations: ['profileChronicDisease', 'facilityLinks', 'facilityLinks.facility'],
@@ -96,8 +170,26 @@ export class HealthProfilesService {
       throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
     }
 
-    if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+    if (userOrAccountId) {
+      if (typeof userOrAccountId === 'string') {
+        if (profile.accountId !== userOrAccountId) {
+          throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+        }
+      } else if (userOrAccountId.type === 'APP_ACCOUNT') {
+        if (profile.accountId !== userOrAccountId.userId) {
+          throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+        }
+      } else if (userOrAccountId.type === 'STAFF') {
+        const staff = userOrAccountId.staff;
+        if (staff?.role !== StaffRole.VNDOCTOR_ADMIN && userOrAccountId.facilityId) {
+          const hasLink = profile.facilityLinks?.some(
+            (link) => link.facilityId === userOrAccountId.facilityId,
+          );
+          if (!hasLink && profile.facilityLinks && profile.facilityLinks.length > 0) {
+            throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+          }
+        }
+      }
     }
 
     return profile;
@@ -233,19 +325,19 @@ export class HealthProfilesService {
   }
 
   /**
-   * Updates an existing Health Profile.
+   * Updates an existing Health Profile by App Account owner or Staff.
    *
    * @param id - Profile UUID.
    * @param dto - Updated fields.
-   * @param accountId - Optional account ID for ownership validation.
+   * @param userOrAccountId - Optional authenticated user context or account ID for ownership validation.
    * @returns Updated HealthProfile.
    */
   async updateProfile(
     id: string,
     dto: UpdateHealthProfileDto,
-    accountId?: string,
+    userOrAccountId?: AuthUserContext | string,
   ): Promise<HealthProfile> {
-    const profile = await this.getProfileById(id, accountId);
+    const profile = await this.getProfileById(id, userOrAccountId);
 
     // If changing to SELF relationship, ensure no other SELF profile exists
     if (
@@ -260,8 +352,18 @@ export class HealthProfilesService {
       }
     }
 
+    // Update entity fields safely
+    if (dto.relationship !== undefined) profile.relationship = dto.relationship;
+    if (dto.fullName !== undefined) profile.fullName = dto.fullName;
+    if (dto.dob !== undefined) profile.dob = dto.dob;
+    if (dto.gender !== undefined) profile.gender = dto.gender;
+    if (dto.citizenId !== undefined) profile.citizenId = dto.citizenId;
+    if (dto.phoneNumber !== undefined) profile.phoneNumber = dto.phoneNumber;
+    if (dto.address !== undefined) profile.address = dto.address;
+    if (dto.bloodType !== undefined) profile.bloodType = dto.bloodType;
+    if (dto.allergy !== undefined) profile.allergy = dto.allergy;
+    if (dto.medicalHistory !== undefined) profile.medicalHistory = dto.medicalHistory;
 
-    Object.assign(profile, dto);
     await this.healthProfileRepository.save(profile);
 
     // Update chronic diseases if provided
@@ -272,6 +374,26 @@ export class HealthProfilesService {
       );
     }
 
+    // Update hospitalPatientCode in FacilityPatientLink if staff provided and link exists
+    if (
+      dto.hospitalPatientCode !== undefined &&
+      userOrAccountId &&
+      typeof userOrAccountId !== 'string' &&
+      userOrAccountId.type === 'STAFF' &&
+      userOrAccountId.facilityId
+    ) {
+      const link = await this.linkRepository.findOne({
+        where: {
+          facilityId: userOrAccountId.facilityId,
+          healthProfileId: id,
+        },
+      });
+      if (link) {
+        link.hospitalPatientCode = dto.hospitalPatientCode;
+        await this.linkRepository.save(link);
+      }
+    }
+
     return this.getProfileById(id);
   }
 
@@ -279,10 +401,13 @@ export class HealthProfilesService {
    * Soft deletes a Health Profile.
    *
    * @param id - Profile UUID.
-   * @param accountId - Owning Account ID.
+   * @param userOrAccountId - Authenticated user context or account ID.
    */
-  async deleteProfile(id: string, accountId: string): Promise<{ success: boolean }> {
-    const profile = await this.getProfileById(id, accountId);
+  async deleteProfile(
+    id: string,
+    userOrAccountId?: AuthUserContext | string,
+  ): Promise<{ success: boolean }> {
+    const profile = await this.getProfileById(id, userOrAccountId);
     await this.healthProfileRepository.softRemove(profile);
     return { success: true };
   }

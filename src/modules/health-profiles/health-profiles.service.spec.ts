@@ -12,6 +12,9 @@ import {
 } from '@/commons/enums/vndoctor.enum';
 import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
 
+import { Account } from '@/modules/accounts/entities/account.entity';
+import { FacilityPatientLink } from '@/modules/patient-links/entities/facility-patient-link.entity';
+
 describe('HealthProfilesService', () => {
   let service: HealthProfilesService;
 
@@ -46,7 +49,20 @@ describe('HealthProfilesService', () => {
     create: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
+    softRemove: jest.fn(),
     createQueryBuilder: jest.fn(),
+  };
+
+  const mockAccountRepository = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockLinkRepository = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
   };
 
   const mockChronicDiseasesService = {
@@ -61,6 +77,14 @@ describe('HealthProfilesService', () => {
         {
           provide: getRepositoryToken(HealthProfile),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Account),
+          useValue: mockAccountRepository,
+        },
+        {
+          provide: getRepositoryToken(FacilityPatientLink),
+          useValue: mockLinkRepository,
         },
         {
           provide: ChronicDiseasesService,
@@ -99,6 +123,46 @@ describe('HealthProfilesService', () => {
       );
     });
 
+    it('should allow Staff to create a profile and auto-link to facility', async () => {
+      mockAccountRepository.findOne.mockResolvedValueOnce({ id: 'acc-patient-99' });
+      mockRepository.findOne
+        .mockResolvedValueOnce(null) // SELF check
+        .mockResolvedValueOnce({ ...mockProfile, accountId: 'acc-patient-99' });
+      mockRepository.create.mockReturnValue({ ...mockProfile, accountId: 'acc-patient-99' });
+      mockRepository.save.mockResolvedValue({ ...mockProfile, accountId: 'acc-patient-99' });
+      mockLinkRepository.findOne.mockResolvedValueOnce(null);
+      mockLinkRepository.create.mockReturnValue({});
+      mockLinkRepository.save.mockResolvedValue({});
+
+      const result = await service.createProfile(
+        {
+          relationship: ProfileRelationship.SELF,
+          fullName: 'Bệnh Nhân Test',
+          dob: '1990-01-01',
+          gender: ProfileGender.MALE,
+          phoneNumber: '0988776655',
+          hospitalPatientCode: 'BN-001',
+        },
+        {
+          type: 'STAFF',
+          userId: 'staff-1',
+          facilityId: 'facility-1',
+          staff: {
+            id: 'staff-1',
+            facilityId: 'facility-1',
+            staffCode: 'STAFF01',
+            fullName: 'BS. Admin',
+            role: StaffRole.DOCTOR,
+            username: 'admin',
+            type: 'STAFF',
+          },
+        },
+      );
+
+      expect(result).toBeDefined();
+      expect(mockLinkRepository.save).toHaveBeenCalled();
+    });
+
     it('should throw Conflict when creating a second SELF profile for same account', async () => {
       mockRepository.findOne.mockResolvedValueOnce(mockProfile);
 
@@ -113,6 +177,76 @@ describe('HealthProfilesService', () => {
           'acc-111',
         ),
       ).rejects.toThrow(Conflict);
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update profile fields and chronic diseases', async () => {
+      mockRepository.findOne
+        .mockResolvedValueOnce({ ...mockProfile }) // getProfileById
+        .mockResolvedValueOnce({ ...mockProfile, fullName: 'Tên Mới' }); // reload
+      mockRepository.save.mockResolvedValue({ ...mockProfile, fullName: 'Tên Mới' });
+
+      const result = await service.updateProfile(
+        'profile-111',
+        {
+          fullName: 'Tên Mới',
+          chronicDiseaseIds: ['cd-1'],
+        },
+        'acc-111',
+      );
+
+      expect(result).toBeDefined();
+      expect(mockChronicDiseasesService.setProfileDiseases).toHaveBeenCalledWith('profile-111', ['cd-1']);
+    });
+
+    it('should allow Staff to update profile and hospitalPatientCode', async () => {
+      const linkedProfile = {
+        ...mockProfile,
+        facilityLinks: [{ facilityId: 'facility-1' }] as unknown as HealthProfile['facilityLinks'],
+      };
+      mockRepository.findOne
+        .mockResolvedValueOnce(linkedProfile) // getProfileById
+        .mockResolvedValueOnce(linkedProfile); // reload
+      mockRepository.save.mockResolvedValue(linkedProfile);
+      mockLinkRepository.findOne.mockResolvedValueOnce({ facilityId: 'facility-1', hospitalPatientCode: 'OLD' });
+      mockLinkRepository.save.mockResolvedValue({});
+
+      const result = await service.updateProfile(
+        'profile-111',
+        {
+          fullName: 'Bệnh Nhân Cập Nhật',
+          hospitalPatientCode: 'BN-NEW-99',
+        },
+        {
+          type: 'STAFF',
+          userId: 'staff-1',
+          facilityId: 'facility-1',
+          staff: {
+            id: 'staff-1',
+            facilityId: 'facility-1',
+            staffCode: 'STAFF01',
+            fullName: 'BS. Admin',
+            role: StaffRole.DOCTOR,
+            username: 'admin',
+            type: 'STAFF',
+          },
+        },
+      );
+
+      expect(result).toBeDefined();
+      expect(mockLinkRepository.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteProfile', () => {
+    it('should delete profile when authorized', async () => {
+      mockRepository.findOne.mockResolvedValueOnce(mockProfile);
+      mockRepository.softRemove.mockResolvedValueOnce(mockProfile);
+
+      const res = await service.deleteProfile('profile-111', 'acc-111');
+      expect(res.success).toBe(true);
+      expect(mockRepository.softRemove).toHaveBeenCalledWith(mockProfile);
     });
   });
 
