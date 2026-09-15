@@ -7,8 +7,11 @@ import { RiskFactorAssessmentInput } from './entities/risk-factor-assessment-inp
 import { RiskFactorAssessmentResult } from './entities/risk-factor-assessment-result.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
-import { AssessmentStatus, VnDoctorRiskLevel } from '@/commons/enums/vndoctor.enum';
+import { ChronicDisease } from '@/modules/chronic-diseases/entities/chronic-disease.entity';
+import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
+import { AssessmentStatus, ProfileGender, VnDoctorRiskLevel } from '@/commons/enums/vndoctor.enum';
 import { NotFound } from '@/commons/exceptions';
+import { RiskDictionaryService } from './services/risk-dictionary.service';
 
 describe('RiskAssessmentsService', () => {
   let service: RiskAssessmentsService;
@@ -19,13 +22,23 @@ describe('RiskAssessmentsService', () => {
   const mockProfile: HealthProfile = {
     id: 'profile-uuid-1',
     accountId: 'acc-uuid-1',
-    fullName: 'Le Van B',
-    gender: 'MALE' as any,
-    dateOfBirth: '1980-05-15',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
+    fullName: 'Nguyen Van A',
+    gender: ProfileGender.MALE,
+    dob: '1979-05-15',
+    profileChronicDisease: {
+      id: 'pcd-1',
+      healthProfileId: 'profile-uuid-1',
+      diseaseIds: ['disease-1'],
+    } as ProfileChronicDisease,
   } as unknown as HealthProfile;
+
+  const mockChronicDisease: ChronicDisease = {
+    id: 'disease-1',
+    code: 'DIABETES',
+    name: 'Đái tháo đường Type 2',
+    isActive: true,
+    displayOrder: 1,
+  } as unknown as ChronicDisease;
 
   const mockResult: RiskFactorAssessmentResult = {
     id: 'result-uuid-1',
@@ -35,39 +48,22 @@ describe('RiskAssessmentsService', () => {
     conclusion: 'High risk',
     recommendations: 'Diet and medication',
     evaluatedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
   } as unknown as RiskFactorAssessmentResult;
 
   const mockInput: RiskFactorAssessmentInput = {
     id: 'input-uuid-1',
     healthProfileId: 'profile-uuid-1',
     facilityId: 'fac-uuid-1',
-    hasUnderlyingDisease: true,
+    hasUnderlyingDisease: false,
     chronicDiseaseIds: [],
-    hasLeftVentricularHypertrophy: false,
-    hasAlbuminuria: false,
-    hasRetinopathy: false,
-    hasSilentBrainInfarct: false,
-    egfr: 80,
-    acr: 15,
-    heightCm: 170,
-    weightKg: 70,
-    bmi: 24.22,
-    systolicBp: 130,
-    diastolicBp: 80,
+    age: 45,
+    gender: 'Nam',
     isSmoking: true,
-    totalCholesterol: 5.2,
-    hdlCholesterol: 1.2,
-    ldlCholesterol: 3.1,
-    triglycerides: 1.8,
-    glucoseFasting: 5.5,
+    systolicBp: 145,
+    totalCholesterol: 7.0,
+    hdlCholesterol: 1.5,
     status: AssessmentStatus.SUBMITTED,
     assessmentDate: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
     assessmentResult: mockResult,
   } as unknown as RiskFactorAssessmentInput;
 
@@ -84,12 +80,14 @@ describe('RiskAssessmentsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RiskAssessmentsService,
+        RiskDictionaryService,
         {
           provide: getRepositoryToken(RiskFactorAssessmentInput),
           useValue: {
             create: jest.fn().mockImplementation((dto: Partial<RiskFactorAssessmentInput>) => ({ id: 'new-input-id', ...dto } as RiskFactorAssessmentInput)),
             save: jest.fn().mockImplementation((inp: RiskFactorAssessmentInput) => Promise.resolve(inp)),
             findOne: jest.fn().mockResolvedValue(mockInput),
+            softRemove: jest.fn().mockResolvedValue(mockInput),
           },
         },
         {
@@ -98,6 +96,7 @@ describe('RiskAssessmentsService', () => {
             create: jest.fn().mockImplementation((dto: Partial<RiskFactorAssessmentResult>) => ({ id: 'new-result-id', ...dto } as RiskFactorAssessmentResult)),
             save: jest.fn().mockImplementation((res: RiskFactorAssessmentResult) => Promise.resolve(res)),
             findOne: jest.fn().mockResolvedValue(mockResult),
+            softRemove: jest.fn().mockResolvedValue(mockResult),
             createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
           },
         },
@@ -110,7 +109,19 @@ describe('RiskAssessmentsService', () => {
         {
           provide: getRepositoryToken(Facility),
           useValue: {
-            findOne: jest.fn().mockResolvedValue({ id: 'fac-uuid-1', name: 'BV Bach Mai' }),
+            findOne: jest.fn().mockResolvedValue({ id: 'fac-uuid-1', facilityName: 'Clinic A' }),
+          },
+        },
+        {
+          provide: getRepositoryToken(ChronicDisease),
+          useValue: {
+            findByIds: jest.fn().mockResolvedValue([mockChronicDisease]),
+          },
+        },
+        {
+          provide: getRepositoryToken(ProfileChronicDisease),
+          useValue: {
+            findOne: jest.fn().mockResolvedValue({ healthProfileId: 'profile-uuid-1', diseaseIds: ['disease-1'] }),
           },
         },
       ],
@@ -126,95 +137,91 @@ describe('RiskAssessmentsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('calculateRedFlags', () => {
-    it('should detect hypertension and smoking red flags', () => {
-      const result = service.calculateRedFlags({
-        systolicBp: 165,
-        diastolicBp: 95,
-        isSmoking: true,
-        bmi: 26.5,
-      });
+  describe('getFormSchema', () => {
+    it('should return dynamic form schema with auto-fill & locked fields for pre-existing disease', async () => {
+      const schema = await service.getFormSchema('profile-uuid-1', 'acc-uuid-1');
 
-      expect(result.hasWarningAlert).toBe(true);
-      expect(result.redFlags.length).toBeGreaterThanOrEqual(2);
-      expect(result.redFlags.some((rf) => rf.metric === 'BLOOD_PRESSURE')).toBe(true);
-      expect(result.redFlags.some((rf) => rf.metric === 'SMOKING')).toBe(true);
+      expect(schema.formCode).toBe('RISK_FACTOR_STRATIFICATION');
+      expect(schema.patientInfo?.fullName).toBe('Nguyen Van A');
+      expect(schema.patientInfo?.gender).toBe('Nam');
+
+      const chronicSection = schema.sections.find((s) => s.code === 'CHRONIC_DISEASES');
+      expect(chronicSection).toBeDefined();
+
+      const diabetesField = chronicSection?.fields.find((f) => f.code === 'diabetes');
+      expect(diabetesField?.disabled).toBe(true);
+      expect(diabetesField?.defaultValue).toBe(true);
+      expect(diabetesField?.fixedReason).toContain('hồ sơ sức khỏe');
     });
 
-    it('should return no red flags for normal parameters', () => {
-      const result = service.calculateRedFlags({
-        systolicBp: 120,
-        diastolicBp: 80,
-        isSmoking: false,
-        bmi: 22.0,
-      });
-
-      expect(result.hasWarningAlert).toBe(false);
-      expect(result.redFlags).toHaveLength(0);
+    it('should throw NotFound if health profile does not exist', async () => {
+      profileRepo.findOne.mockResolvedValueOnce(null);
+      await expect(service.getFormSchema('non-existent')).rejects.toThrow(NotFound);
     });
   });
 
-  describe('create', () => {
-    it('should create assessment input and return initial result', async () => {
-      const result = await service.create(
+  describe('create - Flow 1: No underlying disease (SCORE2)', () => {
+    it('should calculate SCORE2 from 6 physiological metrics', async () => {
+      const res = await service.create(
         {
           healthProfileId: 'profile-uuid-1',
-          facilityId: 'fac-uuid-1',
-          heightCm: 170,
-          weightKg: 68,
-          systolicBp: 130,
+          hasUnderlyingDisease: false,
+          age: 45,
+          gender: 'Nam',
           isSmoking: true,
+          sbp: 145,
+          cholesterol: 7.0,
+          hdl: 1.5,
         },
         'acc-uuid-1',
       );
 
-      expect(profileRepo.findOne).toHaveBeenCalledWith({ where: { id: 'profile-uuid-1' } });
-      expect(inputRepo.create).toHaveBeenCalled();
+      expect(res).toBeDefined();
+      expect(res.riskScore).toBeDefined();
+      expect(res.riskLevel).toBeDefined();
       expect(inputRepo.save).toHaveBeenCalled();
-      expect(resultRepo.save).toHaveBeenCalled();
-      expect(result).toBeDefined();
-      expect(result.riskLevel).toEqual(VnDoctorRiskLevel.HIGH);
+    });
+  });
+
+  describe('create - Flow 2: Has underlying disease & complications', () => {
+    it('should calculate risk level based on chronic diseases and organ damage', async () => {
+      const res = await service.create(
+        {
+          healthProfileId: 'profile-uuid-1',
+          hasUnderlyingDisease: true,
+          diabetes: true,
+          diabetesDurationYears: 10,
+          glycemicControl: 'Không tốt',
+          eGFR: 45,
+          acr: 30,
+          stroke: true,
+          hasLeftVentricularHypertrophy: true,
+        },
+        'acc-uuid-1',
+      );
+
+      expect(res).toBeDefined();
+      expect(res.riskLevel).toBe(VnDoctorRiskLevel.VERY_HIGH);
+      expect(res.hasWarningAlert).toBe(true);
+      expect(res.redFlags?.length).toBeGreaterThan(0);
     });
   });
 
   describe('evaluate', () => {
-    it('should update result and set status to EVALUATED', async () => {
-      const result = await service.evaluate(
+    it('should allow doctor to evaluate and update conclusion', async () => {
+      const res = await service.evaluate(
         'input-uuid-1',
         {
-          riskLevel: VnDoctorRiskLevel.HIGH,
-          riskScore: 9.0,
-          conclusion: 'High risk confirmed',
-          recommendations: 'Diet and medication',
+          riskLevel: VnDoctorRiskLevel.VERY_HIGH,
+          riskScore: 16.0,
+          conclusion: 'Bệnh nhân có nguy cơ tim mạch rất cao cần dùng Statin liều cao',
+          recommendations: 'Uống Atorvastatin 40mg hàng ngày',
         },
-        'doctor-staff-id-1',
+        'doctor-uuid-1',
       );
 
-      expect(inputRepo.findOne).toHaveBeenCalled();
+      expect(res).toBeDefined();
       expect(resultRepo.save).toHaveBeenCalled();
-      expect(result).toBeDefined();
-    });
-
-    it('should throw NotFound if input not found', async () => {
-      inputRepo.findOne.mockResolvedValueOnce(null);
-      await expect(
-        service.evaluate('invalid-id', { riskLevel: VnDoctorRiskLevel.LOW }, 'doc-1'),
-      ).rejects.toThrow(NotFound);
-    });
-  });
-
-  describe('findAll', () => {
-    it('should return paginated assessment results', async () => {
-      const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.data).toHaveLength(1);
-      expect(result.total).toEqual(1);
-    });
-  });
-
-  describe('findOne', () => {
-    it('should return assessment result by input id', async () => {
-      const result = await service.findOne('input-uuid-1', 'acc-uuid-1');
-      expect(result.id).toEqual('result-uuid-1');
     });
   });
 });

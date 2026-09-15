@@ -10,6 +10,9 @@ import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
 import type { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { PatientLinksSseService } from './patient-links-sse.service';
 
+import { Account } from '@/modules/accounts/entities/account.entity';
+import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
+
 describe('PatientLinksService', () => {
   let service: PatientLinksService;
 
@@ -25,6 +28,11 @@ describe('PatientLinksService', () => {
     id: 'profile-111',
     accountId: 'account-111',
     fullName: 'Nguyễn Văn Bệnh Nhân',
+    phoneNumber: '0987654321',
+  };
+
+  const mockAccount = {
+    id: 'account-111',
     phoneNumber: '0987654321',
   };
 
@@ -62,6 +70,15 @@ describe('PatientLinksService', () => {
     createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
   };
 
+  const mockAccountRepository = {
+    findOne: jest.fn(),
+  };
+
+  const mockHealthProfileRepository = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+  };
+
   const mockFacilitiesService = {
     getFacilityById: jest.fn(),
   };
@@ -84,6 +101,14 @@ describe('PatientLinksService', () => {
         {
           provide: getRepositoryToken(FacilityPatientLink),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Account),
+          useValue: mockAccountRepository,
+        },
+        {
+          provide: getRepositoryToken(HealthProfile),
+          useValue: mockHealthProfileRepository,
         },
         {
           provide: FacilitiesService,
@@ -170,8 +195,66 @@ describe('PatientLinksService', () => {
     });
   });
 
+  describe('requestLink', () => {
+    const staff: StaffJwtPayload = {
+      id: 'staff-1',
+      facilityId: 'fac-111',
+      staffCode: 'ST-01',
+      username: 'staff1',
+      fullName: 'Staff 1',
+      role: {} as unknown as StaffJwtPayload['role'],
+      type: 'STAFF',
+    };
+
+    it('should send link request via phone number and emit SSE to patient account', async () => {
+      mockFacilitiesService.getFacilityById.mockResolvedValue(mockFacility);
+      mockHealthProfilesService.getProfileById.mockResolvedValue(mockProfile);
+      mockAccountRepository.findOne.mockResolvedValue(mockAccount);
+      mockRepository.findOne.mockResolvedValue(null);
+
+      const pendingLink = { ...mockLink, status: FacilityPatientLinkStatus.PENDING };
+      mockRepository.create.mockReturnValue(pendingLink);
+      mockRepository.save.mockResolvedValue(pendingLink);
+
+      const result = await service.requestLink(
+        {
+          healthProfileId: 'profile-111',
+          phoneNumber: '0987654321',
+          hospitalPatientCode: 'BN-001',
+        },
+        staff,
+      );
+
+      expect(result.status).toBe(FacilityPatientLinkStatus.PENDING);
+      expect(mockSseService.emitInvitation).toHaveBeenCalledWith(
+        'account-111',
+        expect.objectContaining({
+          linkId: 'link-01',
+          facilityId: 'fac-111',
+        }),
+      );
+    });
+
+    it('should throw NotFound if patient account does not exist for phone number', async () => {
+      mockFacilitiesService.getFacilityById.mockResolvedValue(mockFacility);
+      mockHealthProfilesService.getProfileById.mockResolvedValue(mockProfile);
+      mockAccountRepository.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.requestLink(
+          {
+            healthProfileId: 'profile-111',
+            phoneNumber: '0999999999',
+          },
+          staff,
+        ),
+      ).rejects.toThrow(NotFound);
+    });
+  });
+
   describe('getMyInvitations & getMyLinks', () => {
     it('should retrieve pending invitations for patient account', async () => {
+      mockAccountRepository.findOne.mockResolvedValue(mockAccount);
       const result = await service.getMyInvitations('account-111');
       expect(result).toBeDefined();
       expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
@@ -189,14 +272,17 @@ describe('PatientLinksService', () => {
       const pendingLink = {
         ...mockLink,
         status: FacilityPatientLinkStatus.PENDING,
-        healthProfile: mockProfile,
+        healthProfile: { ...mockProfile, accountId: null },
       };
       mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockAccountRepository.findOne.mockResolvedValue(mockAccount);
       mockRepository.save.mockImplementation((link) => Promise.resolve(link));
+      mockHealthProfileRepository.save.mockResolvedValue({});
 
       const result = await service.acceptInvitation('link-01', 'account-111');
 
       expect(result.status).toBe(FacilityPatientLinkStatus.ACTIVE);
+      expect(mockHealthProfileRepository.save).toHaveBeenCalled();
       expect(mockSseService.emitStatusChange).toHaveBeenCalledWith(
         'account-111',
         expect.objectContaining({ linkId: 'link-01', status: 'ACTIVE' }),
@@ -210,6 +296,7 @@ describe('PatientLinksService', () => {
         healthProfile: mockProfile,
       };
       mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockAccountRepository.findOne.mockResolvedValue(mockAccount);
       mockRepository.save.mockImplementation((link) => Promise.resolve(link));
 
       const result = await service.rejectInvitation('link-01', 'account-111');
@@ -221,13 +308,15 @@ describe('PatientLinksService', () => {
       );
     });
 
-    it('should throw Forbidden if account does not own the profile', async () => {
+    it('should throw Forbidden if account does not own the profile or phone', async () => {
       const pendingLink = {
         ...mockLink,
         status: FacilityPatientLinkStatus.PENDING,
-        healthProfile: mockProfile,
+        healthProfile: { ...mockProfile, accountId: 'other-acc' },
+        phoneNumber: '0123456789',
       };
       mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockAccountRepository.findOne.mockResolvedValue({ id: 'other-account-999', phoneNumber: '0999999999' });
 
       await expect(
         service.acceptInvitation('link-01', 'other-account-999'),

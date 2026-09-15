@@ -17,6 +17,7 @@ import { CarePackagesModule } from './care-packages/care-packages.module';
 import { CareSubscriptionsModule } from './care-subscriptions/care-subscriptions.module';
 import { CareRequestsModule } from './care-requests/care-requests.module';
 import { ConversationsModule } from './conversations/conversations.module';
+import { OcrModule } from './ocr/ocr.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ConversationsModule } from './conversations/conversations.module';
     CareSubscriptionsModule,
     CareRequestsModule,
     ConversationsModule,
+    OcrModule,
   ],
   exports: [
     AuthModule,
@@ -58,6 +60,7 @@ import { ConversationsModule } from './conversations/conversations.module';
     CareSubscriptionsModule,
     CareRequestsModule,
     ConversationsModule,
+    OcrModule,
   ],
 })
 export class CombineModule {}

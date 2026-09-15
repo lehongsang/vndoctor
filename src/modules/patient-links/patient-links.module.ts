@@ -7,9 +7,12 @@ import { FacilitiesModule } from '@/modules/facilities/facilities.module';
 import { HealthProfilesModule } from '@/modules/health-profiles/health-profiles.module';
 import { PatientLinksSseService } from './patient-links-sse.service';
 
+import { Account } from '@/modules/accounts/entities/account.entity';
+import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
+
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FacilityPatientLink]),
+    TypeOrmModule.forFeature([FacilityPatientLink, Account, HealthProfile]),
     FacilitiesModule,
     HealthProfilesModule,
   ],

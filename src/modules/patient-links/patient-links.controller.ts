@@ -19,6 +19,7 @@ import { PatientLinksSseService } from './patient-links-sse.service';
 import {
   CreatePatientLinkDto,
   QueryPatientLinkDto,
+  RequestPatientLinkDto,
   UpdatePatientLinkDto,
 } from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
@@ -125,6 +126,33 @@ export class PatientLinksController {
     @CurrentAccount() account: AppAccountJwtPayload,
   ) {
     return this.patientLinksService.rejectInvitation(id, account.id);
+  }
+
+  @Post('request')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth - Gửi yêu cầu liên kết hồ sơ đến App bệnh nhân qua SĐT',
+    description: 'Cơ sở y tế gửi yêu cầu liên kết hồ sơ bệnh nhân tới tài khoản App qua SĐT. Hệ thống tạo liên kết PENDING và phát SSE thông báo tới App bệnh nhân.',
+    response: { serialization: FacilityPatientLink },
+    errors: [
+      {
+        status: HttpStatus.NOT_FOUND,
+        errorCode: ErrorCode.ACCOUNT_NOT_FOUND,
+        message: 'Tài khoản bệnh nhân chưa đăng ký trên ứng dụng',
+      },
+      {
+        status: HttpStatus.CONFLICT,
+        errorCode: ErrorCode.PATIENT_ALREADY_LINKED,
+        message: 'Hồ sơ đã được liên kết với cơ sở y tế này từ trước',
+      },
+    ],
+  })
+  async requestLink(
+    @Body() dto: RequestPatientLinkDto,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.patientLinksService.requestLink(dto, staff);
   }
 
   @Post()

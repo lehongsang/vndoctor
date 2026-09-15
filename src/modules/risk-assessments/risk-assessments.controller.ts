@@ -18,7 +18,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   CreateRiskAssessmentDto,
   EvaluateRiskAssessmentDto,
@@ -32,12 +32,37 @@ import { RiskAssessmentsService } from './risk-assessments.service';
 export class RiskAssessmentsController {
   constructor(private readonly riskAssessmentsService: RiskAssessmentsService) {}
 
+  @Get('form-schema')
+  @UseGuards(CombinedAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiQuery({
+    name: 'healthProfileId',
+    required: true,
+    description: 'UUID của hồ sơ sức khỏe cá nhân (PatientHealthProfile ID)',
+    example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+  })
+  @Doc({
+    summary: 'Lấy Dynamic JSON Schema Form Phân Tầng Nguy Cơ (Auto-fill & Lock)',
+    description:
+      'Trả về cấu trúc 3 khối trường (GENERAL_METRICS, TARGET_ORGAN_DAMAGE, CHRONIC_DISEASES). Tự động điền tuổi, giới tính và khóa (disabled: true) các trường bệnh nền đã có trong hồ sơ sức khỏe.',
+  })
+  async getFormSchema(
+    @Query('healthProfileId') healthProfileId: string,
+    @Query('patientHealthProfileId') patientHealthProfileId: string,
+    @CurrentAuthUser() user: AuthUserContext,
+  ) {
+    const targetProfileId = healthProfileId || patientHealthProfileId;
+    const accountId = user.type === 'APP_ACCOUNT' ? user.account?.id : undefined;
+    return this.riskAssessmentsService.getFormSchema(targetProfileId, accountId);
+  }
+
   @Post()
   @UseGuards(AppAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
     summary: 'App Auth - Gửi dữ liệu đánh giá yếu tố nguy cơ tim mạch',
-    description: 'Bệnh nhân hoặc nhân viên nhập các chỉ số lâm sàng để hệ thống tự động tra cứu từ điển và trả về kết quả phân tầng nguy cơ',
+    description:
+      'Hỗ trợ 2 luồng: Luồng không bệnh nền (SCORE2 6 chỉ số) và Luồng có bệnh nền (Tổn thương cơ quan đích & Bệnh lý mạn tính). Tự động tra cứu từ điển y khoa và trả về phân tầng cùng cờ đỏ cảnh báo.',
     response: { serialization: RiskFactorAssessmentResult },
   })
   async create(

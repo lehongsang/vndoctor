@@ -11,7 +11,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { HealthProfilesService } from './health-profiles.service';
-import { CreateHealthProfileDto, QueryHealthProfileDto, UpdateHealthProfileDto } from './dtos';
+import {
+  CreateFacilityHealthProfileDto,
+  CreateHealthProfileDto,
+  QueryHealthProfileDto,
+  UpdateHealthProfileDto,
+} from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
 import { HealthProfile } from './entities/health-profile.entity';
 import { AppAuthGuard } from '@/commons/guards/app-auth.guard';
@@ -46,18 +51,33 @@ export class HealthProfilesController {
   }
 
   @Post()
-  @UseGuards(CombinedAuthGuard)
+  @UseGuards(AppAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'App / Staff Auth - Tạo mới hồ sơ sức khỏe',
-    description: 'Bệnh nhân tạo hồ sơ mới cho bản thân/người thân hoặc Nhân viên y tế tạo hồ sơ cho bệnh nhân.',
+    summary: 'App Auth - Tạo mới hồ sơ sức khỏe cho tài khoản',
+    description: 'Bệnh nhân tạo hồ sơ mới cho bản thân hoặc người thân gắn với tài khoản đang đăng nhập.',
     response: { serialization: HealthProfile },
   })
   async createProfile(
     @Body() dto: CreateHealthProfileDto,
-    @CurrentAuthUser() user: AuthUserContext,
+    @CurrentAccount() account: AppAccountJwtPayload,
   ) {
-    return this.healthProfilesService.createProfile(dto, user);
+    return this.healthProfilesService.createAppProfile(dto, account.id);
+  }
+
+  @Post('facility')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth - Tạo mới hồ sơ sức khỏe tại cơ sở y tế',
+    description: 'Nhân viên y tế tạo hồ sơ bệnh nhân độc lập tại viện (không gắn tài khoản App, tự động liên kết với viện).',
+    response: { serialization: HealthProfile },
+  })
+  async createFacilityProfile(
+    @Body() dto: CreateFacilityHealthProfileDto,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.healthProfilesService.createFacilityProfile(dto, staff);
   }
 
   @Get('me')

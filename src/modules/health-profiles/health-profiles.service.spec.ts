@@ -97,7 +97,7 @@ describe('HealthProfilesService', () => {
     jest.clearAllMocks();
   });
 
-  describe('createProfile', () => {
+  describe('createAppProfile', () => {
     it('should create a SELF profile successfully when none exists', async () => {
       mockRepository.findOne
         .mockResolvedValueOnce(null) // SELF check
@@ -105,7 +105,7 @@ describe('HealthProfilesService', () => {
       mockRepository.create.mockReturnValue(mockProfile);
       mockRepository.save.mockResolvedValue(mockProfile);
 
-      const result = await service.createProfile(
+      const result = await service.createAppProfile(
         {
           relationship: ProfileRelationship.SELF,
           fullName: 'Trần Thị Mai',
@@ -123,51 +123,11 @@ describe('HealthProfilesService', () => {
       );
     });
 
-    it('should allow Staff to create a profile and auto-link to facility', async () => {
-      mockAccountRepository.findOne.mockResolvedValueOnce({ id: 'acc-patient-99' });
-      mockRepository.findOne
-        .mockResolvedValueOnce(null) // SELF check
-        .mockResolvedValueOnce({ ...mockProfile, accountId: 'acc-patient-99' });
-      mockRepository.create.mockReturnValue({ ...mockProfile, accountId: 'acc-patient-99' });
-      mockRepository.save.mockResolvedValue({ ...mockProfile, accountId: 'acc-patient-99' });
-      mockLinkRepository.findOne.mockResolvedValueOnce(null);
-      mockLinkRepository.create.mockReturnValue({});
-      mockLinkRepository.save.mockResolvedValue({});
-
-      const result = await service.createProfile(
-        {
-          relationship: ProfileRelationship.SELF,
-          fullName: 'Bệnh Nhân Test',
-          dob: '1990-01-01',
-          gender: ProfileGender.MALE,
-          phoneNumber: '0988776655',
-          hospitalPatientCode: 'BN-001',
-        },
-        {
-          type: 'STAFF',
-          userId: 'staff-1',
-          facilityId: 'facility-1',
-          staff: {
-            id: 'staff-1',
-            facilityId: 'facility-1',
-            staffCode: 'STAFF01',
-            fullName: 'BS. Admin',
-            role: StaffRole.DOCTOR,
-            username: 'admin',
-            type: 'STAFF',
-          },
-        },
-      );
-
-      expect(result).toBeDefined();
-      expect(mockLinkRepository.save).toHaveBeenCalled();
-    });
-
     it('should throw Conflict when creating a second SELF profile for same account', async () => {
       mockRepository.findOne.mockResolvedValueOnce(mockProfile);
 
       await expect(
-        service.createProfile(
+        service.createAppProfile(
           {
             relationship: ProfileRelationship.SELF,
             fullName: 'Trần Thị Mai 2',
@@ -177,6 +137,71 @@ describe('HealthProfilesService', () => {
           'acc-111',
         ),
       ).rejects.toThrow(Conflict);
+    });
+  });
+
+  describe('createFacilityProfile', () => {
+    it('should allow Staff to create an independent profile and auto-link to facility', async () => {
+      const createdFacilityProfile = {
+        ...mockProfile,
+        id: 'profile-fac-1',
+        accountId: null,
+      };
+      mockRepository.create.mockReturnValue(createdFacilityProfile);
+      mockRepository.save.mockResolvedValue(createdFacilityProfile);
+      mockRepository.findOne.mockResolvedValue(createdFacilityProfile);
+      mockLinkRepository.create.mockReturnValue({});
+      mockLinkRepository.save.mockResolvedValue({});
+
+      const result = await service.createFacilityProfile(
+        {
+          fullName: 'Bệnh Nhân Test',
+          dob: '1990-01-01',
+          gender: ProfileGender.MALE,
+          phoneNumber: '0988776655',
+          hospitalPatientCode: 'BN-001',
+          chronicDiseaseIds: ['disease-01'],
+        },
+        {
+          id: 'staff-1',
+          facilityId: 'facility-1',
+          staffCode: 'STAFF01',
+          fullName: 'BS. Admin',
+          role: StaffRole.DOCTOR,
+          username: 'admin',
+          type: 'STAFF',
+        },
+      );
+
+      expect(result).toBeDefined();
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accountId: null,
+          fullName: 'Bệnh Nhân Test',
+        }),
+      );
+      expect(mockLinkRepository.save).toHaveBeenCalled();
+    });
+
+    it('should throw Forbidden if staff has no facilityId', async () => {
+      await expect(
+        service.createFacilityProfile(
+          {
+            fullName: 'Bệnh Nhân Test',
+            dob: '1990-01-01',
+            gender: ProfileGender.MALE,
+          },
+          {
+            id: 'staff-1',
+            facilityId: '',
+            staffCode: 'STAFF01',
+            fullName: 'BS. Admin',
+            role: StaffRole.DOCTOR,
+            username: 'admin',
+            type: 'STAFF',
+          },
+        ),
+      ).rejects.toThrow(Forbidden);
     });
   });
 

@@ -17,17 +17,25 @@ import {
   ProfileRelationship,
 } from '@/commons/enums/vndoctor.enum';
 
-export class CreateHealthProfileDto {
+export class CreateFacilityHealthProfileDto {
+  @ApiPropertyOptional({
+    description: 'Mã hồ sơ bệnh nhân tại cơ sở y tế (Mã BN nội bộ bệnh viện)',
+    example: 'BN-2026-00123',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  hospitalPatientCode?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: ProfileRelationship,
     enumName: 'ProfileRelationship',
-    description: 'Mối quan hệ với chủ tài khoản (Bản thân, Bố, Mẹ, Con, Vợ/Chồng, Khác)',
-    default: ProfileRelationship.SELF,
+    description: 'Mối quan hệ (nếu có, mặc định OTHER)',
+    default: ProfileRelationship.OTHER,
   })
   @IsEnum(ProfileRelationship)
-  @IsNotEmpty()
-  relationship: ProfileRelationship;
+  @IsOptional()
+  relationship?: ProfileRelationship;
 
   @ApiProperty({ description: 'Họ và tên bệnh nhân', example: 'Trần Thị Mai' })
   @IsString()
@@ -51,7 +59,7 @@ export class CreateHealthProfileDto {
   @Length(12, 12, { message: 'CCCD phải có đúng 12 chữ số' })
   citizenId?: string;
 
-  @ApiPropertyOptional({ description: 'Số điện thoại liên hệ riêng của người này', example: '0987654321' })
+  @ApiPropertyOptional({ description: 'Số điện thoại liên hệ của bệnh nhân', example: '0987654321' })
   @IsString()
   @IsOptional()
   @MaxLength(20)

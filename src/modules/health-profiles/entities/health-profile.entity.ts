@@ -20,13 +20,13 @@ import { TreatmentPlan } from '@/modules/treatment-plans/entities/treatment-plan
  */
 @Entity('health_profiles')
 export class HealthProfile extends BaseEntity {
-  @ApiProperty({ description: 'Owning Account ID' })
-  @Column({ type: 'uuid' })
-  accountId: string;
+  @ApiPropertyOptional({ description: 'Owning Account ID (nullable if created independently by medical facility)' })
+  @Column({ type: 'uuid', nullable: true })
+  accountId?: string | null;
 
-  @ManyToOne(() => Account, (account: Account) => account.healthProfiles, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Account, (account: Account) => account.healthProfiles, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'accountId' })
-  account: Relation<Account>;
+  account?: Relation<Account>;
 
   @ApiProperty({ enum: ProfileRelationship, enumName: 'ProfileRelationship', default: ProfileRelationship.SELF })
   @Index('health_profiles_index_3')

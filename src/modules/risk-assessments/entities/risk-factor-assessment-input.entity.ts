@@ -8,6 +8,7 @@ import { RiskFactorAssessmentResult } from './risk-factor-assessment-result.enti
 
 /**
  * Entity representing input clinical metrics for Cardiovascular/Metabolic Risk Factor Assessment.
+ * Hỗ trợ 2 luồng: Không có bệnh nền (SCORE2 6 chỉ số) & Có bệnh nền (Tổn thương cơ quan đích & Bệnh lý mạn tính).
  */
 @Entity('risk_factor_assessment_inputs')
 @Index('risk_factor_assessment_inputs_index_10', ['healthProfileId', 'assessmentDate'])
@@ -38,53 +39,29 @@ export class RiskFactorAssessmentInput extends BaseEntity {
   @Column('uuid', { array: true, default: '{}' })
   chronicDiseaseIds: string[];
 
-  @ApiProperty({ description: 'Has left ventricular hypertrophy', default: false })
+  // ==========================================
+  // KHỐI 1: 6 CHỈ SỐ SINH LÝ CƠ BẢN (SCORE2)
+  // ==========================================
+
+  @ApiPropertyOptional({ description: 'Age at assessment', example: 45 })
+  @Column({ type: 'int', nullable: true })
+  age?: number | null;
+
+  @ApiPropertyOptional({ description: 'Gender', example: 'Nam' })
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  gender?: string | null;
+
+  @ApiProperty({ description: 'Is current smoker', default: false })
   @Column({ type: 'boolean', default: false })
-  hasLeftVentricularHypertrophy: boolean;
+  isSmoking: boolean;
 
-  @ApiProperty({ description: 'Has albuminuria', default: false })
-  @Column({ type: 'boolean', default: false })
-  hasAlbuminuria: boolean;
-
-  @ApiProperty({ description: 'Has diabetic retinopathy', default: false })
-  @Column({ type: 'boolean', default: false })
-  hasRetinopathy: boolean;
-
-  @ApiProperty({ description: 'Has silent brain infarct', default: false })
-  @Column({ type: 'boolean', default: false })
-  hasSilentBrainInfarct: boolean;
-
-  @ApiPropertyOptional({ description: 'eGFR (Estimated Glomerular Filtration Rate) mL/min/1.73m2', example: 75.5 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  egfr?: number | null;
-
-  @ApiPropertyOptional({ description: 'ACR (Albumin-to-Creatinine Ratio) mg/g', example: 35.2 })
-  @Column({ type: 'decimal', precision: 7, scale: 2, nullable: true })
-  acr?: number | null;
-
-  @ApiPropertyOptional({ description: 'Height in cm', example: 168.0 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  heightCm?: number | null;
-
-  @ApiPropertyOptional({ description: 'Weight in kg', example: 65.5 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  weightKg?: number | null;
-
-  @ApiPropertyOptional({ description: 'Body Mass Index', example: 23.2 })
-  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
-  bmi?: number | null;
-
-  @ApiPropertyOptional({ description: 'Systolic blood pressure (mmHg)', example: 135 })
+  @ApiPropertyOptional({ description: 'Systolic blood pressure (mmHg)', example: 145 })
   @Column({ type: 'int', nullable: true })
   systolicBp?: number | null;
 
   @ApiPropertyOptional({ description: 'Diastolic blood pressure (mmHg)', example: 85 })
   @Column({ type: 'int', nullable: true })
   diastolicBp?: number | null;
-
-  @ApiProperty({ description: 'Is current smoker', default: false })
-  @Column({ type: 'boolean', default: false })
-  isSmoking: boolean;
 
   @ApiPropertyOptional({ description: 'Total Cholesterol (mmol/L)', example: 5.2 })
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
@@ -105,6 +82,106 @@ export class RiskFactorAssessmentInput extends BaseEntity {
   @ApiPropertyOptional({ description: 'Fasting Blood Glucose (mmol/L)', example: 6.5 })
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   glucoseFasting?: number | null;
+
+  @ApiPropertyOptional({ description: 'Height in cm', example: 168.0 })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  heightCm?: number | null;
+
+  @ApiPropertyOptional({ description: 'Weight in kg', example: 65.5 })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  weightKg?: number | null;
+
+  @ApiPropertyOptional({ description: 'Body Mass Index', example: 23.2 })
+  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
+  bmi?: number | null;
+
+  // ==========================================
+  // KHỐI 2: TỔN THƯƠNG CƠ QUAN ĐÍCH
+  // ==========================================
+
+  @ApiProperty({ description: 'Has left ventricular hypertrophy', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasLeftVentricularHypertrophy: boolean;
+
+  @ApiProperty({ description: 'Has albuminuria or microalbuminuria', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasAlbuminuria: boolean;
+
+  @ApiProperty({ description: 'Has retinopathy or carotid wall damage', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasRetinopathy: boolean;
+
+  @ApiProperty({ description: 'Has silent brain infarct', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasSilentBrainInfarct: boolean;
+
+  // ==========================================
+  // KHỐI 3: BỆNH LÝ MẠN TÍNH & BIẾN CHỨNG
+  // ==========================================
+
+  @ApiPropertyOptional({ description: 'eGFR (Estimated Glomerular Filtration Rate) mL/min/1.73m2', example: 75.5 })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  egfr?: number | null;
+
+  @ApiPropertyOptional({ description: 'ACR (Albumin-to-Creatinine Ratio) mg/g', example: 35.2 })
+  @Column({ type: 'decimal', precision: 7, scale: 2, nullable: true })
+  acr?: number | null;
+
+  @ApiPropertyOptional({ description: 'Has diabetes mellitus', default: false })
+  @Column({ type: 'boolean', default: false })
+  diabetes?: boolean;
+
+  @ApiPropertyOptional({ description: 'Years diagnosed with diabetes', example: 10 })
+  @Column({ type: 'int', nullable: true })
+  diabetesDurationYears?: number | null;
+
+  @ApiPropertyOptional({ description: 'Glycemic control level (Tốt / Không tốt)', example: 'Tốt' })
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  glycemicControl?: string | null;
+
+  @ApiPropertyOptional({ description: 'History of Stroke / CVA', default: false })
+  @Column({ type: 'boolean', default: false })
+  stroke?: boolean;
+
+  @ApiPropertyOptional({ description: 'Myocardial Infarction', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasMyocardialInfarction?: boolean;
+
+  @ApiPropertyOptional({ description: 'Acute Coronary Syndrome', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasAcuteCoronarySyndrome?: boolean;
+
+  @ApiPropertyOptional({ description: 'Coronary Artery Disease', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasCoronaryArteryDisease?: boolean;
+
+  @ApiPropertyOptional({ description: 'Transient Ischemic Attack (TIA)', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasTia?: boolean;
+
+  @ApiPropertyOptional({ description: 'Aortic Aneurysm', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasAorticAneurysm?: boolean;
+
+  @ApiPropertyOptional({ description: 'Peripheral Artery Disease', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasPeripheralArteryDisease?: boolean;
+
+  @ApiPropertyOptional({ description: 'Atherosclerosis of major arteries', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasAtherosclerosis?: boolean;
+
+  @ApiPropertyOptional({ description: 'Familial Hypercholesterolemia', default: false })
+  @Column({ type: 'boolean', default: false })
+  hasFamilialHypercholesterolemia?: boolean;
+
+  // ==========================================
+  // FORM SNAPSHOT & METADATA
+  // ==========================================
+
+  @ApiPropertyOptional({ description: 'JSON Snapshot of the dynamic form and submission payload' })
+  @Column({ type: 'jsonb', nullable: true })
+  formSnapshot?: Record<string, unknown> | null;
 
   @ApiProperty({ enum: AssessmentStatus, enumName: 'AssessmentStatus', default: AssessmentStatus.SUBMITTED })
   @Column({ type: 'enum', enum: AssessmentStatus, default: AssessmentStatus.SUBMITTED })

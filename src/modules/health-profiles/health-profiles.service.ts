@@ -5,12 +5,12 @@ import { HealthProfile } from './entities/health-profile.entity';
 import { Account } from '@/modules/accounts/entities/account.entity';
 import { FacilityPatientLink } from '@/modules/patient-links/entities/facility-patient-link.entity';
 import {
+  CreateFacilityHealthProfileDto,
   CreateHealthProfileDto,
   QueryHealthProfileDto,
   UpdateHealthProfileDto,
 } from './dtos';
 import {
-  BadRequest,
   Conflict,
   Forbidden,
   NotFound,
@@ -34,53 +34,20 @@ export class HealthProfilesService {
   ) {}
 
   /**
-   * Creates a new Health Profile for an App Account or by Staff on behalf of a patient.
+   * Creates a new Health Profile for an App Account.
    *
-   * @param dto - Health Profile data.
-   * @param userOrAccountId - Authenticated user context (App Account or Staff) or account ID string.
+   * @param dto - Health Profile data for App User.
+   * @param accountId - Authenticated App Account UUID.
    * @returns Newly created HealthProfile.
    */
-  async createProfile(
+  async createAppProfile(
     dto: CreateHealthProfileDto,
-    userOrAccountId: AuthUserContext | string,
+    accountId: string,
   ): Promise<HealthProfile> {
-    let targetAccountId: string;
-    let staffContext: AuthUserContext | undefined;
-
-    if (typeof userOrAccountId === 'string') {
-      targetAccountId = userOrAccountId;
-    } else if (userOrAccountId.type === 'APP_ACCOUNT') {
-      targetAccountId = userOrAccountId.userId;
-    } else {
-      // Authenticated as STAFF
-      staffContext = userOrAccountId;
-      if (dto.accountId) {
-        targetAccountId = dto.accountId;
-      } else if (dto.phoneNumber) {
-        const existingAccount = await this.accountRepository.findOne({
-          where: { phoneNumber: dto.phoneNumber.trim() },
-        });
-        if (existingAccount) {
-          targetAccountId = existingAccount.id;
-        } else {
-          // Create patient account with phone number
-          const newAccount = this.accountRepository.create({
-            phoneNumber: dto.phoneNumber.trim(),
-            passwordHash: 'PATIENT_STAFF_CREATED',
-            isActive: true,
-          });
-          const savedAccount = await this.accountRepository.save(newAccount);
-          targetAccountId = savedAccount.id;
-        }
-      } else {
-        throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
-      }
-    }
-
     // 1. If relationship is SELF, check if account already has a SELF profile
     if (dto.relationship === ProfileRelationship.SELF) {
       const existingSelf = await this.healthProfileRepository.findOne({
-        where: { accountId: targetAccountId, relationship: ProfileRelationship.SELF },
+        where: { accountId, relationship: ProfileRelationship.SELF },
       });
       if (existingSelf) {
         throw new Conflict(ErrorCode.RESOURCE_ALREADY_EXISTS);
@@ -99,7 +66,7 @@ export class HealthProfilesService {
       bloodType: dto.bloodType,
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
-      accountId: targetAccountId,
+      accountId,
     });
 
     const savedProfile = await this.healthProfileRepository.save(profile);
@@ -112,26 +79,60 @@ export class HealthProfilesService {
       );
     }
 
-    // 4. If created by Staff at a facility, automatically create an active link
-    if (staffContext?.facilityId) {
-      const existingLink = await this.linkRepository.findOne({
-        where: {
-          facilityId: staffContext.facilityId,
-          healthProfileId: savedProfile.id,
-        },
-      });
-      if (!existingLink) {
-        const link = this.linkRepository.create({
-          facilityId: staffContext.facilityId,
-          healthProfileId: savedProfile.id,
-          phoneNumber: dto.phoneNumber ? dto.phoneNumber.trim() : '',
-          hospitalPatientCode: dto.hospitalPatientCode || null,
-          status: FacilityPatientLinkStatus.ACTIVE,
-          linkedAt: new Date(),
-        });
-        await this.linkRepository.save(link);
-      }
+    return this.getProfileById(savedProfile.id);
+  }
+
+  /**
+   * Creates a new Health Profile independently by Staff at a Medical Facility.
+   * Does NOT require an App Account, and automatically links the profile to the Staff's facility.
+   *
+   * @param dto - Facility Health Profile data.
+   * @param staff - Authenticated Staff context.
+   * @returns Newly created HealthProfile.
+   */
+  async createFacilityProfile(
+    dto: CreateFacilityHealthProfileDto,
+    staff: StaffJwtPayload,
+  ): Promise<HealthProfile> {
+    if (!staff.facilityId) {
+      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
+
+    // 1. Create health profile with accountId = null
+    const profile = this.healthProfileRepository.create({
+      relationship: dto.relationship || ProfileRelationship.OTHER,
+      fullName: dto.fullName,
+      dob: dto.dob,
+      gender: dto.gender,
+      citizenId: dto.citizenId,
+      phoneNumber: dto.phoneNumber,
+      address: dto.address,
+      bloodType: dto.bloodType,
+      allergy: dto.allergy,
+      medicalHistory: dto.medicalHistory,
+      accountId: null,
+    });
+
+    const savedProfile = await this.healthProfileRepository.save(profile);
+
+    // 2. Attach chronic diseases if provided
+    if (dto.chronicDiseaseIds && dto.chronicDiseaseIds.length > 0) {
+      await this.chronicDiseasesService.setProfileDiseases(
+        savedProfile.id,
+        dto.chronicDiseaseIds,
+      );
+    }
+
+    // 3. Automatically create an ACTIVE facility link
+    const link = this.linkRepository.create({
+      facilityId: staff.facilityId,
+      healthProfileId: savedProfile.id,
+      phoneNumber: dto.phoneNumber ? dto.phoneNumber.trim() : '',
+      hospitalPatientCode: dto.hospitalPatientCode || null,
+      status: FacilityPatientLinkStatus.ACTIVE,
+      linkedAt: new Date(),
+    });
+    await this.linkRepository.save(link);
 
     return this.getProfileById(savedProfile.id);
   }
@@ -342,7 +343,8 @@ export class HealthProfilesService {
     // If changing to SELF relationship, ensure no other SELF profile exists
     if (
       dto.relationship === ProfileRelationship.SELF &&
-      profile.relationship !== ProfileRelationship.SELF
+      profile.relationship !== ProfileRelationship.SELF &&
+      profile.accountId
     ) {
       const existingSelf = await this.healthProfileRepository.findOne({
         where: { accountId: profile.accountId, relationship: ProfileRelationship.SELF },
