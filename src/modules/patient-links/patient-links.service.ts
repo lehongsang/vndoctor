@@ -86,9 +86,6 @@ export class PatientLinksService {
       // Reactivate previously unlinked or pending link
       existing.status = targetStatus;
       existing.phoneNumber = dto.phoneNumber;
-      if (dto.hospitalPatientCode) {
-        existing.hospitalPatientCode = dto.hospitalPatientCode;
-      }
       existing.linkedAt = new Date();
       const updated = await this.linkRepository.save(existing);
 
@@ -109,7 +106,6 @@ export class PatientLinksService {
       facilityId: targetFacilityId,
       healthProfileId: dto.healthProfileId,
       phoneNumber: dto.phoneNumber.trim(),
-      hospitalPatientCode: dto.hospitalPatientCode || null,
       status: targetStatus,
       linkedAt: new Date(),
     });

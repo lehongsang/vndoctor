@@ -29,12 +29,6 @@ export class CreatePatientLinkDto {
   @MaxLength(20)
   phoneNumber: string;
 
-  @ApiPropertyOptional({ description: 'Mã bệnh nhân do viện cấp (Mã hồ sơ BN)', example: 'BN-2026-0099' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(50)
-  hospitalPatientCode?: string;
-
   @ApiPropertyOptional({
     description: 'Trạng thái liên kết (ACTIVE: liên kết ngay, PENDING: gửi lời mời tới app)',
     enum: FacilityPatientLinkStatus,

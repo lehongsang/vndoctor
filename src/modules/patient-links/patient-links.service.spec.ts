@@ -142,7 +142,6 @@ describe('PatientLinksService', () => {
         facilityId: 'fac-111',
         healthProfileId: 'profile-111',
         phoneNumber: '0987654321',
-        hospitalPatientCode: 'BN-001',
         status: FacilityPatientLinkStatus.PENDING,
       });
 
