@@ -15,6 +15,7 @@ import { Examination } from '@/modules/examinations/entities/examination.entity'
 import { RiskFactorAssessmentInput } from '@/modules/risk-assessments/entities/risk-factor-assessment-input.entity';
 import { PatientTreatmentTarget } from '@/modules/treatment-targets/entities/patient-treatment-target.entity';
 import { TreatmentPlan } from '@/modules/treatment-plans/entities/treatment-plan.entity';
+import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 
 /**
  * Entity representing a Health Profile belonging to an App Account.
@@ -92,6 +93,15 @@ export class HealthProfile extends BaseEntity {
 
   @OneToMany(() => TreatmentPlan, (plan: TreatmentPlan) => plan.healthProfile)
   treatmentPlans: Relation<TreatmentPlan>[];
+
+  @OneToMany(() => PatientCareSubscription, (sub: PatientCareSubscription) => sub.healthProfile)
+  careSubscriptions?: Relation<PatientCareSubscription>[];
+
+  @ApiPropertyOptional({
+    description: 'Thông tin gói chăm sóc và bác sĩ được phân công (nếu có)',
+  })
+  @Expose()
+  subscription?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Trạng thái liên kết với tài khoản App (true nếu đã liên kết, false nếu chưa)',

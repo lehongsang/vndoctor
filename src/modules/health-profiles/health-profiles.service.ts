@@ -8,6 +8,7 @@ import {
   CreateFacilityHealthProfileDto,
   CreateHealthProfileDto,
   QueryHealthProfileDto,
+  QueryProfileListDto,
   UpdateHealthProfileDto,
 } from './dtos';
 import {
@@ -20,6 +21,7 @@ import { FacilityPatientLinkStatus, ProfileRelationship, StaffRole } from '@/com
 import { ChronicDiseasesService } from '@/modules/chronic-diseases/chronic-diseases.service';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { AuthUserContext } from '@/commons/decorators/current-auth-user.decorator';
+import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 
 @Injectable()
 export class HealthProfilesService {
@@ -30,6 +32,8 @@ export class HealthProfilesService {
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(FacilityPatientLink)
     private readonly linkRepository: Repository<FacilityPatientLink>,
+    @InjectRepository(PatientCareSubscription)
+    private readonly careSubscriptionRepository: Repository<PatientCareSubscription>,
     private readonly chronicDiseasesService: ChronicDiseasesService,
   ) {}
 
@@ -352,6 +356,128 @@ export class HealthProfilesService {
     const [items, total] = await qb.getManyAndCount();
     const enrichedItems = items.map((p) => this.enrichProfileStatus(p, targetFacilityId));
     return { items: enrichedItems, total, page, limit };
+  }
+
+  /**
+   * Retrieves paginated health profiles that have subscribed to a care package and have an assigned doctor.
+   * Enables doctors to manage patient profiles under their direct care / assignment.
+   *
+   * @param query - Filter criteria (doctorId, facilityId, carePackageId, subscriptionStatus, search, page, limit).
+   * @param staff - Authenticated Staff context (Doctor, Nurse, Admin).
+   * @returns Paginated list of HealthProfile objects enriched with subscription & doctor details.
+   */
+  async getProfileList(
+    query: QueryProfileListDto,
+    staff?: StaffJwtPayload,
+  ): Promise<{
+    items: HealthProfile[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    let targetFacilityId = query.facilityId;
+    let targetDoctorId = query.doctorId;
+
+    // 1. Facility & Doctor access controls
+    if (staff) {
+      // If caller is a DOCTOR, enforce their own doctorId by default
+      if (staff.role === StaffRole.DOCTOR) {
+        if (query.doctorId && query.doctorId !== staff.id) {
+          throw new Forbidden(
+            ErrorCode.FACILITY_ACCESS_DENIED,
+            'Bác sĩ chỉ có quyền xem danh sách hồ sơ bệnh nhân được phân công cho chính mình',
+          );
+        }
+        targetDoctorId = staff.id;
+      }
+
+      // Facility isolation: staff can only see data within their facility (unless VNDOCTOR_ADMIN)
+      if (staff.facilityId) {
+        if (query.facilityId && query.facilityId !== staff.facilityId && staff.role !== StaffRole.VNDOCTOR_ADMIN) {
+          throw new Forbidden(
+            ErrorCode.FACILITY_ACCESS_DENIED,
+            'Bạn không có quyền xem danh sách bệnh nhân của cơ sở y tế khác',
+          );
+        }
+        if (staff.role !== StaffRole.VNDOCTOR_ADMIN) {
+          targetFacilityId = staff.facilityId;
+        }
+      }
+    }
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const qb = this.careSubscriptionRepository
+      .createQueryBuilder('sub')
+      .innerJoinAndSelect('sub.healthProfile', 'profile')
+      .innerJoinAndSelect('sub.carePackage', 'carePackage')
+      .leftJoinAndSelect('sub.assignedDoctor', 'assignedDoctor')
+      .leftJoinAndSelect('sub.assignedNurse', 'assignedNurse')
+      .leftJoinAndSelect('sub.assignedExpert', 'assignedExpert')
+      .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
+      .leftJoinAndSelect('profile.facilityLinks', 'facilityLinks')
+      .leftJoinAndSelect('facilityLinks.facility', 'facility')
+      .where('sub.assignedDoctorId IS NOT NULL');
+
+    if (targetDoctorId) {
+      qb.andWhere('sub.assignedDoctorId = :targetDoctorId', { targetDoctorId });
+    }
+
+    if (targetFacilityId) {
+      qb.andWhere('carePackage.facilityId = :targetFacilityId', { targetFacilityId });
+    }
+
+    if (query.carePackageId) {
+      qb.andWhere('sub.carePackageId = :carePackageId', { carePackageId: query.carePackageId });
+    }
+
+    if (query.subscriptionStatus) {
+      qb.andWhere('sub.status = :subscriptionStatus', {
+        subscriptionStatus: query.subscriptionStatus,
+      });
+    }
+
+    if (query.search) {
+      const kw = `%${query.search.trim()}%`;
+      qb.andWhere(
+        '(profile.fullName ILIKE :kw OR profile.citizenId ILIKE :kw OR profile.phoneNumber ILIKE :kw OR carePackage.packageName ILIKE :kw)',
+        { kw },
+      );
+    }
+
+    qb.orderBy('sub.createdAt', 'DESC').skip(skip).take(limit);
+
+    const [subscriptions, total] = await qb.getManyAndCount();
+
+    const items = subscriptions.map((sub) => {
+      const profile = sub.healthProfile!;
+      const enriched = this.enrichProfileStatus(
+        profile,
+        targetFacilityId || sub.carePackage?.facilityId,
+      );
+      enriched.subscription = {
+        id: sub.id,
+        status: sub.status,
+        startedAt: sub.startedAt,
+        expiresAt: sub.expiresAt,
+        carePackage: sub.carePackage,
+        assignedDoctor: sub.assignedDoctor,
+        assignedNurse: sub.assignedNurse,
+        assignedExpert: sub.assignedExpert,
+        createdAt: sub.createdAt,
+        updatedAt: sub.updatedAt,
+      };
+      return enriched;
+    });
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+    };
   }
 
   /**

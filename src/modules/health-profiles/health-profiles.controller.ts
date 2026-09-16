@@ -15,6 +15,7 @@ import {
   CreateFacilityHealthProfileDto,
   CreateHealthProfileDto,
   QueryHealthProfileDto,
+  QueryProfileListDto,
   UpdateHealthProfileDto,
 } from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
@@ -63,6 +64,36 @@ export class HealthProfilesController {
     @CurrentStaff() staff: StaffJwtPayload,
   ) {
     return this.healthProfilesService.getFacilityProfiles(query, staff);
+  }
+
+  @Get('profileList')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff/Doctor Auth - Danh sách hồ sơ bệnh nhân đã mua gói & được gán Bác sĩ',
+    description: 'Truy vấn lấy ra tất cả các hồ sơ sức khỏe đã mua gói chăm sóc và được assign bác sĩ vào gói để bác sĩ quản lý các hồ sơ dưới quyền chăm sóc (take care) của mình.',
+    response: { serialization: HealthProfile, isArray: true },
+  })
+  async getProfileList(
+    @Query() query: QueryProfileListDto,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.healthProfilesService.getProfileList(query, staff);
+  }
+
+  @Get('profile-list')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff/Doctor Auth - Danh sách hồ sơ bệnh nhân đã mua gói & được gán Bác sĩ (Kebab-case Alias)',
+    description: 'Truy vấn lấy ra tất cả các hồ sơ sức khỏe đã mua gói chăm sóc và được assign bác sĩ vào gói.',
+    response: { serialization: HealthProfile, isArray: true },
+  })
+  async getProfileListAlias(
+    @Query() query: QueryProfileListDto,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.healthProfilesService.getProfileList(query, staff);
   }
 
   @Post()
