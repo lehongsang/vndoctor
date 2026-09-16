@@ -13,7 +13,6 @@ import {
 import { Conflict, Forbidden, NotFound } from '@/commons/exceptions';
 
 import { Account } from '@/modules/accounts/entities/account.entity';
-import { FacilityPatientLink } from '@/modules/patient-links/entities/facility-patient-link.entity';
 import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 
 describe('HealthProfilesService', () => {
@@ -23,6 +22,11 @@ describe('HealthProfilesService', () => {
     id: 'profile-111',
     accountId: 'acc-111',
     account: {} as unknown as HealthProfile['account'],
+    facilityId: 'facility-1',
+    isLinked: true,
+    linkStatus: 'ACTIVE' as unknown as HealthProfile['linkStatus'],
+    hospitalPatientCode: 'BN-20260916-A1B2',
+    linkedAt: new Date(),
     relationship: ProfileRelationship.SELF,
     fullName: 'Trần Thị Mai',
     dob: '1985-05-20',
@@ -36,7 +40,6 @@ describe('HealthProfilesService', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     generateId: () => {},
-    facilityLinks: [],
     healthRecords: [],
     examinations: [],
     riskAssessments: [],
@@ -55,12 +58,6 @@ describe('HealthProfilesService', () => {
   };
 
   const mockAccountRepository = {
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-  };
-
-  const mockLinkRepository = {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -90,10 +87,6 @@ describe('HealthProfilesService', () => {
         {
           provide: getRepositoryToken(Account),
           useValue: mockAccountRepository,
-        },
-        {
-          provide: getRepositoryToken(FacilityPatientLink),
-          useValue: mockLinkRepository,
         },
         {
           provide: getRepositoryToken(PatientCareSubscription),
@@ -154,17 +147,16 @@ describe('HealthProfilesService', () => {
   });
 
   describe('createFacilityProfile', () => {
-    it('should allow Staff to create an independent profile and auto-link to facility', async () => {
+    it('should allow Staff to create an independent profile and assign facilityId', async () => {
       const createdFacilityProfile = {
         ...mockProfile,
         id: 'profile-fac-1',
         accountId: null,
+        facilityId: 'facility-1',
       };
       mockRepository.create.mockReturnValue(createdFacilityProfile);
       mockRepository.save.mockResolvedValue(createdFacilityProfile);
       mockRepository.findOne.mockResolvedValue(createdFacilityProfile);
-      mockLinkRepository.create.mockReturnValue({});
-      mockLinkRepository.save.mockResolvedValue({});
 
       const result = await service.createFacilityProfile(
         {
@@ -189,17 +181,12 @@ describe('HealthProfilesService', () => {
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           accountId: null,
-          fullName: 'Bệnh Nhân Test',
-        }),
-      );
-      expect(mockLinkRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
           facilityId: 'facility-1',
+          fullName: 'Bệnh Nhân Test',
           hospitalPatientCode: expect.stringMatching(/^BN-\d{8}-[A-Z0-9]{4}$/),
-          status: 'ACTIVE',
         }),
       );
-      expect(mockLinkRepository.save).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalled();
     });
 
     it('should throw Forbidden if staff has no facilityId', async () => {
@@ -285,7 +272,6 @@ describe('HealthProfilesService', () => {
     it('should return paginated health profiles linked to staff facility', async () => {
       const mockQb = {
         leftJoinAndSelect: jest.fn().mockReturnThis(),
-        innerJoin: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
@@ -309,11 +295,9 @@ describe('HealthProfilesService', () => {
 
       expect(result.items).toHaveLength(1);
       expect(result.total).toBe(1);
-      expect(mockQb.innerJoin).toHaveBeenCalledWith(
-        'profile.facilityLinks',
-        'activeLink',
-        'activeLink.facilityId = :facilityId AND activeLink.status = :linkStatus',
-        { facilityId: 'facility-1', linkStatus: 'ACTIVE' },
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        'profile.facilityId = :facilityId',
+        { facilityId: 'facility-1' },
       );
     });
 
@@ -344,7 +328,6 @@ describe('HealthProfilesService', () => {
         assignedDoctorId: 'staff-1',
         healthProfile: {
           ...mockProfile,
-          facilityLinks: [],
         },
         carePackage: {
           id: 'package-1',

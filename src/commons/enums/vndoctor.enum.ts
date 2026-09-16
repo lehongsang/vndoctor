@@ -58,6 +58,7 @@ export enum ProfileBloodType {
  * Status of facility patient link
  */
 export enum FacilityPatientLinkStatus {
+  NOT_LINKED = 'NOT_LINKED',
   PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
   UNLINKED = 'UNLINKED',

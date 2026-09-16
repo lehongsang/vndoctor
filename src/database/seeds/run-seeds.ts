@@ -8,7 +8,6 @@ import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import { Account } from '@/modules/accounts/entities/account.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
-import { FacilityPatientLink } from '@/modules/patient-links/entities/facility-patient-link.entity';
 import { CarePackage } from '@/modules/care-packages/entities/care-package.entity';
 import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 import { Conversation } from '@/modules/care-subscriptions/entities/conversation.entity';
@@ -70,7 +69,6 @@ async function runSeed() {
   const staffRepo = dataSource.getRepository(StaffUser);
   const accountRepo = dataSource.getRepository(Account);
   const profileRepo = dataSource.getRepository(HealthProfile);
-  const linkRepo = dataSource.getRepository(FacilityPatientLink);
   const packageRepo = dataSource.getRepository(CarePackage);
   const subscriptionRepo = dataSource.getRepository(PatientCareSubscription);
   const conversationRepo = dataSource.getRepository(Conversation);
@@ -214,28 +212,16 @@ async function runSeed() {
       bloodType: ProfileBloodType.O,
       allergy: 'Không dị ứng thuốc hoặc thức ăn',
       medicalHistory: 'Tiền sử Tăng huyết áp 3 năm, đang duy trì thuốc định kỳ',
-    });
-    healthProfile = await profileRepo.save(healthProfile);
-    console.log(`   Created Health Profile: ${healthProfile.fullName} (${healthProfile.id})`);
-  } else {
-    console.log(`   Health Profile exists: ${healthProfile.fullName}`);
-  }
-
-  // Link Patient Profile with Hospital
-  let patientLink = await linkRepo.findOne({
-    where: { healthProfileId: healthProfile.id, facilityId: facility.id },
-  });
-  if (!patientLink) {
-    patientLink = linkRepo.create({
-      healthProfileId: healthProfile.id,
       facilityId: facility.id,
-      phoneNumber: '0987654321',
+      isLinked: true,
+      linkStatus: FacilityPatientLinkStatus.ACTIVE,
       hospitalPatientCode: 'BN-2026-0001',
-      status: FacilityPatientLinkStatus.ACTIVE,
       linkedAt: new Date(),
     });
-    patientLink = await linkRepo.save(patientLink);
-    console.log(`   Created Hospital Link: Mã BN ${patientLink.hospitalPatientCode}`);
+    healthProfile = await profileRepo.save(healthProfile);
+    console.log(`   Created Health Profile: ${healthProfile.fullName} (${healthProfile.id}) - Mã BN: ${healthProfile.hospitalPatientCode}`);
+  } else {
+    console.log(`   Health Profile exists: ${healthProfile.fullName}`);
   }
 
   // 5. Seed Care Packages (Standard & VIP)

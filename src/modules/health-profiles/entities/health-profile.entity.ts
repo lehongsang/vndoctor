@@ -1,5 +1,6 @@
 import { BaseEntity } from '@/commons/entities/base.entity';
 import {
+  FacilityPatientLinkStatus,
   ProfileBloodType,
   ProfileGender,
   ProfileRelationship,
@@ -8,8 +9,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, Relation } from 'typeorm';
 import { Account } from '@/modules/accounts/entities/account.entity';
+import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
-import { FacilityPatientLink } from '@/modules/patient-links/entities/facility-patient-link.entity';
 import { HealthRecord } from '@/modules/health-records/entities/health-record.entity';
 import { Examination } from '@/modules/examinations/entities/examination.entity';
 import { RiskFactorAssessmentInput } from '@/modules/risk-assessments/entities/risk-factor-assessment-input.entity';
@@ -18,17 +19,55 @@ import { TreatmentPlan } from '@/modules/treatment-plans/entities/treatment-plan
 import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 
 /**
- * Entity representing a Health Profile belonging to an App Account.
+ * Entity representing a Health Profile belonging to an App Account or Medical Facility.
  */
 @Entity('health_profiles')
 export class HealthProfile extends BaseEntity {
   @ApiPropertyOptional({ description: 'Owning Account ID (nullable if created independently by medical facility)' })
+  @Index('health_profiles_index_account_id')
   @Column({ type: 'uuid', nullable: true })
   accountId?: string | null;
 
   @ManyToOne(() => Account, (account: Account) => account.healthProfiles, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'accountId' })
   account?: Relation<Account>;
+
+  @ApiPropertyOptional({ description: 'ID cơ sở y tế quản lý hồ sơ (nullable nếu chưa liên kết với CSYT nào)' })
+  @Index('health_profiles_index_facility_id')
+  @Column({ type: 'uuid', nullable: true })
+  facilityId?: string | null;
+
+  @ManyToOne(() => Facility, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'facilityId' })
+  facility?: Relation<Facility>;
+
+  @ApiProperty({ description: 'Trạng thái đã liên kết thành công giữa Cơ sở y tế và Tài khoản App', default: false })
+  @Column({ type: 'boolean', default: false })
+  isLinked: boolean;
+
+  @ApiProperty({
+    enum: FacilityPatientLinkStatus,
+    enumName: 'FacilityPatientLinkStatus',
+    description: 'Trạng thái liên kết tại cơ sở y tế (NOT_LINKED, PENDING, ACTIVE, UNLINKED)',
+    default: FacilityPatientLinkStatus.NOT_LINKED,
+  })
+  @Column({
+    type: 'enum',
+    enum: FacilityPatientLinkStatus,
+    default: FacilityPatientLinkStatus.NOT_LINKED,
+  })
+  linkStatus: FacilityPatientLinkStatus;
+
+  @ApiPropertyOptional({
+    description: 'Mã bệnh nhân nội bộ tại viện (hệ thống tự sinh hoặc viện cấp)',
+    example: 'BN-20260916-A1B2',
+  })
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  hospitalPatientCode?: string | null;
+
+  @ApiPropertyOptional({ description: 'Thời điểm liên kết được kích hoạt' })
+  @Column({ type: 'timestamptz', nullable: true })
+  linkedAt?: Date | null;
 
   @ApiProperty({ enum: ProfileRelationship, enumName: 'ProfileRelationship', default: ProfileRelationship.SELF })
   @Index('health_profiles_index_3')
@@ -76,9 +115,6 @@ export class HealthProfile extends BaseEntity {
   @OneToOne(() => ProfileChronicDisease, (pcd: ProfileChronicDisease) => pcd.healthProfile, { cascade: true })
   profileChronicDisease?: Relation<ProfileChronicDisease>;
 
-  @OneToMany(() => FacilityPatientLink, (link: FacilityPatientLink) => link.healthProfile)
-  facilityLinks: Relation<FacilityPatientLink>[];
-
   @OneToMany(() => HealthRecord, (record: HealthRecord) => record.healthProfile)
   healthRecords: Relation<HealthRecord>[];
 
@@ -117,19 +153,5 @@ export class HealthProfile extends BaseEntity {
   })
   @Expose()
   appLinkStatus?: string;
-
-  @ApiPropertyOptional({
-    description: 'Trạng thái liên kết tại cơ sở y tế (ACTIVE, PENDING, UNLINKED, NOT_LINKED)',
-    example: 'ACTIVE',
-  })
-  @Expose()
-  linkStatus?: string;
-
-  @ApiPropertyOptional({
-    description: 'Mã bệnh nhân nội bộ tại viện (hệ thống tự sinh)',
-    example: 'BN-20260916-A1B2',
-  })
-  @Expose()
-  hospitalPatientCode?: string | null;
 }
 

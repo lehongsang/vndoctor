@@ -2,7 +2,6 @@ import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { PatientLinksService } from './patient-links.service';
-import { FacilityPatientLink } from './entities/facility-patient-link.entity';
 import { FacilitiesService } from '@/modules/facilities/facilities.service';
 import { HealthProfilesService } from '@/modules/health-profiles/health-profiles.service';
 import { FacilityPatientLinkStatus } from '@/commons/enums/vndoctor.enum';
@@ -24,31 +23,32 @@ describe('PatientLinksService', () => {
     isActive: true,
   };
 
-  const mockProfile = {
+  const mockProfile: HealthProfile = {
     id: 'profile-111',
     accountId: 'account-111',
+    facilityId: 'fac-111',
+    isLinked: true,
+    linkStatus: FacilityPatientLinkStatus.ACTIVE,
+    hospitalPatientCode: 'BN-001',
     fullName: 'Nguyễn Văn Bệnh Nhân',
     phoneNumber: '0987654321',
+    dob: '1990-01-01',
+    gender: 'MALE' as unknown as HealthProfile['gender'],
+    relationship: 'SELF' as unknown as HealthProfile['relationship'],
+    bloodType: 'O' as unknown as HealthProfile['bloodType'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    generateId: () => {},
+    healthRecords: [],
+    examinations: [],
+    riskAssessments: [],
+    treatmentTargets: [],
+    treatmentPlans: [],
   };
 
   const mockAccount = {
     id: 'account-111',
     phoneNumber: '0987654321',
-  };
-
-  const mockLink: FacilityPatientLink = {
-    id: 'link-01',
-    facilityId: 'fac-111',
-    facility: mockFacility as unknown as FacilityPatientLink['facility'],
-    healthProfileId: 'profile-111',
-    healthProfile: mockProfile as unknown as FacilityPatientLink['healthProfile'],
-    phoneNumber: '0987654321',
-    hospitalPatientCode: 'BN-001',
-    status: FacilityPatientLinkStatus.ACTIVE,
-    linkedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    generateId: () => {},
   };
 
   const mockQueryBuilder = {
@@ -58,16 +58,8 @@ describe('PatientLinksService', () => {
     orderBy: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
-    getManyAndCount: jest.fn().mockResolvedValue([[mockLink], 1]),
-    getMany: jest.fn().mockResolvedValue([mockLink]),
-  };
-
-  const mockRepository = {
-    findOne: jest.fn(),
-    find: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
+    getManyAndCount: jest.fn().mockResolvedValue([[mockProfile], 1]),
+    getMany: jest.fn().mockResolvedValue([mockProfile]),
   };
 
   const mockAccountRepository = {
@@ -77,6 +69,7 @@ describe('PatientLinksService', () => {
   const mockHealthProfileRepository = {
     findOne: jest.fn(),
     save: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
   };
 
   const mockFacilitiesService = {
@@ -98,10 +91,6 @@ describe('PatientLinksService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PatientLinksService,
-        {
-          provide: getRepositoryToken(FacilityPatientLink),
-          useValue: mockRepository,
-        },
         {
           provide: getRepositoryToken(Account),
           useValue: mockAccountRepository,
@@ -132,11 +121,19 @@ describe('PatientLinksService', () => {
   describe('createLink', () => {
     it('should link patient profile to facility successfully and emit SSE when PENDING', async () => {
       mockFacilitiesService.getFacilityById.mockResolvedValue(mockFacility);
-      mockHealthProfilesService.getProfileById.mockResolvedValue(mockProfile);
-      mockRepository.findOne.mockResolvedValue(null);
-      const pendingLink = { ...mockLink, status: FacilityPatientLinkStatus.PENDING };
-      mockRepository.create.mockReturnValue(pendingLink);
-      mockRepository.save.mockResolvedValue(pendingLink);
+      const unlinkedProfile = {
+        ...mockProfile,
+        facilityId: null,
+        isLinked: false,
+        linkStatus: FacilityPatientLinkStatus.NOT_LINKED,
+      };
+      mockHealthProfilesService.getProfileById.mockResolvedValue(unlinkedProfile);
+      const savedPendingProfile = {
+        ...unlinkedProfile,
+        facilityId: 'fac-111',
+        linkStatus: FacilityPatientLinkStatus.PENDING,
+      };
+      mockHealthProfileRepository.save.mockResolvedValue(savedPendingProfile);
 
       const result = await service.createLink({
         facilityId: 'fac-111',
@@ -145,21 +142,20 @@ describe('PatientLinksService', () => {
         status: FacilityPatientLinkStatus.PENDING,
       });
 
-      expect(result.id).toBe('link-01');
-      expect(mockRepository.save).toHaveBeenCalled();
+      expect(result.id).toBe('profile-111');
+      expect(mockHealthProfileRepository.save).toHaveBeenCalled();
       expect(mockSseService.emitInvitation).toHaveBeenCalledWith(
         'account-111',
         expect.objectContaining({
-          linkId: 'link-01',
+          linkId: 'profile-111',
           facilityId: 'fac-111',
         }),
       );
     });
 
-    it('should throw Conflict if link is already active', async () => {
+    it('should throw Conflict if link is already active on same facility', async () => {
       mockFacilitiesService.getFacilityById.mockResolvedValue(mockFacility);
       mockHealthProfilesService.getProfileById.mockResolvedValue(mockProfile);
-      mockRepository.findOne.mockResolvedValue(mockLink);
 
       await expect(
         service.createLink({
@@ -207,13 +203,20 @@ describe('PatientLinksService', () => {
 
     it('should send link request via phone number and emit SSE to patient account', async () => {
       mockFacilitiesService.getFacilityById.mockResolvedValue(mockFacility);
-      mockHealthProfilesService.getProfileById.mockResolvedValue(mockProfile);
+      const unlinkedProfile = {
+        ...mockProfile,
+        facilityId: null,
+        isLinked: false,
+        linkStatus: FacilityPatientLinkStatus.NOT_LINKED,
+      };
+      mockHealthProfilesService.getProfileById.mockResolvedValue(unlinkedProfile);
       mockAccountRepository.findOne.mockResolvedValue(mockAccount);
-      mockRepository.findOne.mockResolvedValue(null);
-
-      const pendingLink = { ...mockLink, status: FacilityPatientLinkStatus.PENDING };
-      mockRepository.create.mockReturnValue(pendingLink);
-      mockRepository.save.mockResolvedValue(pendingLink);
+      const savedPendingProfile = {
+        ...unlinkedProfile,
+        facilityId: 'fac-111',
+        linkStatus: FacilityPatientLinkStatus.PENDING,
+      };
+      mockHealthProfileRepository.save.mockResolvedValue(savedPendingProfile);
 
       const result = await service.requestLink(
         {
@@ -223,11 +226,11 @@ describe('PatientLinksService', () => {
         staff,
       );
 
-      expect(result.status).toBe(FacilityPatientLinkStatus.PENDING);
+      expect(result.linkStatus).toBe(FacilityPatientLinkStatus.PENDING);
       expect(mockSseService.emitInvitation).toHaveBeenCalledWith(
         'account-111',
         expect.objectContaining({
-          linkId: 'link-01',
+          linkId: 'profile-111',
           facilityId: 'fac-111',
         }),
       );
@@ -255,79 +258,80 @@ describe('PatientLinksService', () => {
       mockAccountRepository.findOne.mockResolvedValue(mockAccount);
       const result = await service.getMyInvitations('account-111');
       expect(result).toBeDefined();
-      expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
+      expect(mockHealthProfileRepository.createQueryBuilder).toHaveBeenCalled();
     });
 
     it('should retrieve active links for patient account', async () => {
       const result = await service.getMyLinks('account-111');
       expect(result).toBeDefined();
-      expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
+      expect(mockHealthProfileRepository.createQueryBuilder).toHaveBeenCalled();
     });
   });
 
   describe('acceptInvitation & rejectInvitation', () => {
     it('should accept pending invitation successfully and emit SSE', async () => {
-      const pendingLink = {
-        ...mockLink,
-        status: FacilityPatientLinkStatus.PENDING,
-        healthProfile: { ...mockProfile, accountId: null },
+      const pendingProfile = {
+        ...mockProfile,
+        linkStatus: FacilityPatientLinkStatus.PENDING,
+        isLinked: false,
+        accountId: null,
       };
-      mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockHealthProfileRepository.findOne.mockResolvedValue(pendingProfile);
       mockAccountRepository.findOne.mockResolvedValue(mockAccount);
-      mockRepository.save.mockImplementation((link) => Promise.resolve(link));
-      mockHealthProfileRepository.save.mockResolvedValue({});
+      mockHealthProfileRepository.save.mockImplementation((p) => Promise.resolve(p));
 
-      const result = await service.acceptInvitation('link-01', 'account-111');
+      const result = await service.acceptInvitation('profile-111', 'account-111');
 
-      expect(result.status).toBe(FacilityPatientLinkStatus.ACTIVE);
-      expect(mockHealthProfileRepository.save).toHaveBeenCalled();
+      expect(result.linkStatus).toBe(FacilityPatientLinkStatus.ACTIVE);
+      expect(result.isLinked).toBe(true);
       expect(mockSseService.emitStatusChange).toHaveBeenCalledWith(
         'account-111',
-        expect.objectContaining({ linkId: 'link-01', status: 'ACTIVE' }),
+        expect.objectContaining({ linkId: 'profile-111', status: 'ACTIVE' }),
       );
     });
 
     it('should reject pending invitation successfully and emit SSE', async () => {
-      const pendingLink = {
-        ...mockLink,
-        status: FacilityPatientLinkStatus.PENDING,
-        healthProfile: mockProfile,
+      const pendingProfile = {
+        ...mockProfile,
+        linkStatus: FacilityPatientLinkStatus.PENDING,
+        isLinked: false,
       };
-      mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockHealthProfileRepository.findOne.mockResolvedValue(pendingProfile);
       mockAccountRepository.findOne.mockResolvedValue(mockAccount);
-      mockRepository.save.mockImplementation((link) => Promise.resolve(link));
+      mockHealthProfileRepository.save.mockImplementation((p) => Promise.resolve(p));
 
-      const result = await service.rejectInvitation('link-01', 'account-111');
+      const result = await service.rejectInvitation('profile-111', 'account-111');
 
       expect(result.success).toBe(true);
       expect(mockSseService.emitStatusChange).toHaveBeenCalledWith(
         'account-111',
-        expect.objectContaining({ linkId: 'link-01', status: 'UNLINKED' }),
+        expect.objectContaining({ linkId: 'profile-111', status: 'UNLINKED' }),
       );
     });
 
     it('should throw Forbidden if account does not own the profile or phone', async () => {
-      const pendingLink = {
-        ...mockLink,
-        status: FacilityPatientLinkStatus.PENDING,
-        healthProfile: { ...mockProfile, accountId: 'other-acc' },
+      const pendingProfile = {
+        ...mockProfile,
+        linkStatus: FacilityPatientLinkStatus.PENDING,
+        accountId: 'other-acc',
         phoneNumber: '0123456789',
       };
-      mockRepository.findOne.mockResolvedValue(pendingLink);
+      mockHealthProfileRepository.findOne.mockResolvedValue(pendingProfile);
       mockAccountRepository.findOne.mockResolvedValue({ id: 'other-account-999', phoneNumber: '0999999999' });
 
       await expect(
-        service.acceptInvitation('link-01', 'other-account-999'),
+        service.acceptInvitation('profile-111', 'other-account-999'),
       ).rejects.toThrow(Forbidden);
     });
   });
 
   describe('unlinkPatient', () => {
     it('should change status to UNLINKED', async () => {
-      mockRepository.findOne.mockResolvedValue({ ...mockLink });
-      mockRepository.save.mockResolvedValue({
-        ...mockLink,
-        status: FacilityPatientLinkStatus.UNLINKED,
+      mockHealthProfileRepository.findOne.mockResolvedValue({ ...mockProfile });
+      mockHealthProfileRepository.save.mockResolvedValue({
+        ...mockProfile,
+        linkStatus: FacilityPatientLinkStatus.UNLINKED,
+        isLinked: false,
       });
 
       const result = await service.unlinkPatient('fac-111', 'profile-111');
@@ -335,7 +339,7 @@ describe('PatientLinksService', () => {
     });
 
     it('should throw NotFound when link does not exist', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockHealthProfileRepository.findOne.mockResolvedValue(null);
 
       await expect(
         service.unlinkPatient('fac-111', 'non-existent'),

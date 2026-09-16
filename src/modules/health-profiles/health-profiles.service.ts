@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HealthProfile } from './entities/health-profile.entity';
 import { Account } from '@/modules/accounts/entities/account.entity';
-import { FacilityPatientLink } from '@/modules/patient-links/entities/facility-patient-link.entity';
 import {
   CreateFacilityHealthProfileDto,
   CreateHealthProfileDto,
@@ -30,8 +29,6 @@ export class HealthProfilesService {
     private readonly healthProfileRepository: Repository<HealthProfile>,
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
-    @InjectRepository(FacilityPatientLink)
-    private readonly linkRepository: Repository<FacilityPatientLink>,
     @InjectRepository(PatientCareSubscription)
     private readonly careSubscriptionRepository: Repository<PatientCareSubscription>,
     private readonly chronicDiseasesService: ChronicDiseasesService,
@@ -48,28 +45,14 @@ export class HealthProfilesService {
   }
 
   /**
-   * Enriches a HealthProfile entity with computed fields for app link status and facility patient code.
+   * Enriches a HealthProfile entity with computed fields for app link status.
    *
    * @param profile - HealthProfile entity.
-   * @param facilityId - Optional facilityId context.
    * @returns HealthProfile with populated status fields.
    */
-  public enrichProfileStatus(profile: HealthProfile, facilityId?: string): HealthProfile {
+  public enrichProfileStatus(profile: HealthProfile): HealthProfile {
     profile.isAppLinked = Boolean(profile.accountId);
     profile.appLinkStatus = profile.accountId ? 'LINKED' : 'NOT_LINKED';
-
-    let link: FacilityPatientLink | undefined;
-    if (profile.facilityLinks && profile.facilityLinks.length > 0) {
-      if (facilityId) {
-        link = profile.facilityLinks.find((l) => l.facilityId === facilityId) || profile.facilityLinks[0];
-      } else {
-        link = profile.facilityLinks[0];
-      }
-    }
-
-    profile.linkStatus = link ? link.status : 'NOT_LINKED';
-    profile.hospitalPatientCode = link?.hospitalPatientCode || null;
-
     return profile;
   }
 
@@ -110,6 +93,10 @@ export class HealthProfilesService {
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
       accountId,
+      facilityId: null,
+      isLinked: false,
+      linkStatus: FacilityPatientLinkStatus.NOT_LINKED,
+      hospitalPatientCode: null,
     });
 
     const savedProfile = await this.healthProfileRepository.save(profile);
@@ -127,7 +114,8 @@ export class HealthProfilesService {
 
   /**
    * Creates a new Health Profile independently by Staff at a Medical Facility.
-   * Does NOT require an App Account, and automatically links the profile to the Staff's facility.
+   * Does NOT require an App Account, assigns facilityId and generates a hospitalPatientCode.
+   * isLinked is false until linked/accepted with an App Account.
    *
    * @param dto - Facility Health Profile data.
    * @param staff - Authenticated Staff context.
@@ -168,28 +156,22 @@ export class HealthProfilesService {
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
       accountId,
+      facilityId: staff.facilityId,
+      isLinked: false,
+      linkStatus: FacilityPatientLinkStatus.NOT_LINKED,
+      hospitalPatientCode: this.generatePatientCode(),
+      linkedAt: null,
     });
 
     const savedProfile = await this.healthProfileRepository.save(profile);
 
-    // 2. Attach chronic diseases if provided
+    // 3. Attach chronic diseases if provided
     if (dto.chronicDiseaseIds && dto.chronicDiseaseIds.length > 0) {
       await this.chronicDiseasesService.setProfileDiseases(
         savedProfile.id,
         dto.chronicDiseaseIds,
       );
     }
-
-    // 3. Automatically create an ACTIVE facility link with auto-generated patient code
-    const link = this.linkRepository.create({
-      facilityId: staff.facilityId,
-      healthProfileId: savedProfile.id,
-      phoneNumber: dto.phoneNumber ? dto.phoneNumber.trim() : '',
-      hospitalPatientCode: this.generatePatientCode(),
-      status: FacilityPatientLinkStatus.ACTIVE,
-      linkedAt: new Date(),
-    });
-    await this.linkRepository.save(link);
 
     return this.getProfileById(savedProfile.id);
   }
@@ -198,12 +180,12 @@ export class HealthProfilesService {
    * Retrieves all Health Profiles belonging to an App Account.
    *
    * @param accountId - Owning Account UUID.
-   * @returns Array of HealthProfile objects with chronic diseases & facility links.
+   * @returns Array of HealthProfile objects with chronic diseases & facility.
    */
   async getMyProfiles(accountId: string): Promise<HealthProfile[]> {
     const profiles = await this.healthProfileRepository.find({
       where: { accountId },
-      relations: ['profileChronicDisease', 'facilityLinks', 'facilityLinks.facility'],
+      relations: ['profileChronicDisease', 'facility'],
       order: { relationship: 'ASC', createdAt: 'ASC' },
     });
     return profiles.map((p) => this.enrichProfileStatus(p));
@@ -222,7 +204,7 @@ export class HealthProfilesService {
   ): Promise<HealthProfile> {
     const profile = await this.healthProfileRepository.findOne({
       where: { id },
-      relations: ['profileChronicDisease', 'facilityLinks', 'facilityLinks.facility'],
+      relations: ['profileChronicDisease', 'facility'],
     });
 
     if (!profile) {
@@ -249,26 +231,21 @@ export class HealthProfilesService {
         }
       } else if (userOrAccountId.type === 'STAFF') {
         const staff = userOrAccountId.staff;
-        if (staff?.role !== StaffRole.VNDOCTOR_ADMIN && userOrAccountId.facilityId) {
-          const hasLink = profile.facilityLinks?.some(
-            (link) => link.facilityId === userOrAccountId.facilityId,
+        if (
+          staff?.role !== StaffRole.VNDOCTOR_ADMIN &&
+          userOrAccountId.facilityId &&
+          profile.facilityId &&
+          profile.facilityId !== userOrAccountId.facilityId
+        ) {
+          throw new Forbidden(
+            ErrorCode.FACILITY_ACCESS_DENIED,
+            'Hồ sơ sức khỏe này chưa được liên kết với cơ sở y tế của bạn',
           );
-          if (!hasLink && profile.facilityLinks && profile.facilityLinks.length > 0) {
-            throw new Forbidden(
-              ErrorCode.FACILITY_ACCESS_DENIED,
-              'Hồ sơ sức khỏe này chưa được liên kết với cơ sở y tế của bạn',
-            );
-          }
         }
       }
     }
 
-    const facilityId =
-      userOrAccountId && typeof userOrAccountId === 'object' && 'facilityId' in userOrAccountId
-        ? userOrAccountId.facilityId
-        : undefined;
-
-    return this.enrichProfileStatus(profile, facilityId);
+    return this.enrichProfileStatus(profile);
   }
 
   /**
@@ -311,18 +288,14 @@ export class HealthProfilesService {
     const qb = this.healthProfileRepository
       .createQueryBuilder('profile')
       .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
-      .leftJoinAndSelect('profile.facilityLinks', 'facilityLinks')
-      .leftJoinAndSelect('facilityLinks.facility', 'facility');
-
-    const linkStatus = query.linkStatus || FacilityPatientLinkStatus.ACTIVE;
+      .leftJoinAndSelect('profile.facility', 'facility');
 
     if (targetFacilityId) {
-      qb.innerJoin(
-        'profile.facilityLinks',
-        'activeLink',
-        'activeLink.facilityId = :facilityId AND activeLink.status = :linkStatus',
-        { facilityId: targetFacilityId, linkStatus },
-      );
+      qb.andWhere('profile.facilityId = :facilityId', { facilityId: targetFacilityId });
+    }
+
+    if (query.linkStatus) {
+      qb.andWhere('profile.linkStatus = :linkStatus', { linkStatus: query.linkStatus });
     }
 
     if (query.accountId) {
@@ -346,7 +319,7 @@ export class HealthProfilesService {
     if (query.search) {
       const kw = `%${query.search.trim()}%`;
       qb.andWhere(
-        '(profile.fullName ILIKE :kw OR profile.citizenId ILIKE :kw OR profile.phoneNumber ILIKE :kw)',
+        '(profile.fullName ILIKE :kw OR profile.citizenId ILIKE :kw OR profile.phoneNumber ILIKE :kw OR profile.hospitalPatientCode ILIKE :kw)',
         { kw },
       );
     }
@@ -354,7 +327,7 @@ export class HealthProfilesService {
     qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    const enrichedItems = items.map((p) => this.enrichProfileStatus(p, targetFacilityId));
+    const enrichedItems = items.map((p) => this.enrichProfileStatus(p));
     return { items: enrichedItems, total, page, limit };
   }
 
@@ -417,8 +390,7 @@ export class HealthProfilesService {
       .leftJoinAndSelect('sub.assignedNurse', 'assignedNurse')
       .leftJoinAndSelect('sub.assignedExpert', 'assignedExpert')
       .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
-      .leftJoinAndSelect('profile.facilityLinks', 'facilityLinks')
-      .leftJoinAndSelect('facilityLinks.facility', 'facility')
+      .leftJoinAndSelect('profile.facility', 'facility')
       .where('sub.assignedDoctorId IS NOT NULL');
 
     if (targetDoctorId) {
@@ -453,10 +425,7 @@ export class HealthProfilesService {
 
     const items = subscriptions.map((sub) => {
       const profile = sub.healthProfile!;
-      const enriched = this.enrichProfileStatus(
-        profile,
-        targetFacilityId || sub.carePackage?.facilityId,
-      );
+      const enriched = this.enrichProfileStatus(profile);
       enriched.subscription = {
         id: sub.id,
         status: sub.status,
@@ -496,7 +465,15 @@ export class HealthProfilesService {
     const qb = this.healthProfileRepository
       .createQueryBuilder('profile')
       .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
-      .leftJoinAndSelect('profile.facilityLinks', 'links');
+      .leftJoinAndSelect('profile.facility', 'facility');
+
+    if (query.facilityId) {
+      qb.andWhere('profile.facilityId = :facilityId', { facilityId: query.facilityId });
+    }
+
+    if (query.linkStatus) {
+      qb.andWhere('profile.linkStatus = :linkStatus', { linkStatus: query.linkStatus });
+    }
 
     if (query.accountId) {
       qb.andWhere('profile.accountId = :accountId', { accountId: query.accountId });
@@ -518,7 +495,7 @@ export class HealthProfilesService {
 
     if (query.search) {
       const kw = `%${query.search.trim()}%`;
-      qb.andWhere('(profile.fullName ILIKE :kw OR profile.citizenId ILIKE :kw OR profile.phoneNumber ILIKE :kw)', {
+      qb.andWhere('(profile.fullName ILIKE :kw OR profile.citizenId ILIKE :kw OR profile.phoneNumber ILIKE :kw OR profile.hospitalPatientCode ILIKE :kw)', {
         kw,
       });
     }
@@ -526,7 +503,8 @@ export class HealthProfilesService {
     qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    return { items, total, page, limit };
+    const enrichedItems = items.map((p) => this.enrichProfileStatus(p));
+    return { items: enrichedItems, total, page, limit };
   }
 
   /**

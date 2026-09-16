@@ -23,7 +23,6 @@ import {
   UpdatePatientLinkDto,
 } from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
-import { FacilityPatientLink } from './entities/facility-patient-link.entity';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import { AppAuthGuard } from '@/commons/guards/app-auth.guard';
@@ -57,7 +56,7 @@ export class PatientLinksController {
   @Doc({
     summary: 'App Auth - Danh sách lời mời liên kết hồ sơ y tế đang chờ duyệt',
     description: 'Bệnh nhân xem các lời mời liên kết hồ sơ bệnh án từ cơ sở y tế đang ở trạng thái PENDING.',
-    response: { serialization: FacilityPatientLink, isArray: true },
+    response: { serialization: HealthProfile, isArray: true },
   })
   async getMyInvitations(@CurrentAccount() account: AppAccountJwtPayload) {
     return this.patientLinksService.getMyInvitations(account.id);
@@ -69,7 +68,7 @@ export class PatientLinksController {
   @Doc({
     summary: 'App Auth - Danh sách cơ sở y tế đã liên kết với tài khoản bệnh nhân',
     description: 'Lấy toàn bộ các liên kết cơ sở y tế đang hoạt động (ACTIVE) của các hồ sơ thuộc tài khoản App.',
-    response: { serialization: FacilityPatientLink, isArray: true },
+    response: { serialization: HealthProfile, isArray: true },
   })
   async getMyLinks(@CurrentAccount() account: AppAccountJwtPayload) {
     return this.patientLinksService.getMyLinks(account.id);
@@ -81,7 +80,7 @@ export class PatientLinksController {
   @Doc({
     summary: 'App Auth - Bệnh nhân đồng ý lời mời liên kết hồ sơ y tế',
     description: 'Chuyển trạng thái liên kết từ PENDING sang ACTIVE.',
-    response: { serialization: FacilityPatientLink },
+    response: { serialization: HealthProfile },
     errors: [
       {
         status: HttpStatus.NOT_FOUND,
@@ -134,7 +133,7 @@ export class PatientLinksController {
   @Doc({
     summary: 'Staff Auth - Gửi yêu cầu liên kết hồ sơ đến App bệnh nhân qua SĐT',
     description: 'Cơ sở y tế gửi yêu cầu liên kết hồ sơ bệnh nhân tới tài khoản App qua SĐT. Hệ thống tạo liên kết PENDING và phát SSE thông báo tới App bệnh nhân.',
-    response: { serialization: FacilityPatientLink },
+    response: { serialization: HealthProfile },
     errors: [
       {
         status: HttpStatus.NOT_FOUND,
@@ -161,7 +160,7 @@ export class PatientLinksController {
   @Doc({
     summary: 'Staff Auth - Liên kết hồ sơ bệnh nhân vào cơ sở y tế',
     description: 'Nhân viên y tế hoặc tiếp đón liên kết hồ sơ bệnh nhân vào viện qua SĐT & healthProfileId. Nếu chọn PENDING, hệ thống sẽ tự phát SSE gửi lời mời đến App bệnh nhân.',
-    response: { serialization: FacilityPatientLink },
+    response: { serialization: HealthProfile },
   })
   async createLink(
     @Body() dto: CreatePatientLinkDto,
@@ -202,7 +201,7 @@ export class PatientLinksController {
   @Doc({
     summary: 'Staff Auth - Chi tiết liên kết theo ID',
     description: 'Lấy thông tin chi tiết một bản ghi liên kết',
-    response: { serialization: FacilityPatientLink },
+    response: { serialization: HealthProfile },
   })
   async getLinkById(@Param('id') id: string) {
     return this.patientLinksService.getLinkById(id);
@@ -214,7 +213,7 @@ export class PatientLinksController {
   @Doc({
     summary: 'Staff Auth - Cập nhật trạng thái hoặc mã bệnh nhân',
     description: 'Cập nhật mã bệnh nhân viện cấp (Mã BN) hoặc chuyển trạng thái liên kết (ACTIVE, UNLINKED)',
-    response: { serialization: FacilityPatientLink },
+    response: { serialization: HealthProfile },
   })
   async updateLink(
     @Param('id') id: string,

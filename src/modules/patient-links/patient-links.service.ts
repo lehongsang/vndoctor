@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FacilityPatientLink } from './entities/facility-patient-link.entity';
 import {
   CreatePatientLinkDto,
   QueryPatientLinkDto,
@@ -26,8 +25,6 @@ import { PatientLinksSseService } from './patient-links-sse.service';
 @Injectable()
 export class PatientLinksService {
   constructor(
-    @InjectRepository(FacilityPatientLink)
-    private readonly linkRepository: Repository<FacilityPatientLink>,
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(HealthProfile)
@@ -53,12 +50,12 @@ export class PatientLinksService {
    *
    * @param dto - Linking payload.
    * @param staff - Current staff context.
-   * @returns Newly created or reactivated FacilityPatientLink.
+   * @returns Updated HealthProfile.
    */
   async createLink(
     dto: CreatePatientLinkDto,
     staff?: StaffJwtPayload,
-  ): Promise<FacilityPatientLink> {
+  ): Promise<HealthProfile> {
     let targetFacilityId = dto.facilityId;
 
     if (staff && staff.facilityId) {
@@ -84,66 +81,44 @@ export class PatientLinksService {
     // Verify health profile exists
     const profile = await this.healthProfilesService.getProfileById(dto.healthProfileId);
 
-    // Check duplicate link
-    const existing = await this.linkRepository.findOne({
-      where: {
-        facilityId: targetFacilityId,
-        healthProfileId: dto.healthProfileId,
-      },
-    });
-
     const targetStatus = dto.status || FacilityPatientLinkStatus.ACTIVE;
 
-    if (existing) {
-      if (existing.status === FacilityPatientLinkStatus.ACTIVE) {
-        throw new Conflict(
-          ErrorCode.PATIENT_ALREADY_LINKED,
-          `Hồ sơ sức khỏe "${profile.fullName}" đã được liên kết và đang hoạt động tại cơ sở y tế này`,
-        );
-      }
-
-      // Reactivate previously unlinked or pending link
-      existing.status = targetStatus;
-      existing.phoneNumber = dto.phoneNumber;
-      existing.linkedAt = new Date();
-      const updated = await this.linkRepository.save(existing);
-
-      if (targetStatus === FacilityPatientLinkStatus.PENDING && profile.accountId) {
-        this.sseService.emitInvitation(profile.accountId, {
-          linkId: updated.id,
-          facilityId: facility.id,
-          facilityName: facility.facilityName,
-          healthProfileId: profile.id,
-          hospitalPatientCode: updated.hospitalPatientCode,
-        });
-      }
-
-      return updated;
+    if (
+      profile.facilityId === targetFacilityId &&
+      profile.isLinked &&
+      profile.linkStatus === FacilityPatientLinkStatus.ACTIVE
+    ) {
+      throw new Conflict(
+        ErrorCode.PATIENT_ALREADY_LINKED,
+        `Hồ sơ sức khỏe "${profile.fullName}" đã được liên kết và đang hoạt động tại cơ sở y tế này`,
+      );
     }
 
-    const link = this.linkRepository.create({
-      facilityId: targetFacilityId,
-      healthProfileId: dto.healthProfileId,
-      phoneNumber: dto.phoneNumber.trim(),
-      hospitalPatientCode: this.generatePatientCode(),
-      status: targetStatus,
-      linkedAt: new Date(),
-    });
+    profile.facilityId = targetFacilityId;
+    if (dto.phoneNumber) {
+      profile.phoneNumber = dto.phoneNumber.trim();
+    }
+    if (!profile.hospitalPatientCode) {
+      profile.hospitalPatientCode = this.generatePatientCode();
+    }
+    profile.linkStatus = targetStatus;
+    profile.isLinked = targetStatus === FacilityPatientLinkStatus.ACTIVE && Boolean(profile.accountId);
+    profile.linkedAt = new Date();
 
-    const savedLink = await this.linkRepository.save(link);
+    const savedProfile = await this.healthProfileRepository.save(profile);
 
     // If link created with PENDING status, send real-time notification to patient via SSE
     if (targetStatus === FacilityPatientLinkStatus.PENDING && profile.accountId) {
       this.sseService.emitInvitation(profile.accountId, {
-        linkId: savedLink.id,
+        linkId: savedProfile.id,
         facilityId: facility.id,
         facilityName: facility.facilityName,
         healthProfileId: profile.id,
-        hospitalPatientCode: savedLink.hospitalPatientCode,
+        hospitalPatientCode: savedProfile.hospitalPatientCode,
       });
     }
 
-    return savedLink;
+    return savedProfile;
   }
 
   /**
@@ -166,7 +141,7 @@ export class PatientLinksService {
   }
 
   /**
-   * Retrieves paginated list of patient links for a facility.
+   * Retrieves paginated list of patient profiles for a facility.
    *
    * @param query - Query filter parameters.
    * @param staff - Staff context.
@@ -175,7 +150,7 @@ export class PatientLinksService {
   async getFacilityPatients(
     query: QueryPatientLinkDto,
     staff?: StaffJwtPayload,
-  ): Promise<{ items: FacilityPatientLink[]; total: number; page: number; limit: number }> {
+  ): Promise<{ items: HealthProfile[]; total: number; page: number; limit: number }> {
     const targetFacilityId =
       staff && staff.facilityId ? staff.facilityId : query.facilityId;
 
@@ -183,31 +158,30 @@ export class PatientLinksService {
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
     const skip = (page - 1) * limit;
 
-    const qb = this.linkRepository
-      .createQueryBuilder('link')
-      .leftJoinAndSelect('link.healthProfile', 'profile')
-      .leftJoinAndSelect('link.facility', 'facility')
+    const qb = this.healthProfileRepository
+      .createQueryBuilder('profile')
+      .leftJoinAndSelect('profile.facility', 'facility')
       .leftJoinAndSelect('profile.profileChronicDisease', 'pcd');
 
     if (targetFacilityId) {
-      qb.andWhere('link.facilityId = :facilityId', {
+      qb.andWhere('profile.facilityId = :facilityId', {
         facilityId: targetFacilityId,
       });
     }
 
     if (query.status) {
-      qb.andWhere('link.status = :status', { status: query.status });
+      qb.andWhere('profile.linkStatus = :status', { status: query.status });
     }
 
     if (query.search) {
       const kw = `%${query.search.trim()}%`;
       qb.andWhere(
-        '(profile.fullName ILIKE :kw OR profile.phoneNumber ILIKE :kw OR profile.citizenId ILIKE :kw OR link.hospitalPatientCode ILIKE :kw)',
+        '(profile.fullName ILIKE :kw OR profile.phoneNumber ILIKE :kw OR profile.citizenId ILIKE :kw OR profile.hospitalPatientCode ILIKE :kw)',
         { kw },
       );
     }
 
-    qb.orderBy('link.createdAt', 'DESC').skip(skip).take(limit);
+    qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
     return { items, total, page, limit };
@@ -215,16 +189,16 @@ export class PatientLinksService {
 
   /**
    * Sends a linking request from Facility to a Patient App Account via phone number.
-   * Creates or updates a PENDING link and triggers an SSE invitation to the patient.
+   * Sets PENDING status on the health profile and triggers an SSE invitation to the patient.
    *
    * @param dto - Request payload containing healthProfileId and phoneNumber.
    * @param staff - Current authenticated staff.
-   * @returns FacilityPatientLink in PENDING state.
+   * @returns HealthProfile in PENDING state.
    */
   async requestLink(
     dto: RequestPatientLinkDto,
     staff: StaffJwtPayload,
-  ): Promise<FacilityPatientLink> {
+  ): Promise<HealthProfile> {
     if (!staff.facilityId) {
       throw new Forbidden(
         ErrorCode.FACILITY_ACCESS_DENIED,
@@ -247,50 +221,37 @@ export class PatientLinksService {
       );
     }
 
-    // Check existing link
-    let link = await this.linkRepository.findOne({
-      where: {
-        facilityId: staff.facilityId,
-        healthProfileId: dto.healthProfileId,
-      },
-    });
-
-    if (link) {
-      if (link.status === FacilityPatientLinkStatus.ACTIVE) {
-        throw new Conflict(
-          ErrorCode.PATIENT_ALREADY_LINKED,
-          `Hồ sơ sức khỏe "${profile.fullName}" đã có liên kết đang hoạt động với cơ sở y tế này`,
-        );
-      }
-      link.status = FacilityPatientLinkStatus.PENDING;
-      link.phoneNumber = cleanPhone;
-      if (!link.hospitalPatientCode) {
-        link.hospitalPatientCode = this.generatePatientCode();
-      }
-      link.linkedAt = new Date();
-    } else {
-      link = this.linkRepository.create({
-        facilityId: staff.facilityId,
-        healthProfileId: dto.healthProfileId,
-        phoneNumber: cleanPhone,
-        hospitalPatientCode: this.generatePatientCode(),
-        status: FacilityPatientLinkStatus.PENDING,
-        linkedAt: new Date(),
-      });
+    if (
+      profile.facilityId === staff.facilityId &&
+      profile.isLinked &&
+      profile.linkStatus === FacilityPatientLinkStatus.ACTIVE
+    ) {
+      throw new Conflict(
+        ErrorCode.PATIENT_ALREADY_LINKED,
+        `Hồ sơ sức khỏe "${profile.fullName}" đã có liên kết đang hoạt động với cơ sở y tế này`,
+      );
     }
 
-    const savedLink = await this.linkRepository.save(link);
+    profile.facilityId = staff.facilityId;
+    profile.linkStatus = FacilityPatientLinkStatus.PENDING;
+    profile.isLinked = false;
+    if (!profile.hospitalPatientCode) {
+      profile.hospitalPatientCode = this.generatePatientCode();
+    }
+    profile.linkedAt = new Date();
+
+    const savedProfile = await this.healthProfileRepository.save(profile);
 
     // Emit real-time SSE invitation to patient
     this.sseService.emitInvitation(account.id, {
-      linkId: savedLink.id,
+      linkId: savedProfile.id,
       facilityId: facility.id,
       facilityName: facility.facilityName,
       healthProfileId: profile.id,
-      hospitalPatientCode: savedLink.hospitalPatientCode,
+      hospitalPatientCode: savedProfile.hospitalPatientCode,
     });
 
-    return savedLink;
+    return savedProfile;
   }
 
   /**
@@ -298,20 +259,19 @@ export class PatientLinksService {
    * Matches either by profile.accountId or by account phoneNumber.
    *
    * @param accountId - Authenticated App Account ID
-   * @returns List of pending invitations
+   * @returns List of pending invitation profiles
    */
-  async getMyInvitations(accountId: string): Promise<FacilityPatientLink[]> {
+  async getMyInvitations(accountId: string): Promise<HealthProfile[]> {
     const account = await this.accountRepository.findOne({ where: { id: accountId } });
     const userPhone = account?.phoneNumber;
 
-    const qb = this.linkRepository
-      .createQueryBuilder('link')
-      .leftJoinAndSelect('link.facility', 'facility')
-      .leftJoinAndSelect('link.healthProfile', 'profile')
-      .where('link.status = :status', { status: FacilityPatientLinkStatus.PENDING });
+    const qb = this.healthProfileRepository
+      .createQueryBuilder('profile')
+      .leftJoinAndSelect('profile.facility', 'facility')
+      .where('profile.linkStatus = :status', { status: FacilityPatientLinkStatus.PENDING });
 
     if (userPhone) {
-      qb.andWhere('(profile.accountId = :accountId OR link.phoneNumber = :userPhone)', {
+      qb.andWhere('(profile.accountId = :accountId OR profile.phoneNumber = :userPhone)', {
         accountId,
         userPhone,
       });
@@ -319,41 +279,41 @@ export class PatientLinksService {
       qb.andWhere('profile.accountId = :accountId', { accountId });
     }
 
-    return qb.orderBy('link.createdAt', 'DESC').getMany();
+    return qb.orderBy('profile.createdAt', 'DESC').getMany();
   }
 
   /**
    * Gets active facility links for authenticated mobile app user.
    *
    * @param accountId - Authenticated App Account ID
-   * @returns List of active links
+   * @returns List of active linked profiles
    */
-  async getMyLinks(accountId: string): Promise<FacilityPatientLink[]> {
-    return this.linkRepository
-      .createQueryBuilder('link')
-      .leftJoinAndSelect('link.facility', 'facility')
-      .leftJoinAndSelect('link.healthProfile', 'profile')
+  async getMyLinks(accountId: string): Promise<HealthProfile[]> {
+    return this.healthProfileRepository
+      .createQueryBuilder('profile')
+      .leftJoinAndSelect('profile.facility', 'facility')
       .where('profile.accountId = :accountId', { accountId })
-      .andWhere('link.status = :status', { status: FacilityPatientLinkStatus.ACTIVE })
-      .orderBy('link.linkedAt', 'DESC')
+      .andWhere('profile.isLinked = :isLinked', { isLinked: true })
+      .andWhere('profile.linkStatus = :status', { status: FacilityPatientLinkStatus.ACTIVE })
+      .orderBy('profile.linkedAt', 'DESC')
       .getMany();
   }
 
   /**
    * Accepts a pending facility link invitation from mobile app.
-   * If health profile does not yet have an accountId, automatically assigns it to this account.
+   * Sets isLinked = true, linkStatus = ACTIVE, and binds accountId.
    *
-   * @param id - Link UUID
+   * @param id - Profile UUID
    * @param accountId - Authenticated App Account ID
-   * @returns Updated link
+   * @returns Updated HealthProfile
    */
-  async acceptInvitation(id: string, accountId: string): Promise<FacilityPatientLink> {
-    const link = await this.linkRepository.findOne({
+  async acceptInvitation(id: string, accountId: string): Promise<HealthProfile> {
+    const profile = await this.healthProfileRepository.findOne({
       where: { id },
-      relations: ['healthProfile', 'facility'],
+      relations: ['facility'],
     });
 
-    if (!link) {
+    if (!profile) {
       throw new NotFound(
         ErrorCode.PATIENT_LINK_NOT_FOUND,
         `Không tìm thấy lời mời liên kết y tế với mã ID: ${id}`,
@@ -362,8 +322,8 @@ export class PatientLinksService {
 
     const account = await this.accountRepository.findOne({ where: { id: accountId } });
     const isOwner =
-      link.healthProfile.accountId === accountId ||
-      (account && link.phoneNumber === account.phoneNumber);
+      profile.accountId === accountId ||
+      (account && profile.phoneNumber === account.phoneNumber);
 
     if (!isOwner) {
       throw new Forbidden(
@@ -372,19 +332,15 @@ export class PatientLinksService {
       );
     }
 
-    link.status = FacilityPatientLinkStatus.ACTIVE;
-    link.linkedAt = new Date();
-    const updated = await this.linkRepository.save(link);
-
-    // If healthProfile does not have an accountId yet (created independently by facility), bind it to this patient account
-    if (!link.healthProfile.accountId) {
-      link.healthProfile.accountId = accountId;
-      await this.healthProfileRepository.save(link.healthProfile);
-    }
+    profile.accountId = accountId;
+    profile.isLinked = true;
+    profile.linkStatus = FacilityPatientLinkStatus.ACTIVE;
+    profile.linkedAt = new Date();
+    const updated = await this.healthProfileRepository.save(profile);
 
     this.sseService.emitStatusChange(accountId, {
-      linkId: link.id,
-      facilityId: link.facilityId,
+      linkId: profile.id,
+      facilityId: profile.facilityId,
       status: FacilityPatientLinkStatus.ACTIVE,
     });
 
@@ -394,17 +350,17 @@ export class PatientLinksService {
   /**
    * Rejects a pending facility link invitation from mobile app.
    *
-   * @param id - Link UUID
+   * @param id - Profile UUID
    * @param accountId - Authenticated App Account ID
    * @returns Success response
    */
   async rejectInvitation(id: string, accountId: string): Promise<{ success: boolean; message: string }> {
-    const link = await this.linkRepository.findOne({
+    const profile = await this.healthProfileRepository.findOne({
       where: { id },
-      relations: ['healthProfile', 'facility'],
+      relations: ['facility'],
     });
 
-    if (!link) {
+    if (!profile) {
       throw new NotFound(
         ErrorCode.PATIENT_LINK_NOT_FOUND,
         `Không tìm thấy lời mời liên kết y tế với mã ID: ${id}`,
@@ -413,8 +369,8 @@ export class PatientLinksService {
 
     const account = await this.accountRepository.findOne({ where: { id: accountId } });
     const isOwner =
-      link.healthProfile.accountId === accountId ||
-      (account && link.phoneNumber === account.phoneNumber);
+      profile.accountId === accountId ||
+      (account && profile.phoneNumber === account.phoneNumber);
 
     if (!isOwner) {
       throw new Forbidden(
@@ -423,12 +379,13 @@ export class PatientLinksService {
       );
     }
 
-    link.status = FacilityPatientLinkStatus.UNLINKED;
-    await this.linkRepository.save(link);
+    profile.isLinked = false;
+    profile.linkStatus = FacilityPatientLinkStatus.UNLINKED;
+    await this.healthProfileRepository.save(profile);
 
     this.sseService.emitStatusChange(accountId, {
-      linkId: link.id,
-      facilityId: link.facilityId,
+      linkId: profile.id,
+      facilityId: profile.facilityId,
       status: FacilityPatientLinkStatus.UNLINKED,
     });
 
@@ -439,51 +396,59 @@ export class PatientLinksService {
   }
 
   /**
-   * Finds link by ID.
+   * Finds profile/link by ID.
    *
-   * @param id - Link UUID.
-   * @returns FacilityPatientLink entity.
+   * @param id - Profile UUID.
+   * @returns HealthProfile entity.
    */
-  async getLinkById(id: string): Promise<FacilityPatientLink> {
-    const link = await this.linkRepository.findOne({
+  async getLinkById(id: string): Promise<HealthProfile> {
+    const profile = await this.healthProfileRepository.findOne({
       where: { id },
-      relations: ['facility', 'healthProfile'],
+      relations: ['facility'],
     });
 
-    if (!link) {
+    if (!profile) {
       throw new NotFound(
         ErrorCode.PATIENT_LINK_NOT_FOUND,
         `Không tìm thấy thông tin liên kết y tế với mã ID: ${id}`,
       );
     }
 
-    return link;
+    return profile;
   }
 
   /**
    * Updates link status or hospital patient code.
    *
-   * @param id - Link UUID.
+   * @param id - Profile UUID.
    * @param dto - Update payload.
    * @param staff - Staff context.
-   * @returns Updated link.
+   * @returns Updated HealthProfile.
    */
   async updateLink(
     id: string,
     dto: UpdatePatientLinkDto,
     staff?: StaffJwtPayload,
-  ): Promise<FacilityPatientLink> {
-    const link = await this.getLinkById(id);
+  ): Promise<HealthProfile> {
+    const profile = await this.getLinkById(id);
 
-    if (staff && staff.facilityId && link.facilityId !== staff.facilityId) {
+    if (staff && staff.facilityId && profile.facilityId !== staff.facilityId) {
       throw new Forbidden(
         ErrorCode.FACILITY_ACCESS_DENIED,
         'Bạn không có quyền chỉnh sửa thông tin liên kết của cơ sở y tế khác',
       );
     }
 
-    Object.assign(link, dto);
-    return this.linkRepository.save(link);
+    if (dto.hospitalPatientCode !== undefined) {
+      profile.hospitalPatientCode = dto.hospitalPatientCode;
+    }
+
+    if (dto.status !== undefined) {
+      profile.linkStatus = dto.status;
+      profile.isLinked = dto.status === FacilityPatientLinkStatus.ACTIVE && Boolean(profile.accountId);
+    }
+
+    return this.healthProfileRepository.save(profile);
   }
 
   /**
@@ -496,19 +461,20 @@ export class PatientLinksService {
     facilityId: string,
     healthProfileId: string,
   ): Promise<{ success: boolean }> {
-    const link = await this.linkRepository.findOne({
-      where: { facilityId, healthProfileId },
+    const profile = await this.healthProfileRepository.findOne({
+      where: { id: healthProfileId, facilityId },
     });
 
-    if (!link) {
+    if (!profile) {
       throw new NotFound(
         ErrorCode.PATIENT_LINK_NOT_FOUND,
         `Không tìm thấy liên kết giữa cơ sở y tế (ID: ${facilityId}) và hồ sơ sức khỏe (ID: ${healthProfileId})`,
       );
     }
 
-    link.status = FacilityPatientLinkStatus.UNLINKED;
-    await this.linkRepository.save(link);
+    profile.isLinked = false;
+    profile.linkStatus = FacilityPatientLinkStatus.UNLINKED;
+    await this.healthProfileRepository.save(profile);
 
     return { success: true };
   }

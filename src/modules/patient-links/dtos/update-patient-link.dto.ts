@@ -11,5 +11,11 @@ export class UpdatePatientLinkDto {
   @IsEnum(FacilityPatientLinkStatus)
   @IsOptional()
   status?: FacilityPatientLinkStatus;
+  @ApiPropertyOptional({
+    description: 'Mã bệnh nhân nội bộ do viện cấp',
+    example: 'BN-2026-0001',
+  })
+  @IsOptional()
+  hospitalPatientCode?: string;
 }
 
