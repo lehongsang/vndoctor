@@ -132,18 +132,7 @@ export class HealthProfilesService {
       );
     }
 
-    // 1. Check if phone number belongs to an existing App Account
-    let accountId: string | null = null;
-    if (dto.phoneNumber) {
-      const account = await this.accountRepository.findOne({
-        where: { phoneNumber: dto.phoneNumber.trim() },
-      });
-      if (account) {
-        accountId = account.id;
-      }
-    }
-
-    // 2. Create profile
+    // Create profile at facility: accountId is always null until the patient explicitly accepts the link invitation on App
     const profile = this.healthProfileRepository.create({
       relationship: dto.relationship || ProfileRelationship.OTHER,
       fullName: dto.fullName,
@@ -155,7 +144,7 @@ export class HealthProfilesService {
       bloodType: dto.bloodType,
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
-      accountId,
+      accountId: null,
       facilityId: staff.facilityId,
       isLinked: false,
       linkStatus: FacilityPatientLinkStatus.NOT_LINKED,
