@@ -45,18 +45,6 @@ export class HealthProfilesService {
   }
 
   /**
-   * Enriches a HealthProfile entity with computed fields for app link status.
-   *
-   * @param profile - HealthProfile entity.
-   * @returns HealthProfile with populated status fields.
-   */
-  public enrichProfileStatus(profile: HealthProfile): HealthProfile {
-    profile.isAppLinked = Boolean(profile.accountId);
-    profile.appLinkStatus = profile.accountId ? 'LINKED' : 'NOT_LINKED';
-    return profile;
-  }
-
-  /**
    * Creates a new Health Profile for an App Account.
    *
    * @param dto - Health Profile data for App User.
@@ -172,12 +160,11 @@ export class HealthProfilesService {
    * @returns Array of HealthProfile objects with chronic diseases & facility.
    */
   async getMyProfiles(accountId: string): Promise<HealthProfile[]> {
-    const profiles = await this.healthProfileRepository.find({
+    return this.healthProfileRepository.find({
       where: { accountId },
       relations: ['profileChronicDisease', 'facility'],
       order: { relationship: 'ASC', createdAt: 'ASC' },
     });
-    return profiles.map((p) => this.enrichProfileStatus(p));
   }
 
   /**
@@ -234,7 +221,7 @@ export class HealthProfilesService {
       }
     }
 
-    return this.enrichProfileStatus(profile);
+    return profile;
   }
 
   /**
@@ -316,8 +303,7 @@ export class HealthProfilesService {
     qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    const enrichedItems = items.map((p) => this.enrichProfileStatus(p));
-    return { items: enrichedItems, total, page, limit };
+    return { items, total, page, limit };
   }
 
   /**
@@ -414,8 +400,7 @@ export class HealthProfilesService {
 
     const items = subscriptions.map((sub) => {
       const profile = sub.healthProfile!;
-      const enriched = this.enrichProfileStatus(profile);
-      enriched.subscription = {
+      profile.subscription = {
         id: sub.id,
         status: sub.status,
         startedAt: sub.startedAt,
@@ -427,7 +412,7 @@ export class HealthProfilesService {
         createdAt: sub.createdAt,
         updatedAt: sub.updatedAt,
       };
-      return enriched;
+      return profile;
     });
 
     return {
@@ -492,8 +477,7 @@ export class HealthProfilesService {
     qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    const enrichedItems = items.map((p) => this.enrichProfileStatus(p));
-    return { items: enrichedItems, total, page, limit };
+    return { items, total, page, limit };
   }
 
   /**

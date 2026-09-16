@@ -138,20 +138,5 @@ export class HealthProfile extends BaseEntity {
   })
   @Expose()
   subscription?: Record<string, unknown>;
-
-  @ApiPropertyOptional({
-    description: 'Trạng thái liên kết với tài khoản App (true nếu đã liên kết, false nếu chưa)',
-    example: false,
-  })
-  @Expose()
-  isAppLinked?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Chi tiết trạng thái liên kết App (LINKED: đã liên kết app, NOT_LINKED: chưa liên kết app)',
-    example: 'NOT_LINKED',
-    enum: ['LINKED', 'NOT_LINKED'],
-  })
-  @Expose()
-  appLinkStatus?: string;
 }
 
