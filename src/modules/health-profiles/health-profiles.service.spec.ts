@@ -159,7 +159,6 @@ describe('HealthProfilesService', () => {
           dob: '1990-01-01',
           gender: ProfileGender.MALE,
           phoneNumber: '0988776655',
-          hospitalPatientCode: 'BN-001',
           chronicDiseaseIds: ['disease-01'],
         },
         {
@@ -178,6 +177,13 @@ describe('HealthProfilesService', () => {
         expect.objectContaining({
           accountId: null,
           fullName: 'Bệnh Nhân Test',
+        }),
+      );
+      expect(mockLinkRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          facilityId: 'facility-1',
+          hospitalPatientCode: expect.stringMatching(/^BN-\d{8}-[A-Z0-9]{4}$/),
+          status: 'ACTIVE',
         }),
       );
       expect(mockLinkRepository.save).toHaveBeenCalled();
@@ -223,44 +229,6 @@ describe('HealthProfilesService', () => {
 
       expect(result).toBeDefined();
       expect(mockChronicDiseasesService.setProfileDiseases).toHaveBeenCalledWith('profile-111', ['cd-1']);
-    });
-
-    it('should allow Staff to update profile and hospitalPatientCode', async () => {
-      const linkedProfile = {
-        ...mockProfile,
-        facilityLinks: [{ facilityId: 'facility-1' }] as unknown as HealthProfile['facilityLinks'],
-      };
-      mockRepository.findOne
-        .mockResolvedValueOnce(linkedProfile) // getProfileById
-        .mockResolvedValueOnce(linkedProfile); // reload
-      mockRepository.save.mockResolvedValue(linkedProfile);
-      mockLinkRepository.findOne.mockResolvedValueOnce({ facilityId: 'facility-1', hospitalPatientCode: 'OLD' });
-      mockLinkRepository.save.mockResolvedValue({});
-
-      const result = await service.updateProfile(
-        'profile-111',
-        {
-          fullName: 'Bệnh Nhân Cập Nhật',
-          hospitalPatientCode: 'BN-NEW-99',
-        },
-        {
-          type: 'STAFF',
-          userId: 'staff-1',
-          facilityId: 'facility-1',
-          staff: {
-            id: 'staff-1',
-            facilityId: 'facility-1',
-            staffCode: 'STAFF01',
-            fullName: 'BS. Admin',
-            role: StaffRole.DOCTOR,
-            username: 'admin',
-            type: 'STAFF',
-          },
-        },
-      );
-
-      expect(result).toBeDefined();
-      expect(mockLinkRepository.save).toHaveBeenCalled();
     });
   });
 

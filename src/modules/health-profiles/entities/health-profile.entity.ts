@@ -5,6 +5,7 @@ import {
   ProfileRelationship,
 } from '@/commons/enums/vndoctor.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, Relation } from 'typeorm';
 import { Account } from '@/modules/accounts/entities/account.entity';
 import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
@@ -91,4 +92,34 @@ export class HealthProfile extends BaseEntity {
 
   @OneToMany(() => TreatmentPlan, (plan: TreatmentPlan) => plan.healthProfile)
   treatmentPlans: Relation<TreatmentPlan>[];
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái liên kết với tài khoản App (true nếu đã liên kết, false nếu chưa)',
+    example: false,
+  })
+  @Expose()
+  isAppLinked?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Chi tiết trạng thái liên kết App (LINKED: đã liên kết app, NOT_LINKED: chưa liên kết app)',
+    example: 'NOT_LINKED',
+    enum: ['LINKED', 'NOT_LINKED'],
+  })
+  @Expose()
+  appLinkStatus?: string;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái liên kết tại cơ sở y tế (ACTIVE, PENDING, UNLINKED, NOT_LINKED)',
+    example: 'ACTIVE',
+  })
+  @Expose()
+  linkStatus?: string;
+
+  @ApiPropertyOptional({
+    description: 'Mã bệnh nhân nội bộ tại viện (hệ thống tự sinh)',
+    example: 'BN-20260916-A1B2',
+  })
+  @Expose()
+  hospitalPatientCode?: string | null;
 }
+

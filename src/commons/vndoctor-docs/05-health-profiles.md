@@ -33,7 +33,6 @@ Module `health-profiles` quản lý các hồ sơ sức khỏe cá nhân và ng�
 | `medicalHistory`| string | Không | Tiền sử bệnh lý bản thân & gia đình |
 | `chronicDiseaseIds` | string[] | Không | Danh sách UUID bệnh mạn tính |
 | `accountId` | string (UUID) | Không | UUID tài khoản (Staff truyền khi tạo hồ sơ cho tài khoản cụ thể) |
-| `hospitalPatientCode` | string | Không | Mã bệnh nhân nội bộ tại cơ sở y tế |
 
 *Ví dụ Body:*
 ```json
@@ -55,12 +54,17 @@ Module `health-profiles` quản lý các hồ sơ sức khỏe cá nhân và ng�
 ```json
 {
   "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-  "accountId": "acc-uuid",
-  "relationship": "SELF",
+  "accountId": null,
+  "relationship": "OTHER",
   "fullName": "Trần Văn An",
   "dob": "1975-05-12",
   "gender": "MALE",
+  "phoneNumber": "0987654321",
   "bloodType": "O",
+  "isAppLinked": false,
+  "appLinkStatus": "NOT_LINKED",
+  "linkStatus": "ACTIVE",
+  "hospitalPatientCode": "BN-20260916-A1B2",
   "createdAt": "2026-09-08T07:00:00.000Z"
 }
 ```

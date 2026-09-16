@@ -219,7 +219,6 @@ describe('PatientLinksService', () => {
         {
           healthProfileId: 'profile-111',
           phoneNumber: '0987654321',
-          hospitalPatientCode: 'BN-001',
         },
         staff,
       );

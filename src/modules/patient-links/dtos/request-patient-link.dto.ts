@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class RequestPatientLinkDto {
   @ApiProperty({
@@ -18,13 +18,5 @@ export class RequestPatientLinkDto {
   @IsNotEmpty()
   @MaxLength(20)
   phoneNumber: string;
-
-  @ApiPropertyOptional({
-    description: 'Mã hồ sơ bệnh nhân nội bộ tại cơ sở y tế (nếu cập nhật)',
-    example: 'BN-2026-00123',
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(50)
-  hospitalPatientCode?: string;
 }
+

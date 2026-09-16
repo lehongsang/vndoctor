@@ -50,6 +50,21 @@ export class HealthProfilesController {
     return this.healthProfilesService.getFacilityProfiles(query, staff);
   }
 
+  @Get('facility')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'Staff Auth - Lấy danh sách hồ sơ sức khỏe tại cơ sở y tế (Alias)',
+    description: 'Nhân viên y tế lấy danh sách các hồ sơ sức khỏe đã được liên kết vào cơ sở y tế của mình.',
+    response: { serialization: HealthProfile, isArray: true },
+  })
+  async getFacilityProfilesAlias(
+    @Query() query: QueryHealthProfileDto,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ) {
+    return this.healthProfilesService.getFacilityProfiles(query, staff);
+  }
+
   @Post()
   @UseGuards(AppAuthGuard)
   @ApiBearerAuth('access-token')

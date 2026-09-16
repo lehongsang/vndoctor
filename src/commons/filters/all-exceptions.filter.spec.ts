@@ -33,6 +33,8 @@ describe('AllExceptionsFilter', () => {
     expect(json).toHaveBeenCalledWith({
       statusCode: 400,
       errorCode: 'BAD_REQUEST',
+      messageCode: 'BAD_REQUEST',
+      message: ['fullName must be longer than 2 characters'],
     });
   });
 
@@ -49,6 +51,8 @@ describe('AllExceptionsFilter', () => {
     expect(json).toHaveBeenCalledWith({
       statusCode: 400,
       errorCode: ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+      messageCode: ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+      message: ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
     });
   });
 
@@ -62,6 +66,8 @@ describe('AllExceptionsFilter', () => {
     expect(json).toHaveBeenCalledWith({
       statusCode: 500,
       errorCode: 'INTERNAL_SERVER_ERROR',
+      messageCode: 'INTERNAL_SERVER_ERROR',
+      message: 'Database connection pool exhausted',
     });
   });
 });

@@ -18,4 +18,19 @@ export class ErrorResponseDto {
    */
   @ApiProperty({ enum: ErrorCode, enumName: 'ErrorCode', example: ErrorCode.INVALID_INPUT })
   errorCode: ErrorCode;
+
+  /**
+   * Machine-readable message code
+   * @example "INVALID_INPUT"
+   */
+  @ApiProperty({ example: 'INVALID_INPUT' })
+  messageCode: string;
+
+  /**
+   * Human-readable error message or validation details
+   * @example "Dữ liệu đầu vào không hợp lệ"
+   */
+  @ApiProperty({ example: 'Dữ liệu đầu vào không hợp lệ' })
+  message: string | string[];
 }
+

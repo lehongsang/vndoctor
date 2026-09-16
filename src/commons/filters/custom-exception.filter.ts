@@ -25,6 +25,8 @@ export class CustomExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       statusCode: status,
       errorCode: exception.errorCode,
+      messageCode: exception.messageCode || exception.errorCode,
+      message: exception.customMessage || exception.message || exception.errorCode,
     });
   }
 

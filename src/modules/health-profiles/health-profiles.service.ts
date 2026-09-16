@@ -34,6 +34,42 @@ export class HealthProfilesService {
   ) {}
 
   /**
+   * Helper to generate unique hospital patient code (e.g. BN-20260916-ABCD).
+   */
+  public generatePatientCode(): string {
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `BN-${dateStr}-${randomHex}`;
+  }
+
+  /**
+   * Enriches a HealthProfile entity with computed fields for app link status and facility patient code.
+   *
+   * @param profile - HealthProfile entity.
+   * @param facilityId - Optional facilityId context.
+   * @returns HealthProfile with populated status fields.
+   */
+  public enrichProfileStatus(profile: HealthProfile, facilityId?: string): HealthProfile {
+    profile.isAppLinked = Boolean(profile.accountId);
+    profile.appLinkStatus = profile.accountId ? 'LINKED' : 'NOT_LINKED';
+
+    let link: FacilityPatientLink | undefined;
+    if (profile.facilityLinks && profile.facilityLinks.length > 0) {
+      if (facilityId) {
+        link = profile.facilityLinks.find((l) => l.facilityId === facilityId) || profile.facilityLinks[0];
+      } else {
+        link = profile.facilityLinks[0];
+      }
+    }
+
+    profile.linkStatus = link ? link.status : 'NOT_LINKED';
+    profile.hospitalPatientCode = link?.hospitalPatientCode || null;
+
+    return profile;
+  }
+
+  /**
    * Creates a new Health Profile for an App Account.
    *
    * @param dto - Health Profile data for App User.
@@ -98,7 +134,18 @@ export class HealthProfilesService {
       throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
     }
 
-    // 1. Create health profile with accountId = null
+    // 1. Check if phone number belongs to an existing App Account
+    let accountId: string | null = null;
+    if (dto.phoneNumber) {
+      const account = await this.accountRepository.findOne({
+        where: { phoneNumber: dto.phoneNumber.trim() },
+      });
+      if (account) {
+        accountId = account.id;
+      }
+    }
+
+    // 2. Create health profile
     const profile = this.healthProfileRepository.create({
       relationship: dto.relationship || ProfileRelationship.OTHER,
       fullName: dto.fullName,
@@ -110,7 +157,7 @@ export class HealthProfilesService {
       bloodType: dto.bloodType,
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
-      accountId: null,
+      accountId,
     });
 
     const savedProfile = await this.healthProfileRepository.save(profile);
@@ -123,12 +170,12 @@ export class HealthProfilesService {
       );
     }
 
-    // 3. Automatically create an ACTIVE facility link
+    // 3. Automatically create an ACTIVE facility link with auto-generated patient code
     const link = this.linkRepository.create({
       facilityId: staff.facilityId,
       healthProfileId: savedProfile.id,
       phoneNumber: dto.phoneNumber ? dto.phoneNumber.trim() : '',
-      hospitalPatientCode: dto.hospitalPatientCode || null,
+      hospitalPatientCode: this.generatePatientCode(),
       status: FacilityPatientLinkStatus.ACTIVE,
       linkedAt: new Date(),
     });
@@ -144,11 +191,12 @@ export class HealthProfilesService {
    * @returns Array of HealthProfile objects with chronic diseases & facility links.
    */
   async getMyProfiles(accountId: string): Promise<HealthProfile[]> {
-    return this.healthProfileRepository.find({
+    const profiles = await this.healthProfileRepository.find({
       where: { accountId },
       relations: ['profileChronicDisease', 'facilityLinks', 'facilityLinks.facility'],
       order: { relationship: 'ASC', createdAt: 'ASC' },
     });
+    return profiles.map((p) => this.enrichProfileStatus(p));
   }
 
   /**
@@ -193,7 +241,12 @@ export class HealthProfilesService {
       }
     }
 
-    return profile;
+    const facilityId =
+      userOrAccountId && typeof userOrAccountId === 'object' && 'facilityId' in userOrAccountId
+        ? userOrAccountId.facilityId
+        : undefined;
+
+    return this.enrichProfileStatus(profile, facilityId);
   }
 
   /**
@@ -273,7 +326,8 @@ export class HealthProfilesService {
     qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    return { items, total, page, limit };
+    const enrichedItems = items.map((p) => this.enrichProfileStatus(p, targetFacilityId));
+    return { items: enrichedItems, total, page, limit };
   }
 
   /**
@@ -374,26 +428,6 @@ export class HealthProfilesService {
         id,
         dto.chronicDiseaseIds,
       );
-    }
-
-    // Update hospitalPatientCode in FacilityPatientLink if staff provided and link exists
-    if (
-      dto.hospitalPatientCode !== undefined &&
-      userOrAccountId &&
-      typeof userOrAccountId !== 'string' &&
-      userOrAccountId.type === 'STAFF' &&
-      userOrAccountId.facilityId
-    ) {
-      const link = await this.linkRepository.findOne({
-        where: {
-          facilityId: userOrAccountId.facilityId,
-          healthProfileId: id,
-        },
-      });
-      if (link) {
-        link.hospitalPatientCode = dto.hospitalPatientCode;
-        await this.linkRepository.save(link);
-      }
     }
 
     return this.getProfileById(id);

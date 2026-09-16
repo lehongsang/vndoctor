@@ -19,15 +19,6 @@ import {
 
 export class CreateFacilityHealthProfileDto {
   @ApiPropertyOptional({
-    description: 'Mã hồ sơ bệnh nhân tại cơ sở y tế (Mã BN nội bộ bệnh viện)',
-    example: 'BN-2026-00123',
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(50)
-  hospitalPatientCode?: string;
-
-  @ApiPropertyOptional({
     enum: ProfileRelationship,
     enumName: 'ProfileRelationship',
     description: 'Mối quan hệ (nếu có, mặc định OTHER)',

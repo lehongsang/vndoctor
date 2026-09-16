@@ -38,6 +38,16 @@ export class PatientLinksService {
   ) {}
 
   /**
+   * Helper to generate unique hospital patient code (e.g. BN-20260916-ABCD).
+   */
+  public generatePatientCode(): string {
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `BN-${dateStr}-${randomHex}`;
+  }
+
+  /**
    * Links a Patient Health Profile to a Medical Facility.
    * If status is PENDING, emits an SSE invitation event to the target patient.
    *
@@ -106,6 +116,7 @@ export class PatientLinksService {
       facilityId: targetFacilityId,
       healthProfileId: dto.healthProfileId,
       phoneNumber: dto.phoneNumber.trim(),
+      hospitalPatientCode: this.generatePatientCode(),
       status: targetStatus,
       linkedAt: new Date(),
     });
@@ -235,8 +246,8 @@ export class PatientLinksService {
       }
       link.status = FacilityPatientLinkStatus.PENDING;
       link.phoneNumber = cleanPhone;
-      if (dto.hospitalPatientCode) {
-        link.hospitalPatientCode = dto.hospitalPatientCode;
+      if (!link.hospitalPatientCode) {
+        link.hospitalPatientCode = this.generatePatientCode();
       }
       link.linkedAt = new Date();
     } else {
@@ -244,7 +255,7 @@ export class PatientLinksService {
         facilityId: staff.facilityId,
         healthProfileId: dto.healthProfileId,
         phoneNumber: cleanPhone,
-        hospitalPatientCode: dto.hospitalPatientCode || null,
+        hospitalPatientCode: this.generatePatientCode(),
         status: FacilityPatientLinkStatus.PENDING,
         linkedAt: new Date(),
       });

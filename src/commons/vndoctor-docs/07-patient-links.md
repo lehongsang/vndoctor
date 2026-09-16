@@ -18,19 +18,16 @@ Module `patient-links` quản lý quá trình tìm kiếm và liên kết hồ s
 #### 📥 Input (Body - `CreatePatientLinkDto`)
 | Trường | Kiểu | Bắt buộc | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `facilityId` | UUID | Có | ID cơ sở y tế |
+| `facilityId` | UUID | Không | ID cơ sở y tế (Staff không cần truyền, tự nhận theo token) |
 | `healthProfileId` | UUID | Có | ID hồ sơ sức khỏe trên App |
 | `phoneNumber` | string | Có | SĐT dùng để liên kết |
-| `hospitalPatientCode` | string | Không | Mã bệnh nhân tại viện (nếu có) |
 | `status` | enum | Không | `PENDING`, `ACTIVE`, `UNLINKED` (Mặc định: `ACTIVE`) |
 
 *Ví dụ Body:*
 ```json
 {
-  "facilityId": "e1112233-4455-6677-8899-aabbccddeeff",
   "healthProfileId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
   "phoneNumber": "0987654321",
-  "hospitalPatientCode": "BN-2026-00892",
   "status": "ACTIVE"
 }
 ```
