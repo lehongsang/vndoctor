@@ -42,4 +42,15 @@ export class HealthRecord extends BaseEntity {
   @ApiProperty({ description: 'Timestamp when measurement was taken' })
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   measuredAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Đánh giá & Phân độ tự động theo tiêu chuẩn VNHA (dành cho metricType = BLOOD_PRESSURE)',
+  })
+  evaluation?: {
+    level: string;
+    label: string;
+    subType?: string | null;
+    warningMessage?: string | null;
+    isDanger: boolean;
+  } | null;
 }

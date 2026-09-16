@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindOptionsWhere, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { CreateHealthRecordDto, QueryHealthRecordDto, UpdateHealthRecordDto } from './dtos';
 import { HealthRecord } from './entities/health-record.entity';
+import { classifyBloodPressure } from './helpers/blood-pressure-classifier.helper';
 
 /**
  * Service handling personal health records and vitals tracking.
@@ -18,6 +19,30 @@ export class HealthRecordsService {
     @InjectRepository(HealthProfile)
     private readonly healthProfileRepo: Repository<HealthProfile>,
   ) {}
+
+  /**
+   * Enriches a health record with VNHA clinical classification if applicable.
+   *
+   * @param record - HealthRecord entity
+   * @returns HealthRecord with evaluation
+   */
+  private enrichRecord(record: HealthRecord): HealthRecord {
+    if (
+      record.metricType === HealthMetricType.BLOOD_PRESSURE &&
+      record.valueNumeric !== null &&
+      record.valueNumeric !== undefined &&
+      record.secondaryValue !== null &&
+      record.secondaryValue !== undefined
+    ) {
+      record.evaluation = classifyBloodPressure(
+        Number(record.valueNumeric),
+        Number(record.secondaryValue),
+      );
+    } else {
+      record.evaluation = null;
+    }
+    return record;
+  }
 
   /**
    * Validate health profile ownership or access.
@@ -68,7 +93,8 @@ export class HealthRecordsService {
       measuredAt: dto.measuredAt ?? new Date(),
     });
 
-    return this.healthRecordRepo.save(record);
+    const saved = await this.healthRecordRepo.save(record);
+    return this.enrichRecord(saved);
   }
 
   /**
@@ -115,7 +141,12 @@ export class HealthRecordsService {
       take: limit,
     });
 
-    return { data, total, page, limit };
+    return {
+      data: data.map((r) => this.enrichRecord(r)),
+      total,
+      page,
+      limit,
+    };
   }
 
   /**
@@ -145,7 +176,7 @@ export class HealthRecordsService {
       );
     }
 
-    return record;
+    return this.enrichRecord(record);
   }
 
   /**
@@ -166,7 +197,8 @@ export class HealthRecordsService {
     if (dto.note !== undefined) record.note = dto.note;
     if (dto.measuredAt !== undefined) record.measuredAt = dto.measuredAt;
 
-    return this.healthRecordRepo.save(record);
+    const updated = await this.healthRecordRepo.save(record);
+    return this.enrichRecord(updated);
   }
 
   /**
@@ -198,17 +230,16 @@ export class HealthRecordsService {
     const metrics = metricType ? [metricType] : Object.values(HealthMetricType);
     const summary: Partial<Record<HealthMetricType, HealthRecord>> = {};
 
-    await Promise.all(
-      metrics.map(async (metric) => {
-        const latest = await this.healthRecordRepo.findOne({
-          where: { healthProfileId, metricType: metric },
-          order: { measuredAt: 'DESC' },
-        });
-        if (latest) {
-          summary[metric] = latest;
-        }
-      }),
-    );
+    for (const type of metrics) {
+      const latest = await this.healthRecordRepo.findOne({
+        where: { healthProfileId, metricType: type },
+        order: { measuredAt: 'DESC' },
+      });
+
+      if (latest) {
+        summary[type] = this.enrichRecord(latest);
+      }
+    }
 
     return summary;
   }
