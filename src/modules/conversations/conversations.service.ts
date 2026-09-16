@@ -76,11 +76,17 @@ export class ConversationsService {
       where: { id: dto.healthProfileId },
     });
     if (!profile) {
-      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.HEALTH_PROFILE_NOT_FOUND,
+        `Không tìm thấy hồ sơ sức khỏe với mã ID: ${dto.healthProfileId}`,
+      );
     }
 
     if (callerAccountId && profile.accountId !== callerAccountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền tạo cuộc trò chuyện cho hồ sơ sức khỏe của người khác',
+      );
     }
 
     // 2. Validate Target Doctor / Staff
@@ -88,11 +94,17 @@ export class ConversationsService {
       where: { id: dto.directUserId },
     });
     if (!doctor) {
-      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.STAFF_NOT_FOUND,
+        `Không tìm thấy bác sĩ / nhân viên y tế với mã ID: ${dto.directUserId}`,
+      );
     }
 
     if (!doctor.isActive) {
-      throw new BadRequest(ErrorCode.STAFF_INACTIVE);
+      throw new BadRequest(
+        ErrorCode.STAFF_INACTIVE,
+        `Tài khoản bác sĩ "${doctor.fullName}" hiện đang bị tạm khóa`,
+      );
     }
 
     // 3. Check for existing direct conversation
@@ -195,12 +207,15 @@ export class ConversationsService {
   }
 
   /**
-   * Find a conversation by ID with access validation.
+   * Find conversation by UUID with all relations.
+   * Enforces multi-tenancy access:
+   * - Staff can only access conversations within their own facility.
+   * - Patient (app user) can only access conversations of their own health profile.
    *
    * @param id Conversation UUID
-   * @param staffFacilityId Optional staff facility
-   * @param accountId Optional patient account ID
-   * @returns Found Conversation
+   * @param staffFacilityId Facility ID of the authenticated staff
+   * @param accountId App Account ID of authenticated patient
+   * @returns Conversation entity
    */
   async findById(
     id: string,
@@ -223,11 +238,17 @@ export class ConversationsService {
     });
 
     if (!conversation) {
-      throw new NotFound(ErrorCode.CONVERSATION_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.CONVERSATION_NOT_FOUND,
+        `Không tìm thấy cuộc trò chuyện với mã ID: ${id}`,
+      );
     }
 
     if (staffFacilityId && conversation.facilityId && conversation.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền truy cập cuộc trò chuyện của cơ sở y tế khác',
+      );
     }
 
     if (accountId) {
@@ -236,7 +257,10 @@ export class ConversationsService {
         conversation.subscription?.healthProfile?.accountId === accountId;
 
       if (!isOwner) {
-        throw new Forbidden(ErrorCode.CONVERSATION_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.CONVERSATION_ACCESS_DENIED,
+          'Bạn không phải là thành viên tham gia cuộc trò chuyện này',
+        );
       }
     }
 
@@ -370,11 +394,17 @@ export class ConversationsService {
     );
 
     if (conversation.status === ConversationStatus.CLOSED) {
-      throw new BadRequest(ErrorCode.CONVERSATION_CLOSED);
+      throw new BadRequest(
+        ErrorCode.CONVERSATION_CLOSED,
+        'Cuộc trò chuyện đã được đóng lại, không thể gửi thêm tin nhắn mới',
+      );
     }
 
     if (conversation.status === ConversationStatus.ARCHIVED) {
-      throw new BadRequest(ErrorCode.CONVERSATION_ARCHIVED);
+      throw new BadRequest(
+        ErrorCode.CONVERSATION_ARCHIVED,
+        'Cuộc trò chuyện đã được lưu trữ (Archived), không thể gửi thêm tin nhắn',
+      );
     }
 
     const now = new Date();
@@ -529,10 +559,10 @@ export class ConversationsService {
   }
 
   /**
-   * Upload media / file attachment for chat.
+   * Upload chat media (image, audio, document) and return media URL + metadata.
    *
    * @param conversationId Conversation UUID
-   * @param file Uploaded file
+   * @param file Express multer file
    * @param uploader Uploader context
    * @returns Media URL and metadata
    */
@@ -544,7 +574,10 @@ export class ConversationsService {
     await this.findById(conversationId, uploader.staffFacilityId, uploader.accountId);
 
     if (!file) {
-      throw new BadRequest(ErrorCode.FILE_REQUIRED);
+      throw new BadRequest(
+        ErrorCode.FILE_REQUIRED,
+        'Yêu cầu tải lên tệp đính kèm (ảnh, tài liệu, file âm thanh)',
+      );
     }
 
     const uploaded = await this.storageService.uploadFile(
@@ -556,8 +589,8 @@ export class ConversationsService {
 
     return {
       mediaUrl: uploaded.url,
-      size: uploaded.size,
-      mimeType: uploaded.mimeType,
+      size: file.size,
+      mimeType: file.mimetype,
     };
   }
 
@@ -607,11 +640,29 @@ export class ConversationsService {
   }
 
   /**
-   * Pin or unpin a message.
+   * Update conversation status (e.g. CLOSE, ARCHIVE, REOPEN).
+   *
+   * @param conversationId Conversation UUID
+   * @param status New conversation status
+   * @param staffFacilityId Staff facility ID for authorization check
+   * @returns Updated Conversation
+   */
+  async updateStatus(
+    conversationId: string,
+    status: ConversationStatus,
+    staffFacilityId?: string,
+  ): Promise<Conversation> {
+    const conversation = await this.findById(conversationId, staffFacilityId);
+    conversation.status = status;
+    return this.conversationRepo.save(conversation);
+  }
+
+  /**
+   * Pin or unpin a message inside a conversation.
    *
    * @param messageId Message UUID
    * @param isPinned Pin flag
-   * @param staffFacilityId Staff facility
+   * @param staffFacilityId Optional staff facility
    * @returns Updated Message
    */
   async pinMessage(
@@ -625,11 +676,17 @@ export class ConversationsService {
     });
 
     if (!message) {
-      throw new NotFound(ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND,
+        `Không tìm thấy tin nhắn với mã ID: ${messageId}`,
+      );
     }
 
     if (staffFacilityId && message.conversation?.facilityId && message.conversation.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền ghim tin nhắn của cơ sở y tế khác',
+      );
     }
 
     message.isPinned = isPinned;
@@ -657,20 +714,32 @@ export class ConversationsService {
     });
 
     if (!message) {
-      throw new NotFound(ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.CONVERSATION_MESSAGE_NOT_FOUND,
+        `Không tìm thấy tin nhắn với mã ID: ${messageId}`,
+      );
     }
 
     if (staffFacilityId && message.conversation?.facilityId && message.conversation.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền thu hồi tin nhắn của cơ sở y tế khác',
+      );
     }
 
     // Ownership check: only sender can delete
     if (staffUserId && message.senderUserId && message.senderUserId !== staffUserId) {
-      throw new Forbidden(ErrorCode.CONVERSATION_MESSAGE_CANNOT_DELETE);
+      throw new Forbidden(
+        ErrorCode.CONVERSATION_MESSAGE_CANNOT_DELETE,
+        'Bạn chỉ có thể thu hồi tin nhắn do chính bạn gửi',
+      );
     }
 
     if (accountId && message.senderAccountId && message.senderAccountId !== accountId) {
-      throw new Forbidden(ErrorCode.CONVERSATION_MESSAGE_CANNOT_DELETE);
+      throw new Forbidden(
+        ErrorCode.CONVERSATION_MESSAGE_CANNOT_DELETE,
+        'Bạn chỉ có thể thu hồi tin nhắn do chính bạn gửi',
+      );
     }
 
     message.isDeleted = true;

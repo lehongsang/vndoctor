@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common';
-import { ErrorCode } from './error-codes';
+import { ErrorCode, getErrorMessage } from './error-codes';
 
 export interface CustomExceptionOptions {
   errorCode?: ErrorCode | string;
@@ -20,13 +20,14 @@ export class CustomException extends HttpException {
 
   constructor(options: CustomExceptionOptions) {
     const finalErrorCode = options.errorCode || options.code || ErrorCode.INTERNAL_SERVER_ERROR;
+    const finalMessage = options.message || getErrorMessage(finalErrorCode);
 
     super(
       {
         statusCode: options.statusCode,
         errorCode: finalErrorCode,
         messageCode: finalErrorCode,
-        message: options.message || finalErrorCode,
+        message: finalMessage,
       },
       options.statusCode,
     );
@@ -34,7 +35,7 @@ export class CustomException extends HttpException {
     this.errorCode = finalErrorCode;
     this.code = finalErrorCode;
     this.messageCode = finalErrorCode;
-    this.customMessage = options.message;
+    this.customMessage = finalMessage;
     this.context = options.context;
     this.trace = options.trace;
 

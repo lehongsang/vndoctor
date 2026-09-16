@@ -55,7 +55,10 @@ export class StaffService {
   ): Promise<StaffUser> {
     // 1. Role restriction: non-VNDOCTOR_ADMIN cannot create VNDOCTOR_ADMIN accounts
     if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && dto.role === StaffRole.VNDOCTOR_ADMIN) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Chỉ quản trị viên cấp cao của hệ thống (VNDOCTOR_ADMIN) mới có quyền tạo tài khoản quản trị hệ thống',
+      );
     }
 
     // 2. Determine target facility ID based on creator scope and hierarchy
@@ -63,7 +66,10 @@ export class StaffService {
 
     if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN) {
       if (!creator.facilityId) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Tài khoản người tạo chưa được gán cơ sở y tế',
+        );
       }
 
       if (!dto.facilityId || dto.facilityId === creator.facilityId) {
@@ -76,7 +82,10 @@ export class StaffService {
         );
 
         if (!isSubordinate) {
-          throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+          throw new Forbidden(
+            ErrorCode.FACILITY_ACCESS_DENIED,
+            'Bạn chỉ có quyền tạo tài khoản nhân sự cho cơ sở y tế của bạn hoặc các cơ sở y tế trực thuộc',
+          );
         }
 
         targetFacilityId = dto.facilityId;
@@ -84,14 +93,20 @@ export class StaffService {
     }
 
     if (!targetFacilityId && dto.role !== StaffRole.VNDOCTOR_ADMIN) {
-      throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+      throw new BadRequest(
+        ErrorCode.MISSING_REQUIRED_FIELD,
+        'Thiếu thông tin mã định danh (ID) cơ sở y tế trực thuộc của nhân sự',
+      );
     }
 
     // Verify facility exists and is active if facilityId provided
     if (targetFacilityId) {
       const facility = await this.facilitiesService.getFacilityById(targetFacilityId);
       if (!facility.isActive) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          `Cơ sở y tế "${facility.facilityName}" hiện đang bị tạm khóa, không thể thêm nhân sự mới`,
+        );
       }
     }
 
@@ -111,7 +126,10 @@ export class StaffService {
       }
     }
     if (!isUnique) {
-      throw new Conflict(ErrorCode.STAFF_CODE_ALREADY_EXISTS);
+      throw new Conflict(
+        ErrorCode.STAFF_CODE_ALREADY_EXISTS,
+        `Mã nhân sự "${staffCode}" đã tồn tại trên hệ thống, vui lòng thử lại`,
+      );
     }
 
     // 3. Resolve username: use provided username or email prefix
@@ -126,7 +144,10 @@ export class StaffService {
       where: { email: dto.email.toLowerCase().trim() },
     });
     if (existingEmail) {
-      throw new Conflict(ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS);
+      throw new Conflict(
+        ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS,
+        `Email "${dto.email}" đã được sử dụng bởi một tài khoản khác trong hệ thống`,
+      );
     }
 
     const existingUsername = await this.staffRepository.findOne({
@@ -217,7 +238,10 @@ export class StaffService {
     });
 
     if (!staff) {
-      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.STAFF_NOT_FOUND,
+        `Không tìm thấy tài khoản nhân viên y tế với mã ID: ${id}`,
+      );
     }
 
     return staff;
@@ -256,7 +280,10 @@ export class StaffService {
         where: { email: dto.email.toLowerCase().trim() },
       });
       if (emailExists) {
-        throw new Conflict(ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS);
+        throw new Conflict(
+          ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS,
+          `Email "${dto.email}" đã được sử dụng bởi một tài khoản khác trong hệ thống`,
+        );
       }
       staff.email = dto.email.toLowerCase().trim();
     }
@@ -280,7 +307,10 @@ export class StaffService {
         where: { email: dto.email.toLowerCase().trim() },
       });
       if (emailExists) {
-        throw new Conflict(ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS);
+        throw new Conflict(
+          ErrorCode.ACCOUNT_EMAIL_ALREADY_EXISTS,
+          `Email "${dto.email}" đã được sử dụng bởi một tài khoản khác trong hệ thống`,
+        );
       }
       staff.email = dto.email.toLowerCase().trim();
     }
@@ -309,12 +339,18 @@ export class StaffService {
       .getOne();
 
     if (!staff) {
-      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.STAFF_NOT_FOUND,
+        `Không tìm thấy thông tin tài khoản nhân viên y tế với mã ID: ${id}`,
+      );
     }
 
     const isMatch = await bcrypt.compare(dto.oldPassword, staff.passwordHash);
     if (!isMatch) {
-      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
+      throw new Unauthorized(
+        ErrorCode.INVALID_CREDENTIALS,
+        'Mật khẩu hiện tại không chính xác, vui lòng kiểm tra lại',
+      );
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -339,20 +375,29 @@ export class StaffService {
 
     // Prevent staff from deleting themselves
     if (currentStaff && currentStaff.id === id) {
-      throw new BadRequest(ErrorCode.STAFF_CANNOT_DELETE_SELF);
+      throw new BadRequest(
+        ErrorCode.STAFF_CANNOT_DELETE_SELF,
+        'Bạn không thể tự xóa hoặc vô hiệu hóa tài khoản của chính mình',
+      );
     }
 
     // Facility permission check
     if (currentStaff && currentStaff.role !== StaffRole.VNDOCTOR_ADMIN) {
       if (!currentStaff.facilityId) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Tài khoản người thực hiện chưa được gán cơ sở y tế',
+        );
       }
       if (staff.facilityId !== currentStaff.facilityId) {
         const isSubordinate = staff.facilityId
           ? await this.facilitiesService.isSubordinateFacility(staff.facilityId, currentStaff.facilityId)
           : false;
         if (!isSubordinate) {
-          throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+          throw new Forbidden(
+            ErrorCode.FACILITY_ACCESS_DENIED,
+            'Bạn chỉ có quyền vô hiệu hóa nhân sự thuộc cơ sở y tế của bạn hoặc cấp dưới trực thuộc',
+          );
         }
       }
     }

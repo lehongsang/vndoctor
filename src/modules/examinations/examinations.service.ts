@@ -53,19 +53,28 @@ export class ExaminationsService {
     });
 
     if (!profile) {
-      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.HEALTH_PROFILE_NOT_FOUND,
+        `Không tìm thấy hồ sơ sức khỏe với mã ID: ${dto.healthProfileId}`,
+      );
     }
 
     const targetFacilityId = dto.facilityId || defaultFacilityId;
     if (!targetFacilityId) {
-      throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+      throw new BadRequest(
+        ErrorCode.MISSING_REQUIRED_FIELD,
+        'Thiếu thông tin mã cơ sở y tế thực hiện khám bệnh',
+      );
     }
     const facility = await this.facilityRepo.findOne({
       where: { id: targetFacilityId },
     });
 
     if (!facility) {
-      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.FACILITY_NOT_FOUND,
+        `Không tìm thấy cơ sở y tế với mã ID: ${targetFacilityId}`,
+      );
     }
 
 
@@ -122,7 +131,10 @@ export class ExaminationsService {
     });
 
     if (!exam) {
-      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.EXAMINATION_NOT_FOUND,
+        `Không tìm thấy kết quả khám bệnh với mã ID: ${id}`,
+      );
     }
 
     if (dto.heartRate !== undefined) exam.heartRate = dto.heartRate;
@@ -231,11 +243,17 @@ export class ExaminationsService {
     });
 
     if (!exam) {
-      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.EXAMINATION_NOT_FOUND,
+        `Không tìm thấy kết quả khám bệnh với mã ID: ${id}`,
+      );
     }
 
     if (accountId && exam.healthProfile && exam.healthProfile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền truy cập kết quả khám bệnh của người khác',
+      );
     }
 
     return exam;
@@ -255,11 +273,17 @@ export class ExaminationsService {
     });
 
     if (!exam) {
-      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.EXAMINATION_NOT_FOUND,
+        `Không tìm thấy kết quả khám bệnh với mã số khám: ${examinationCode}`,
+      );
     }
 
     if (accountId && exam.healthProfile && exam.healthProfile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền truy cập kết quả khám bệnh của người khác',
+      );
     }
 
     return exam;
@@ -278,11 +302,17 @@ export class ExaminationsService {
     });
 
     if (!exam) {
-      throw new NotFound(ErrorCode.EXAMINATION_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.EXAMINATION_NOT_FOUND,
+        `Không tìm thấy kết quả khám bệnh với mã ID: ${id}`,
+      );
     }
 
     if (staffFacilityId && exam.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền xóa kết quả khám bệnh của cơ sở y tế khác',
+      );
     }
 
     exam.status = ExaminationStatus.CANCELLED;

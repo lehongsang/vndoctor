@@ -42,11 +42,17 @@ export class TreatmentTargetsService {
     });
 
     if (!profile) {
-      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.HEALTH_PROFILE_NOT_FOUND,
+        `Không tìm thấy hồ sơ sức khỏe với mã ID: ${dto.healthProfileId}`,
+      );
     }
 
     if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền tạo mục tiêu điều trị cho hồ sơ sức khỏe của người khác',
+      );
     }
 
     let defaultBpTarget = dto.bpTarget;
@@ -110,7 +116,10 @@ export class TreatmentTargetsService {
     });
 
     if (!target) {
-      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.TREATMENT_TARGET_NOT_FOUND,
+        `Không tìm thấy mục tiêu điều trị với mã ID: ${id}`,
+      );
     }
 
     target.doctorId = doctorId;
@@ -149,11 +158,17 @@ export class TreatmentTargetsService {
     });
 
     if (!target) {
-      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.TREATMENT_TARGET_NOT_FOUND,
+        `Không tìm thấy mục tiêu điều trị với mã ID: ${id}`,
+      );
     }
 
     if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền cập nhật mục tiêu điều trị của bệnh nhân khác',
+      );
     }
 
     if (doctorId) {
@@ -166,20 +181,16 @@ export class TreatmentTargetsService {
   }
 
   /**
-   * Retrieve list of treatment targets with filtering and pagination.
+   * Query treatment targets with filtering and pagination.
    *
    * @param query - QueryPatientTargetDto
-   * @param accountId - Optional App Account ID for patient data scoping
-   * @returns Paginated list of targets
+   * @param accountId - Optional App Account ID
+   * @returns Paginated treatment targets
    */
   async findAll(
     query: QueryPatientTargetDto,
     accountId?: string,
   ): Promise<{ data: PatientTreatmentTarget[]; total: number; page: number; limit: number }> {
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
-    const skip = (page - 1) * limit;
-
     const qb = this.targetRepo
       .createQueryBuilder('target')
       .leftJoinAndSelect('target.healthProfile', 'profile')
@@ -193,7 +204,9 @@ export class TreatmentTargetsService {
     }
 
     if (query.healthProfileId) {
-      qb.andWhere('target.healthProfileId = :healthProfileId', { healthProfileId: query.healthProfileId });
+      qb.andWhere('target.healthProfileId = :healthProfileId', {
+        healthProfileId: query.healthProfileId,
+      });
     }
 
     if (query.doctorId) {
@@ -204,14 +217,21 @@ export class TreatmentTargetsService {
       qb.andWhere('target.status = :status', { status: query.status });
     }
 
-    qb.orderBy('target.createdAt', 'DESC').skip(skip).take(limit);
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    qb.orderBy('target.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
 
     const [data, total] = await qb.getManyAndCount();
+
     return { data, total, page, limit };
   }
 
   /**
-   * Find a single treatment target by ID.
+   * Retrieve a single treatment target by ID.
    *
    * @param id - Target UUID
    * @param accountId - Optional App Account ID
@@ -224,11 +244,17 @@ export class TreatmentTargetsService {
     });
 
     if (!target) {
-      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.TREATMENT_TARGET_NOT_FOUND,
+        `Không tìm thấy mục tiêu điều trị với mã ID: ${id}`,
+      );
     }
 
     if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền truy cập mục tiêu điều trị của bệnh nhân khác',
+      );
     }
 
     return target;
@@ -248,11 +274,17 @@ export class TreatmentTargetsService {
     });
 
     if (!target) {
-      throw new NotFound(ErrorCode.TREATMENT_TARGET_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.TREATMENT_TARGET_NOT_FOUND,
+        `Không tìm thấy mục tiêu điều trị với mã ID: ${id}`,
+      );
     }
 
     if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền xóa mục tiêu điều trị của bệnh nhân khác',
+      );
     }
 
     await this.targetRepo.softRemove(target);

@@ -74,20 +74,32 @@ export class CareRequestsService {
     });
 
     if (!subscription) {
-      throw new NotFound(ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+        `Không tìm thấy gói chăm sóc với mã ID: ${dto.subscriptionId}`,
+      );
     }
 
     if (accountId && subscription.healthProfile?.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND);
+      throw new Forbidden(
+        ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+        'Bạn không có quyền tạo yêu cầu hỗ trợ y tế trên gói chăm sóc của người khác',
+      );
     }
 
     if (subscription.status !== CareSubscriptionStatus.ACTIVE) {
-      throw new BadRequest(ErrorCode.CARE_SUBSCRIPTION_EXPIRED);
+      throw new BadRequest(
+        ErrorCode.CARE_SUBSCRIPTION_EXPIRED,
+        `Gói chăm sóc hiện không ở trạng thái hoạt động (ACTIVE). Trạng thái hiện tại: ${subscription.status}`,
+      );
     }
 
     const facilityId = subscription.carePackage?.facilityId;
     if (!facilityId) {
-      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.FACILITY_NOT_FOUND,
+        'Không tìm thấy thông tin cơ sở y tế phụ trách gói chăm sóc này',
+      );
     }
 
 
@@ -236,11 +248,17 @@ export class CareRequestsService {
     });
 
     if (!careRequest) {
-      throw new NotFound(ErrorCode.CARE_REQUEST_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.CARE_REQUEST_NOT_FOUND,
+        `Không tìm thấy yêu cầu chăm sóc với mã ID: ${id}`,
+      );
     }
 
     if (staffFacilityId && careRequest.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền truy cập yêu cầu chăm sóc của cơ sở y tế khác',
+      );
     }
 
     if (
@@ -248,7 +266,10 @@ export class CareRequestsService {
       careRequest.subscription?.healthProfile?.accountId &&
       careRequest.subscription.healthProfile.accountId !== accountId
     ) {
-      throw new Forbidden(ErrorCode.CARE_REQUEST_NOT_FOUND);
+      throw new Forbidden(
+        ErrorCode.CARE_REQUEST_NOT_FOUND,
+        'Bạn không có quyền truy cập yêu cầu chăm sóc của bệnh nhân khác',
+      );
     }
 
     return careRequest;
@@ -273,7 +294,10 @@ export class CareRequestsService {
       careRequest.status === CareRequestStatus.RESOLVED ||
       careRequest.status === CareRequestStatus.CANCELLED
     ) {
-      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
+      throw new BadRequest(
+        ErrorCode.CARE_REQUEST_ALREADY_RESOLVED,
+        `Yêu cầu chăm sóc đã kết thúc (Trạng thái: ${careRequest.status}), không thể phân công lại`,
+      );
     }
 
     // Validate target staff user
@@ -282,11 +306,17 @@ export class CareRequestsService {
     });
 
     if (!targetStaff) {
-      throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.STAFF_NOT_FOUND,
+        `Không tìm thấy nhân viên y tế với mã ID: ${dto.assignedUserId}`,
+      );
     }
 
     if (targetStaff.facilityId !== careRequest.facilityId) {
-      throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new BadRequest(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        `Nhân viên "${targetStaff.fullName}" không thuộc cơ sở y tế phụ trách yêu cầu chăm sóc này`,
+      );
     }
 
     if (
@@ -294,11 +324,17 @@ export class CareRequestsService {
       targetStaff.role !== StaffRole.NURSE &&
       targetStaff.role !== StaffRole.ADMIN
     ) {
-      throw new BadRequest(ErrorCode.INVALID_INPUT);
+      throw new BadRequest(
+        ErrorCode.INVALID_INPUT,
+        `Nhân viên được phân công phải có vai trò Bác sĩ hoặc Điều dưỡng (Role hiện tại: ${targetStaff.role})`,
+      );
     }
 
     if (!targetStaff.isActive) {
-      throw new BadRequest(ErrorCode.STAFF_INACTIVE);
+      throw new BadRequest(
+        ErrorCode.STAFF_INACTIVE,
+        `Tài khoản nhân viên "${targetStaff.fullName}" hiện đang bị tạm khóa`,
+      );
     }
 
     careRequest.assignedUserId = dto.assignedUserId;
@@ -363,11 +399,17 @@ export class CareRequestsService {
     const careRequest = await this.findById(id, staffFacilityId);
 
     if (careRequest.status === CareRequestStatus.RESOLVED) {
-      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
+      throw new BadRequest(
+        ErrorCode.CARE_REQUEST_ALREADY_RESOLVED,
+        'Yêu cầu chăm sóc này đã được kết luận giải quyết trước đó',
+      );
     }
 
     if (careRequest.status === CareRequestStatus.CANCELLED) {
-      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
+      throw new BadRequest(
+        ErrorCode.CARE_REQUEST_ALREADY_RESOLVED,
+        'Yêu cầu chăm sóc này đã bị hủy, không thể kết luận giải quyết',
+      );
     }
 
     const now = new Date();
@@ -429,7 +471,10 @@ export class CareRequestsService {
     const careRequest = await this.findById(id, staffFacilityId);
 
     if (careRequest.status === CareRequestStatus.RESOLVED) {
-      throw new BadRequest(ErrorCode.CARE_REQUEST_ALREADY_RESOLVED);
+      throw new BadRequest(
+        ErrorCode.CARE_REQUEST_ALREADY_RESOLVED,
+        'Yêu cầu chăm sóc đã giải quyết hoàn tất, không thể thay đổi trạng thái',
+      );
     }
 
     careRequest.status = dto.status;

@@ -63,13 +63,19 @@ export class PatientLinksService {
 
     if (staff && staff.facilityId) {
       if (dto.facilityId && dto.facilityId !== staff.facilityId) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Bạn không có quyền tạo liên kết cho cơ sở y tế khác với cơ sở bạn đang công tác',
+        );
       }
       targetFacilityId = staff.facilityId;
     }
 
     if (!targetFacilityId) {
-      throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+      throw new BadRequest(
+        ErrorCode.MISSING_REQUIRED_FIELD,
+        'Thiếu thông tin mã định danh (ID) cơ sở y tế cần liên kết',
+      );
     }
 
     // Verify facility exists
@@ -90,7 +96,10 @@ export class PatientLinksService {
 
     if (existing) {
       if (existing.status === FacilityPatientLinkStatus.ACTIVE) {
-        throw new Conflict(ErrorCode.PATIENT_ALREADY_LINKED);
+        throw new Conflict(
+          ErrorCode.PATIENT_ALREADY_LINKED,
+          `Hồ sơ sức khỏe "${profile.fullName}" đã được liên kết và đang hoạt động tại cơ sở y tế này`,
+        );
       }
 
       // Reactivate previously unlinked or pending link
@@ -217,7 +226,10 @@ export class PatientLinksService {
     staff: StaffJwtPayload,
   ): Promise<FacilityPatientLink> {
     if (!staff.facilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Tài khoản nhân viên y tế chưa được liên kết với cơ sở y tế nào để thực hiện gửi yêu cầu',
+      );
     }
 
     const facility = await this.facilitiesService.getFacilityById(staff.facilityId);
@@ -229,7 +241,10 @@ export class PatientLinksService {
     });
 
     if (!account) {
-      throw new NotFound(ErrorCode.ACCOUNT_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.ACCOUNT_NOT_FOUND,
+        `Không tìm thấy tài khoản người dùng ứng dụng ứng với số điện thoại ${cleanPhone}`,
+      );
     }
 
     // Check existing link
@@ -242,7 +257,10 @@ export class PatientLinksService {
 
     if (link) {
       if (link.status === FacilityPatientLinkStatus.ACTIVE) {
-        throw new Conflict(ErrorCode.PATIENT_ALREADY_LINKED);
+        throw new Conflict(
+          ErrorCode.PATIENT_ALREADY_LINKED,
+          `Hồ sơ sức khỏe "${profile.fullName}" đã có liên kết đang hoạt động với cơ sở y tế này`,
+        );
       }
       link.status = FacilityPatientLinkStatus.PENDING;
       link.phoneNumber = cleanPhone;
@@ -336,7 +354,10 @@ export class PatientLinksService {
     });
 
     if (!link) {
-      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.PATIENT_LINK_NOT_FOUND,
+        `Không tìm thấy lời mời liên kết y tế với mã ID: ${id}`,
+      );
     }
 
     const account = await this.accountRepository.findOne({ where: { id: accountId } });
@@ -345,7 +366,10 @@ export class PatientLinksService {
       (account && link.phoneNumber === account.phoneNumber);
 
     if (!isOwner) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền chấp nhận lời mời liên kết cho hồ sơ sức khỏe này do không trùng khớp tài khoản hoặc số điện thoại',
+      );
     }
 
     link.status = FacilityPatientLinkStatus.ACTIVE;
@@ -381,7 +405,10 @@ export class PatientLinksService {
     });
 
     if (!link) {
-      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.PATIENT_LINK_NOT_FOUND,
+        `Không tìm thấy lời mời liên kết y tế với mã ID: ${id}`,
+      );
     }
 
     const account = await this.accountRepository.findOne({ where: { id: accountId } });
@@ -390,7 +417,10 @@ export class PatientLinksService {
       (account && link.phoneNumber === account.phoneNumber);
 
     if (!isOwner) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền từ chối lời mời liên kết cho hồ sơ sức khỏe này do không trùng khớp tài khoản hoặc số điện thoại',
+      );
     }
 
     link.status = FacilityPatientLinkStatus.UNLINKED;
@@ -421,7 +451,10 @@ export class PatientLinksService {
     });
 
     if (!link) {
-      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.PATIENT_LINK_NOT_FOUND,
+        `Không tìm thấy thông tin liên kết y tế với mã ID: ${id}`,
+      );
     }
 
     return link;
@@ -443,7 +476,10 @@ export class PatientLinksService {
     const link = await this.getLinkById(id);
 
     if (staff && staff.facilityId && link.facilityId !== staff.facilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền chỉnh sửa thông tin liên kết của cơ sở y tế khác',
+      );
     }
 
     Object.assign(link, dto);
@@ -465,7 +501,10 @@ export class PatientLinksService {
     });
 
     if (!link) {
-      throw new NotFound(ErrorCode.PATIENT_LINK_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.PATIENT_LINK_NOT_FOUND,
+        `Không tìm thấy liên kết giữa cơ sở y tế (ID: ${facilityId}) và hồ sơ sức khỏe (ID: ${healthProfileId})`,
+      );
     }
 
     link.status = FacilityPatientLinkStatus.UNLINKED;

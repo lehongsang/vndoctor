@@ -52,7 +52,7 @@ describe('AllExceptionsFilter', () => {
       statusCode: 400,
       errorCode: ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
       messageCode: ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
-      message: ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+      message: 'Không tìm thấy gói đăng ký chăm sóc của bệnh nhân',
     });
   });
 
@@ -67,7 +67,7 @@ describe('AllExceptionsFilter', () => {
       statusCode: 500,
       errorCode: 'INTERNAL_SERVER_ERROR',
       messageCode: 'INTERNAL_SERVER_ERROR',
-      message: 'Database connection pool exhausted',
+      message: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau',
     });
   });
 });

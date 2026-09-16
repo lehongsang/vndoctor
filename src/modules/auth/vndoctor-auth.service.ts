@@ -109,16 +109,25 @@ export class VnDoctorAuthService {
   async loginStaff(dto: StaffLoginDto): Promise<StaffAuthResponseDto> {
     const staff = await this.staffService.findByUsernameWithPassword(dto.username);
     if (!staff) {
-      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
+      throw new Unauthorized(
+        ErrorCode.INVALID_CREDENTIALS,
+        'Tên đăng nhập hoặc mật khẩu không chính xác',
+      );
     }
 
     if (!staff.isActive) {
-      throw new Forbidden(ErrorCode.STAFF_INACTIVE);
+      throw new Forbidden(
+        ErrorCode.STAFF_INACTIVE,
+        `Tài khoản nhân viên "${staff.fullName}" hiện đang bị tạm khóa hoặc ngừng hoạt động`,
+      );
     }
 
     const isMatch = await bcrypt.compare(dto.password, staff.passwordHash);
     if (!isMatch) {
-      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
+      throw new Unauthorized(
+        ErrorCode.INVALID_CREDENTIALS,
+        'Tên đăng nhập hoặc mật khẩu không chính xác',
+      );
     }
 
     const payload: StaffJwtPayload = {
@@ -165,7 +174,10 @@ export class VnDoctorAuthService {
    */
   async refreshStaffToken(dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
     if (await this.isTokenBlacklisted(dto.refreshToken)) {
-      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_BLACKLISTED);
+      throw new Unauthorized(
+        ErrorCode.REFRESH_TOKEN_BLACKLISTED,
+        'Mã làm mới phiên đăng nhập (Refresh Token) đã bị thu hồi hoặc đã đăng xuất',
+      );
     }
 
     let decoded: RefreshTokenPayload;
@@ -175,16 +187,25 @@ export class VnDoctorAuthService {
         this.staffRefreshSecret,
       ) as RefreshTokenPayload;
     } catch {
-      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_INVALID);
+      throw new Unauthorized(
+        ErrorCode.REFRESH_TOKEN_INVALID,
+        'Mã làm mới phiên đăng nhập (Refresh Token) không hợp lệ hoặc đã hết hạn',
+      );
     }
 
     if (decoded.type !== 'STAFF_REFRESH' || !decoded.id) {
-      throw new Unauthorized(ErrorCode.TOKEN_AUDIENCE_MISMATCH);
+      throw new Unauthorized(
+        ErrorCode.TOKEN_AUDIENCE_MISMATCH,
+        'Mã token không thuộc phạm vi người dùng nhân viên y tế',
+      );
     }
 
     const staff = await this.staffService.getStaffById(decoded.id);
     if (!staff || !staff.isActive) {
-      throw new Forbidden(ErrorCode.STAFF_INACTIVE);
+      throw new Forbidden(
+        ErrorCode.STAFF_INACTIVE,
+        'Tài khoản nhân viên y tế hiện đang bị tạm khóa',
+      );
     }
 
     const payload: StaffJwtPayload = {
@@ -201,12 +222,12 @@ export class VnDoctorAuthService {
       expiresIn: this.staffExpiresInSeconds,
     });
 
-    const refreshPayload: RefreshTokenPayload = {
+    const newRefreshPayload: RefreshTokenPayload = {
       id: staff.id,
       type: 'STAFF_REFRESH',
     };
 
-    const newRefreshToken = jwt.sign(refreshPayload, this.staffRefreshSecret, {
+    const newRefreshToken = jwt.sign(newRefreshPayload, this.staffRefreshSecret, {
       expiresIn: this.staffRefreshExpiresInSeconds,
     });
 
@@ -220,11 +241,11 @@ export class VnDoctorAuthService {
   }
 
   /**
-   * Generates and dispatches a 6-digit OTP code to the requested mobile phone.
-   * Enforces 60-second cooldown rate limit and purpose-specific validations.
+   * Sends an SMS OTP to a patient mobile phone number.
+   * Enforces 60-second cooldown per phone number per purpose.
    *
-   * @param dto - Target phone number and OTP purpose.
-   * @returns Delivery status with TTL and retry cooldown details.
+   * @param dto - Target mobile phone and purpose (REGISTER, FORGOT_PASSWORD).
+   * @returns OTP dispatch status and countdown timers.
    */
   async sendAppOtp(dto: SendOtpDto): Promise<SendOtpResponseDto> {
     const phoneNumber = dto.phoneNumber.trim();
@@ -233,19 +254,28 @@ export class VnDoctorAuthService {
     // 1. Check rate limit cooldown
     const isCooldownActive = await this.redisService.get(cooldownKey);
     if (isCooldownActive) {
-      throw new BadRequest(ErrorCode.OTP_COOLDOWN_ACTIVE);
+      throw new BadRequest(
+        ErrorCode.OTP_COOLDOWN_ACTIVE,
+        'Yêu cầu gửi mã OTP đang trong thời gian chờ (60s), vui lòng thử lại sau',
+      );
     }
 
     // 2. Validate purpose specific constraints
     if (dto.type === OtpPurpose.REGISTER) {
       const existing = await this.accountsService.findByPhoneNumberWithPassword(phoneNumber);
       if (existing) {
-        throw new Conflict(ErrorCode.ACCOUNT_PHONE_ALREADY_EXISTS);
+        throw new Conflict(
+          ErrorCode.ACCOUNT_PHONE_ALREADY_EXISTS,
+          `Số điện thoại ${phoneNumber} đã được đăng ký tài khoản trên hệ thống`,
+        );
       }
     } else if (dto.type === OtpPurpose.FORGOT_PASSWORD) {
       const existing = await this.accountsService.findByPhoneNumberWithPassword(phoneNumber);
       if (!existing) {
-        throw new NotFound(ErrorCode.ACCOUNT_NOT_FOUND);
+        throw new NotFound(
+          ErrorCode.ACCOUNT_NOT_FOUND,
+          `Không tìm thấy tài khoản ứng với số điện thoại ${phoneNumber}`,
+        );
       }
     }
 
@@ -287,7 +317,10 @@ export class VnDoctorAuthService {
 
     const storedOtp = await this.redisService.get(otpKey);
     if (!storedOtp) {
-      throw new BadRequest(ErrorCode.OTP_EXPIRED);
+      throw new BadRequest(
+        ErrorCode.OTP_EXPIRED,
+        'Mã OTP đã hết hạn hiệu lực (sau 5 phút) hoặc chưa được yêu cầu, vui lòng yêu cầu mã mới',
+      );
     }
 
     const attemptsStr = await this.redisService.get(attemptsKey);
@@ -296,12 +329,18 @@ export class VnDoctorAuthService {
     if (attempts >= 5) {
       await this.redisService.del(otpKey);
       await this.redisService.del(attemptsKey);
-      throw new BadRequest(ErrorCode.OTP_MAX_ATTEMPTS_EXCEEDED);
+      throw new BadRequest(
+        ErrorCode.OTP_MAX_ATTEMPTS_EXCEEDED,
+        'Bạn đã nhập sai mã OTP quá 5 lần, mã OTP đã bị hủy. Vui lòng yêu cầu mã mới',
+      );
     }
 
     if (storedOtp !== dto.otp.trim()) {
       await this.redisService.setex(attemptsKey, 300, String(attempts + 1));
-      throw new BadRequest(ErrorCode.OTP_INVALID);
+      throw new BadRequest(
+        ErrorCode.OTP_INVALID,
+        `Mã OTP không chính xác (còn ${5 - (attempts + 1)} lần thử)`,
+      );
     }
 
     // Verification successful -> Invalidate OTP
@@ -340,19 +379,28 @@ export class VnDoctorAuthService {
       try {
         const decoded = jwt.verify(dto.verificationToken, this.appSecret) as OtpVerificationPayload;
         if (decoded.type !== 'OTP_VERIFICATION' || decoded.purpose !== OtpPurpose.REGISTER) {
-          throw new BadRequest(ErrorCode.VERIFICATION_TOKEN_INVALID);
+          throw new BadRequest(
+            ErrorCode.VERIFICATION_TOKEN_INVALID,
+            'Mã xác thực OTP không hợp lệ hoặc không phải cho mục đích đăng ký tài khoản',
+          );
         }
         targetPhone = decoded.phoneNumber;
       } catch (err) {
         if (err instanceof BadRequest) {
           throw err;
         }
-        throw new BadRequest(ErrorCode.VERIFICATION_TOKEN_INVALID);
+        throw new BadRequest(
+          ErrorCode.VERIFICATION_TOKEN_INVALID,
+          'Mã xác thực OTP không hợp lệ hoặc đã hết hạn hiệu lực',
+        );
       }
     }
 
     if (!targetPhone) {
-      throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+      throw new BadRequest(
+        ErrorCode.MISSING_REQUIRED_FIELD,
+        'Thiếu thông tin số điện thoại đăng ký tài khoản',
+      );
     }
 
     const account = await this.accountsService.register({
@@ -400,16 +448,25 @@ export class VnDoctorAuthService {
   async loginApp(dto: AppLoginDto): Promise<AppAuthResponseDto> {
     const account = await this.accountsService.findByPhoneNumberWithPassword(dto.phoneNumber);
     if (!account) {
-      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
+      throw new Unauthorized(
+        ErrorCode.INVALID_CREDENTIALS,
+        'Số điện thoại hoặc mật khẩu không chính xác',
+      );
     }
 
     if (!account.isActive) {
-      throw new Forbidden(ErrorCode.ACCOUNT_INACTIVE);
+      throw new Forbidden(
+        ErrorCode.ACCOUNT_INACTIVE,
+        'Tài khoản của bạn hiện đang bị tạm khóa hoặc ngừng hoạt động',
+      );
     }
 
     const isMatch = await bcrypt.compare(dto.password, account.passwordHash);
     if (!isMatch) {
-      throw new Unauthorized(ErrorCode.INVALID_CREDENTIALS);
+      throw new Unauthorized(
+        ErrorCode.INVALID_CREDENTIALS,
+        'Số điện thoại hoặc mật khẩu không chính xác',
+      );
     }
 
     const payload: AppAccountJwtPayload = {
@@ -453,7 +510,10 @@ export class VnDoctorAuthService {
    */
   async refreshAppToken(dto: RefreshTokenDto): Promise<TokenRefreshResponseDto> {
     if (await this.isTokenBlacklisted(dto.refreshToken)) {
-      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_BLACKLISTED);
+      throw new Unauthorized(
+        ErrorCode.REFRESH_TOKEN_BLACKLISTED,
+        'Mã làm mới phiên đăng nhập (Refresh Token) đã bị thu hồi hoặc đã đăng xuất',
+      );
     }
 
     let decoded: RefreshTokenPayload;
@@ -463,16 +523,25 @@ export class VnDoctorAuthService {
         this.appRefreshSecret,
       ) as RefreshTokenPayload;
     } catch {
-      throw new Unauthorized(ErrorCode.REFRESH_TOKEN_INVALID);
+      throw new Unauthorized(
+        ErrorCode.REFRESH_TOKEN_INVALID,
+        'Mã làm mới phiên đăng nhập (Refresh Token) không hợp lệ hoặc đã hết hạn',
+      );
     }
 
     if (decoded.type !== 'APP_REFRESH' || !decoded.id) {
-      throw new Unauthorized(ErrorCode.TOKEN_AUDIENCE_MISMATCH);
+      throw new Unauthorized(
+        ErrorCode.TOKEN_AUDIENCE_MISMATCH,
+        'Mã token không thuộc phạm vi người dùng ứng dụng bệnh nhân',
+      );
     }
 
     const account = await this.accountsService.getAccountById(decoded.id);
     if (!account || !account.isActive) {
-      throw new Forbidden(ErrorCode.ACCOUNT_INACTIVE);
+      throw new Forbidden(
+        ErrorCode.ACCOUNT_INACTIVE,
+        'Tài khoản người dùng hiện đang bị tạm khóa',
+      );
     }
 
     const payload: AppAccountJwtPayload = {

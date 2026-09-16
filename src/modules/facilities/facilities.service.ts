@@ -53,7 +53,10 @@ export class FacilitiesService {
     }
 
     if (!isCodeUnique) {
-      throw new Conflict(ErrorCode.FACILITY_CODE_ALREADY_EXISTS);
+      throw new Conflict(
+        ErrorCode.FACILITY_CODE_ALREADY_EXISTS,
+        `Mã cơ sở y tế "${facilityCode}" đã tồn tại trên hệ thống, vui lòng thử lại`,
+      );
     }
 
     // 2. Enforce hierarchy rules based on creator's facility & role
@@ -62,7 +65,10 @@ export class FacilitiesService {
     if (creator && creator.role !== StaffRole.VNDOCTOR_ADMIN && creator.facilityId) {
       // If the creator is a regular Facility Admin, they can ONLY create sub-facilities under their own facility
       if (dto.parentId && dto.parentId !== creator.facilityId) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Bạn chỉ có quyền tạo cơ sở y tế trực thuộc cơ sở y tế bạn đang quản trị',
+        );
       }
       targetParentId = creator.facilityId;
     }
@@ -74,11 +80,17 @@ export class FacilitiesService {
       });
 
       if (!parentFacility) {
-        throw new NotFound(ErrorCode.FACILITY_PARENT_NOT_FOUND);
+        throw new NotFound(
+          ErrorCode.FACILITY_PARENT_NOT_FOUND,
+          `Không tìm thấy cơ sở y tế cấp cha với mã ID: ${targetParentId}`,
+        );
       }
 
       if (!parentFacility.isActive) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          `Cơ sở y tế cấp cha "${parentFacility.facilityName}" hiện đang bị tạm khóa / ngừng hoạt động`,
+        );
       }
     }
 
@@ -160,7 +172,10 @@ export class FacilitiesService {
     });
 
     if (!facility) {
-      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.FACILITY_NOT_FOUND,
+        `Không tìm thấy cơ sở y tế với mã ID: ${id}`,
+      );
     }
 
     return facility;
@@ -318,18 +333,27 @@ export class FacilitiesService {
     // 2. Validate authorization & hierarchy permissions
     if (staff && staff.role !== StaffRole.VNDOCTOR_ADMIN) {
       if (!staff.facilityId) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Tài khoản nhân viên chưa được gán cơ sở y tế để thực hiện thao tác này',
+        );
       }
 
       // Facility Admin cannot deactivate their own primary facility
       if (staff.facilityId === id) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Quản trị viên cơ sở y tế không thể tự vô hiệu hóa cơ sở y tế chính của mình',
+        );
       }
 
       // Facility Admin can only deactivate subordinate facilities
       const isSubordinate = await this.isSubordinateFacility(id, staff.facilityId);
       if (!isSubordinate) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Bạn chỉ có quyền vô hiệu hóa các cơ sở y tế cấp dưới trực thuộc đơn vị của bạn',
+        );
       }
     }
 
@@ -339,7 +363,10 @@ export class FacilitiesService {
     });
 
     if (activeChildrenCount > 0) {
-      throw new BadRequest(ErrorCode.FACILITY_HAS_CHILDREN);
+      throw new BadRequest(
+        ErrorCode.FACILITY_HAS_CHILDREN,
+        `Không thể vô hiệu hóa cơ sở này vì vẫn còn ${activeChildrenCount} cơ sở y tế cấp con đang hoạt động`,
+      );
     }
 
     // 4. Perform soft delete by setting isActive to false

@@ -25,7 +25,10 @@ export class AccountsService {
     });
 
     if (existing) {
-      throw new Conflict(ErrorCode.ACCOUNT_PHONE_ALREADY_EXISTS);
+      throw new Conflict(
+        ErrorCode.ACCOUNT_PHONE_ALREADY_EXISTS,
+        `Số điện thoại "${dto.phoneNumber}" đã được đăng ký tài khoản trên hệ thống`,
+      );
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -70,7 +73,10 @@ export class AccountsService {
     });
 
     if (!account) {
-      throw new NotFound(ErrorCode.ACCOUNT_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.ACCOUNT_NOT_FOUND,
+        `Không tìm thấy tài khoản người dùng với mã ID: ${id}`,
+      );
     }
 
     return account;

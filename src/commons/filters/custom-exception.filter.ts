@@ -2,6 +2,7 @@ import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import { Catch, Injectable } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { CustomException } from '../exceptions/custom.exception';
+import { getErrorMessage } from '../exceptions/error-codes';
 import { LoggerService } from '../logger/logger.service';
 import { getCorrelationId } from '../middlewares/correlation-id.middleware';
 import { buildRequestLogMetadata } from './request-log-metadata';
@@ -22,11 +23,13 @@ export class CustomExceptionFilter implements ExceptionFilter {
     // Log async (Fire-and-Forget) - not block request
     this.logExceptionAsync(exception, correlationId, requestMetadata, status);
 
+    const message = exception.customMessage || getErrorMessage(exception.errorCode);
+
     response.status(status).json({
       statusCode: status,
       errorCode: exception.errorCode,
       messageCode: exception.messageCode || exception.errorCode,
-      message: exception.customMessage || exception.message || exception.errorCode,
+      message,
     });
   }
 

@@ -128,7 +128,10 @@ export class TreatmentDictionariesService implements OnModuleInit {
     });
 
     if (!item) {
-      throw new NotFound(ErrorCode.TREATMENT_DICTIONARY_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.TREATMENT_DICTIONARY_NOT_FOUND,
+        `Không tìm thấy định nghĩa mục tiêu điều trị mẫu với mã: ${code}`,
+      );
     }
 
     return item;

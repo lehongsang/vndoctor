@@ -32,16 +32,21 @@ export class HealthRecordsService {
     });
 
     if (!profile) {
-      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.HEALTH_PROFILE_NOT_FOUND,
+        `Không tìm thấy hồ sơ sức khỏe với mã ID: ${healthProfileId}`,
+      );
     }
 
     if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền truy cập hoặc ghi dữ liệu chỉ số sức khỏe của người khác',
+      );
     }
 
     return profile;
   }
-
 
   /**
    * Log a new health metric measurement.
@@ -70,8 +75,8 @@ export class HealthRecordsService {
    * Retrieve list of health records with filtering & pagination.
    *
    * @param query - QueryHealthRecordDto
-   * @param accountId - Optional account ID to restrict access
-   * @returns Paginated records list with total count
+   * @param accountId - Optional account ID to restrict access to own profiles
+   * @returns Paginated list of HealthRecord entities
    */
   async findAll(
     query: QueryHealthRecordDto,
@@ -86,9 +91,11 @@ export class HealthRecordsService {
     if (query.healthProfileId) {
       where.healthProfileId = query.healthProfileId;
     }
+
     if (query.metricType) {
       where.metricType = query.metricType;
     }
+
     if (query.fromDate && query.toDate) {
       where.measuredAt = Between(query.fromDate, query.toDate);
     } else if (query.fromDate) {
@@ -116,7 +123,7 @@ export class HealthRecordsService {
    *
    * @param id - Record UUID
    * @param accountId - Optional account ID to restrict access
-   * @returns HealthRecord
+   * @returns HealthRecord entity
    */
   async findOne(id: string, accountId?: string): Promise<HealthRecord> {
     const record = await this.healthRecordRepo.findOne({
@@ -125,11 +132,17 @@ export class HealthRecordsService {
     });
 
     if (!record) {
-      throw new NotFound(ErrorCode.HEALTH_RECORD_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.HEALTH_RECORD_NOT_FOUND,
+        `Không tìm thấy bản ghi chỉ số sức khỏe với mã ID: ${id}`,
+      );
     }
 
     if (accountId && record.healthProfile && record.healthProfile.accountId !== accountId) {
-      throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền truy cập chỉ số sức khỏe của người khác',
+      );
     }
 
     return record;

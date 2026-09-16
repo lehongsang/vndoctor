@@ -51,7 +51,10 @@ export class CarePackagesService {
     // 1. Determine target facility ID
     const facilityId = dto.facilityId || staffFacilityId;
     if (!facilityId) {
-      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.FACILITY_NOT_FOUND,
+        'Thiếu thông tin mã cơ sở y tế (facilityId) cung cấp gói chăm sóc',
+      );
     }
 
     // 2. Validate facility existence
@@ -59,30 +62,48 @@ export class CarePackagesService {
       where: { id: facilityId },
     });
     if (!facility) {
-      throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.FACILITY_NOT_FOUND,
+        `Không tìm thấy cơ sở y tế với mã ID: ${facilityId}`,
+      );
     }
 
     // 3. Validate package type and doctorExpertId
     const packageType = dto.type ?? CarePackageType.STANDARD;
     if (packageType === CarePackageType.STANDARD) {
       if (dto.doctorExpertId) {
-        throw new BadRequest(ErrorCode.BAD_REQUEST);
+        throw new BadRequest(
+          ErrorCode.BAD_REQUEST,
+          'Gói chăm sóc STANDARD (Tiêu chuẩn) không hỗ trợ gán Bác sĩ Chuyên gia',
+        );
       }
     } else if (packageType === CarePackageType.VIP) {
       if (!dto.doctorExpertId) {
-        throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+        throw new BadRequest(
+          ErrorCode.MISSING_REQUIRED_FIELD,
+          'Gói chăm sóc VIP bắt buộc phải có thông tin Bác sĩ Chuyên gia (doctorExpertId)',
+        );
       }
       const expert = await this.staffRepo.findOne({
         where: { id: dto.doctorExpertId },
       });
       if (!expert) {
-        throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+        throw new NotFound(
+          ErrorCode.STAFF_NOT_FOUND,
+          `Không tìm thấy thông tin Chuyên gia y tế với mã ID: ${dto.doctorExpertId}`,
+        );
       }
       if (expert.facilityId && expert.facilityId !== facilityId) {
-        throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new BadRequest(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          `Chuyên gia y tế "${expert.fullName}" không thuộc cơ sở y tế này`,
+        );
       }
       if (!expert.isActive) {
-        throw new BadRequest(ErrorCode.STAFF_INACTIVE);
+        throw new BadRequest(
+          ErrorCode.STAFF_INACTIVE,
+          `Tài khoản Chuyên gia y tế "${expert.fullName}" hiện đang bị tạm khóa`,
+        );
       }
     }
 
@@ -102,7 +123,10 @@ export class CarePackagesService {
       }
     }
     if (!isUnique) {
-      throw new Conflict(ErrorCode.CARE_PACKAGE_CODE_ALREADY_EXISTS);
+      throw new Conflict(
+        ErrorCode.CARE_PACKAGE_CODE_ALREADY_EXISTS,
+        `Mã gói chăm sóc "${code}" đã tồn tại trên hệ thống, vui lòng thử lại`,
+      );
     }
 
     // 5. Create and persist care package entity
@@ -196,7 +220,10 @@ export class CarePackagesService {
     });
 
     if (!carePackage) {
-      throw new NotFound(ErrorCode.CARE_PACKAGE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.CARE_PACKAGE_NOT_FOUND,
+        `Không tìm thấy gói chăm sóc với mã ID: ${id}`,
+      );
     }
 
     return carePackage;
@@ -219,7 +246,10 @@ export class CarePackagesService {
 
     // 1. Verify facility ownership if staff facility ID is provided
     if (staffFacilityId && carePackage.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền chỉnh sửa gói chăm sóc của cơ sở y tế khác',
+      );
     }
 
     // 2. If facility ID changed, verify new facility exists
@@ -228,7 +258,10 @@ export class CarePackagesService {
         where: { id: dto.facilityId },
       });
       if (!facility) {
-        throw new NotFound(ErrorCode.FACILITY_NOT_FOUND);
+        throw new NotFound(
+          ErrorCode.FACILITY_NOT_FOUND,
+          `Không tìm thấy cơ sở y tế với mã ID: ${dto.facilityId}`,
+        );
       }
       carePackage.facilityId = dto.facilityId;
     }
@@ -239,26 +272,41 @@ export class CarePackagesService {
 
     if (targetType === CarePackageType.STANDARD) {
       if (dto.doctorExpertId) {
-        throw new BadRequest(ErrorCode.BAD_REQUEST);
+        throw new BadRequest(
+          ErrorCode.BAD_REQUEST,
+          'Gói chăm sóc STANDARD (Tiêu chuẩn) không hỗ trợ gán Bác sĩ Chuyên gia',
+        );
       }
       carePackage.doctorExpertId = null;
     } else if (targetType === CarePackageType.VIP) {
       const expertIdToCheck = dto.doctorExpertId !== undefined ? dto.doctorExpertId : carePackage.doctorExpertId;
       if (!expertIdToCheck) {
-        throw new BadRequest(ErrorCode.MISSING_REQUIRED_FIELD);
+        throw new BadRequest(
+          ErrorCode.MISSING_REQUIRED_FIELD,
+          'Gói chăm sóc VIP bắt buộc phải có thông tin Bác sĩ Chuyên gia (doctorExpertId)',
+        );
       }
       if (dto.doctorExpertId && dto.doctorExpertId !== carePackage.doctorExpertId) {
         const expert = await this.staffRepo.findOne({
           where: { id: dto.doctorExpertId },
         });
         if (!expert) {
-          throw new NotFound(ErrorCode.STAFF_NOT_FOUND);
+          throw new NotFound(
+            ErrorCode.STAFF_NOT_FOUND,
+            `Không tìm thấy thông tin Chuyên gia y tế với mã ID: ${dto.doctorExpertId}`,
+          );
         }
         if (expert.facilityId && expert.facilityId !== targetFacilityId) {
-          throw new BadRequest(ErrorCode.FACILITY_ACCESS_DENIED);
+          throw new BadRequest(
+            ErrorCode.FACILITY_ACCESS_DENIED,
+            `Chuyên gia y tế "${expert.fullName}" không thuộc cơ sở y tế này`,
+          );
         }
         if (!expert.isActive) {
-          throw new BadRequest(ErrorCode.STAFF_INACTIVE);
+          throw new BadRequest(
+            ErrorCode.STAFF_INACTIVE,
+            `Tài khoản Chuyên gia y tế "${expert.fullName}" hiện đang bị tạm khóa`,
+          );
         }
       }
       carePackage.doctorExpertId = expertIdToCheck;
@@ -291,7 +339,10 @@ export class CarePackagesService {
     const carePackage = await this.findById(id);
 
     if (staffFacilityId && carePackage.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền thay đổi trạng thái gói chăm sóc của cơ sở y tế khác',
+      );
     }
 
     carePackage.status = status;
@@ -312,7 +363,10 @@ export class CarePackagesService {
     const carePackage = await this.findById(id);
 
     if (staffFacilityId && carePackage.facilityId !== staffFacilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Bạn không có quyền xóa gói chăm sóc của cơ sở y tế khác',
+      );
     }
 
     carePackage.status = CarePackageStatus.INACTIVE;

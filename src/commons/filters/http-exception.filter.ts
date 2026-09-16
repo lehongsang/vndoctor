@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 import { LoggerService } from '../logger/logger.service';
 import { getCorrelationId } from '../middlewares/correlation-id.middleware';
 import { buildRequestLogMetadata } from './request-log-metadata';
-import { ErrorCode } from '../exceptions/error-codes';
+import { ErrorCode, getErrorMessage } from '../exceptions/error-codes';
 
 @Catch(HttpException)
 @Injectable()
@@ -36,11 +36,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     const res = exception.getResponse();
-    let message: string | string[] = exception.message;
+    let message: string | string[] = getErrorMessage(errorCode, exception.message);
     if (typeof res === 'object' && res !== null) {
       const resObj = res as Record<string, unknown>;
       if (resObj.message) {
-        message = resObj.message as string | string[];
+        if (Array.isArray(resObj.message)) {
+          message = resObj.message as string[];
+        } else if (typeof resObj.message === 'string') {
+          message = getErrorMessage(resObj.message, resObj.message);
+        }
       }
     }
 

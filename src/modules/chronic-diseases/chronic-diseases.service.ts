@@ -132,7 +132,10 @@ export class ChronicDiseasesService implements OnModuleInit {
   async getChronicDiseaseById(id: string): Promise<ChronicDisease> {
     const disease = await this.chronicDiseaseRepository.findOne({ where: { id } });
     if (!disease) {
-      throw new NotFound(ErrorCode.CHRONIC_DISEASE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.CHRONIC_DISEASE_NOT_FOUND,
+        `Không tìm thấy bệnh mãn tính với mã ID: ${id}`,
+      );
     }
     return disease;
   }
@@ -149,7 +152,10 @@ export class ChronicDiseasesService implements OnModuleInit {
     });
 
     if (existing) {
-      throw new Conflict(ErrorCode.CHRONIC_DISEASE_CODE_ALREADY_EXISTS);
+      throw new Conflict(
+        ErrorCode.CHRONIC_DISEASE_CODE_ALREADY_EXISTS,
+        `Mã bệnh mãn tính "${dto.code}" đã tồn tại trong danh mục`,
+      );
     }
 
     const disease = this.chronicDiseaseRepository.create({
@@ -228,7 +234,10 @@ export class ChronicDiseasesService implements OnModuleInit {
         where: { id: In(diseaseIds) },
       });
       if (foundCount !== diseaseIds.length) {
-        throw new NotFound(ErrorCode.CHRONIC_DISEASE_NOT_FOUND);
+        throw new NotFound(
+          ErrorCode.CHRONIC_DISEASE_NOT_FOUND,
+          'Một hoặc nhiều mã bệnh mãn tính được chọn không tồn tại trong danh mục hệ thống',
+        );
       }
     }
 

@@ -86,7 +86,10 @@ export class HealthProfilesService {
         where: { accountId, relationship: ProfileRelationship.SELF },
       });
       if (existingSelf) {
-        throw new Conflict(ErrorCode.RESOURCE_ALREADY_EXISTS);
+        throw new Conflict(
+          ErrorCode.RESOURCE_ALREADY_EXISTS,
+          'Tài khoản này đã có hồ sơ sức khỏe cá nhân (chính chủ / SELF), không thể tạo thêm',
+        );
       }
     }
 
@@ -131,7 +134,10 @@ export class HealthProfilesService {
     staff: StaffJwtPayload,
   ): Promise<HealthProfile> {
     if (!staff.facilityId) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Tài khoản nhân viên y tế chưa được liên kết với cơ sở y tế để tạo hồ sơ',
+      );
     }
 
     // 1. Check if phone number belongs to an existing App Account
@@ -145,7 +151,7 @@ export class HealthProfilesService {
       }
     }
 
-    // 2. Create health profile
+    // 2. Create profile
     const profile = this.healthProfileRepository.create({
       relationship: dto.relationship || ProfileRelationship.OTHER,
       fullName: dto.fullName,
@@ -216,17 +222,26 @@ export class HealthProfilesService {
     });
 
     if (!profile) {
-      throw new NotFound(ErrorCode.HEALTH_PROFILE_NOT_FOUND);
+      throw new NotFound(
+        ErrorCode.HEALTH_PROFILE_NOT_FOUND,
+        `Không tìm thấy hồ sơ sức khỏe với mã ID: ${id}`,
+      );
     }
 
     if (userOrAccountId) {
       if (typeof userOrAccountId === 'string') {
         if (profile.accountId !== userOrAccountId) {
-          throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+          throw new Forbidden(
+            ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+            'Bạn không có quyền truy cập hồ sơ sức khỏe của người dùng khác',
+          );
         }
       } else if (userOrAccountId.type === 'APP_ACCOUNT') {
         if (profile.accountId !== userOrAccountId.userId) {
-          throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED);
+          throw new Forbidden(
+            ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+            'Bạn không có quyền truy cập hồ sơ sức khỏe của người dùng khác',
+          );
         }
       } else if (userOrAccountId.type === 'STAFF') {
         const staff = userOrAccountId.staff;
@@ -235,7 +250,10 @@ export class HealthProfilesService {
             (link) => link.facilityId === userOrAccountId.facilityId,
           );
           if (!hasLink && profile.facilityLinks && profile.facilityLinks.length > 0) {
-            throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+            throw new Forbidden(
+              ErrorCode.FACILITY_ACCESS_DENIED,
+              'Hồ sơ sức khỏe này chưa được liên kết với cơ sở y tế của bạn',
+            );
           }
         }
       }
@@ -265,7 +283,10 @@ export class HealthProfilesService {
 
     if (staff && staff.facilityId) {
       if (query.facilityId && query.facilityId !== staff.facilityId && staff.role !== StaffRole.VNDOCTOR_ADMIN) {
-        throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Bạn không có quyền xem danh sách bệnh nhân của cơ sở y tế khác',
+        );
       }
       if (staff.role !== StaffRole.VNDOCTOR_ADMIN) {
         targetFacilityId = staff.facilityId;
@@ -273,7 +294,10 @@ export class HealthProfilesService {
     }
 
     if (!targetFacilityId && staff?.role !== StaffRole.VNDOCTOR_ADMIN) {
-      throw new Forbidden(ErrorCode.FACILITY_ACCESS_DENIED);
+      throw new Forbidden(
+        ErrorCode.FACILITY_ACCESS_DENIED,
+        'Yêu cầu xác thực cơ sở y tế để lấy danh sách bệnh nhân',
+      );
     }
 
     const page = Math.max(1, Number(query.page) || 1);
@@ -404,7 +428,10 @@ export class HealthProfilesService {
         where: { accountId: profile.accountId, relationship: ProfileRelationship.SELF },
       });
       if (existingSelf && existingSelf.id !== id) {
-        throw new Conflict(ErrorCode.RESOURCE_ALREADY_EXISTS);
+        throw new Conflict(
+          ErrorCode.RESOURCE_ALREADY_EXISTS,
+          'Tài khoản này đã có hồ sơ sức khỏe cá nhân (chính chủ / SELF) khác, không thể chuyển hồ sơ này sang SELF',
+        );
       }
     }
 

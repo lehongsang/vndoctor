@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { LoggerService } from '../logger/logger.service';
 import { getCorrelationId } from '../middlewares/correlation-id.middleware';
 import { buildRequestLogMetadata } from './request-log-metadata';
-import { ErrorCode } from '../exceptions/error-codes';
+import { ErrorCode, getErrorMessage } from '../exceptions/error-codes';
 
 /**
  * Global catch-all exception filter.
@@ -45,13 +45,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     }
 
-    let message: string | string[] = fallbackMessage;
+    let message: string | string[] = getErrorMessage(errorCode, fallbackMessage);
     if (exception instanceof HttpException) {
       const res = exception.getResponse();
       if (typeof res === 'object' && res !== null) {
         const resObj = res as Record<string, unknown>;
         if (resObj.message) {
-          message = resObj.message as string | string[];
+          if (Array.isArray(resObj.message)) {
+            message = resObj.message as string[];
+          } else if (typeof resObj.message === 'string') {
+            message = getErrorMessage(resObj.message, resObj.message);
+          }
         }
       }
     }
