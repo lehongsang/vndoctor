@@ -1,4 +1,5 @@
 import {
+  DEFAULT_ALLOWED_ORIGINS,
   buildCorsOriginAllowlist,
   buildCorsOriginOption,
   parseCorsOriginList,
@@ -22,10 +23,10 @@ describe('cors origin helpers', () => {
     ]);
   });
 
-  it('returns an empty allowlist when the CSV env is not set', () => {
+  it('returns default allowlist when the CSV env is not set', () => {
     delete process.env.CORS_ALLOWED_ORIGINS;
 
-    expect(buildCorsOriginAllowlist()).toEqual([]);
+    expect(buildCorsOriginAllowlist()).toEqual(DEFAULT_ALLOWED_ORIGINS);
   });
 
   it('allows any origin outside production for local development', () => {
@@ -35,10 +36,13 @@ describe('cors origin helpers', () => {
     expect(buildCorsOriginOption()).toBe(true);
   });
 
-  it('uses the configured allowlist in production', () => {
+  it('uses the configured allowlist in production combined with default origins', () => {
     process.env.NODE_ENV = 'production';
     process.env.CORS_ALLOWED_ORIGINS = 'https://app.example.com';
 
-    expect(buildCorsOriginOption()).toEqual(['https://app.example.com']);
+    expect(buildCorsOriginOption()).toEqual([
+      ...DEFAULT_ALLOWED_ORIGINS,
+      'https://app.example.com',
+    ]);
   });
 });

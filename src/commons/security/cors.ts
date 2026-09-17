@@ -1,5 +1,10 @@
 const CORS_ALLOWED_ORIGINS_ENV = 'CORS_ALLOWED_ORIGINS';
 
+export const DEFAULT_ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'https://vndoctorfe.onrender.com',
+];
+
 export type CorsOriginOption = true | string[];
 
 /**
@@ -23,14 +28,16 @@ export function parseCorsOriginList(csvOrigins?: string): string[] {
 
 /**
  * Builds the shared frontend origin allowlist used by HTTP CORS, Socket.IO, and Better Auth.
- * Uses one CSV environment variable shared across HTTP CORS, Socket.IO, and Better Auth.
+ * Uses default origins combined with the CSV environment variable.
  *
  * @returns Distinct, non-empty allowed origins.
  */
 export function buildCorsOriginAllowlist(): string[] {
-  return parseCorsOriginList(
+  const envOrigins = parseCorsOriginList(
     process.env[CORS_ALLOWED_ORIGINS_ENV],
   );
+
+  return [...new Set([...DEFAULT_ALLOWED_ORIGINS, ...envOrigins])];
 }
 
 /**
