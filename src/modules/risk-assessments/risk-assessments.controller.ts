@@ -57,19 +57,23 @@ export class RiskAssessmentsController {
   }
 
   @Post()
-  @UseGuards(AppAuthGuard)
+  @UseGuards(CombinedAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'App Auth - Gửi dữ liệu đánh giá yếu tố nguy cơ tim mạch',
+    summary: 'App / Staff Auth - Gửi dữ liệu đánh giá yếu tố nguy cơ tim mạch',
     description:
-      'Hỗ trợ 2 luồng: Luồng không bệnh nền (SCORE2 6 chỉ số) và Luồng có bệnh nền (Tổn thương cơ quan đích & Bệnh lý mạn tính). Tự động tra cứu từ điển y khoa và trả về phân tầng cùng cờ đỏ cảnh báo.',
+      'Hỗ trợ Bệnh nhân hoặc Bác sĩ/Nhân viên y tế gửi dữ liệu đánh giá nguy cơ (SCORE2 hoặc có bệnh nền). Tự động tra cứu từ điển y khoa và trả về phân tầng cùng cờ đỏ cảnh báo.',
     response: { serialization: RiskFactorAssessmentResult },
   })
   async create(
     @Body() dto: CreateRiskAssessmentDto,
-    @CurrentAccount() account: AppAccountJwtPayload,
+    @CurrentAuthUser() user: AuthUserContext,
   ) {
-    return this.riskAssessmentsService.create(dto, account.id);
+    if (user.type === 'STAFF' && user.staff?.facilityId && !dto.facilityId) {
+      dto.facilityId = user.staff.facilityId;
+    }
+    const accountId = user.type === 'APP_ACCOUNT' ? user.account?.id : undefined;
+    return this.riskAssessmentsService.create(dto, accountId);
   }
 
   @Get()
@@ -106,18 +110,19 @@ export class RiskAssessmentsController {
   }
 
   @Get(':id')
-  @UseGuards(AppAuthGuard)
+  @UseGuards(CombinedAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'App Auth - Lấy chi tiết kết quả đánh giá nguy cơ',
+    summary: 'App / Staff Auth - Lấy chi tiết kết quả đánh giá nguy cơ',
     description: 'Xem chi tiết kết quả phân tầng nguy cơ, điểm nguy cơ và kết luận đánh giá của bác sĩ',
     response: { serialization: RiskFactorAssessmentResult },
   })
   async findOne(
     @Param('id') id: string,
-    @CurrentAccount() account: AppAccountJwtPayload,
+    @CurrentAuthUser() user: AuthUserContext,
   ) {
-    return this.riskAssessmentsService.findOne(id, account.id);
+    const accountId = user.type === 'APP_ACCOUNT' ? user.account?.id : undefined;
+    return this.riskAssessmentsService.findOne(id, accountId);
   }
 
   @Post(':id/evaluate')
