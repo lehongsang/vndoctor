@@ -18,6 +18,7 @@ import {
   Unauthorized,
   ErrorCode,
 } from '@/commons/exceptions';
+import { ConfigService } from '@nestjs/config';
 import { FacilitiesService } from '@/modules/facilities/facilities.service';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
@@ -30,7 +31,19 @@ export class StaffService {
     @InjectRepository(StaffUser)
     private readonly staffRepository: Repository<StaffUser>,
     private readonly facilitiesService: FacilitiesService,
+    private readonly configService?: ConfigService,
   ) {}
+
+  /**
+   * Gets the default initial password for newly created staff accounts from environment config or fallback.
+   */
+  public getDefaultStaffPassword(): string {
+    return (
+      this.configService?.get<string>('DEFAULT_STAFF_PASSWORD') ||
+      process.env.DEFAULT_STAFF_PASSWORD ||
+      StaffService.DEFAULT_STAFF_PASSWORD
+    );
+  }
 
   /**
    * Helper to generate unique staff code (e.g. STF-20260912-ABCD).
@@ -159,9 +172,10 @@ export class StaffService {
       resolvedUsername = `${resolvedUsername}_${suffix}`;
     }
 
-    // 5. Hash default password 'vndoctor123'
+    // 5. Hash default password from env or fallback 'vndoctor123'
+    const defaultPassword = this.getDefaultStaffPassword();
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(StaffService.DEFAULT_STAFF_PASSWORD, salt);
+    const passwordHash = await bcrypt.hash(defaultPassword, salt);
 
     // 6. Create and save staff
     const staff = this.staffRepository.create({

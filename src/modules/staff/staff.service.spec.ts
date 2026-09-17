@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -23,21 +24,15 @@ describe('StaffService', () => {
 
   const mockStaff: StaffUser = {
     id: 'staff-111',
-    facilityId: 'fac-111',
-    facility: mockFacility as unknown as StaffUser['facility'],
     staffCode: 'CCHN-01',
-    username: 'dr_an',
-    passwordHash: '$2a$10$hashedpassword',
     fullName: 'BS. Nguyễn Văn An',
-    role: StaffRole.DOCTOR,
-    specialty: 'Tim mạch',
     email: 'dr.an@hospital.vn',
-    phoneNumber: '0901234567',
+    username: 'dr_an',
+    role: StaffRole.DOCTOR,
+    facilityId: 'fac-111',
     isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    generateId: () => {},
-  };
+    passwordHash: '$2a$10$hashedpassword',
+  } as StaffUser;
 
   const mockRepository = {
     findOne: jest.fn(),
@@ -62,6 +57,15 @@ describe('StaffService', () => {
         {
           provide: FacilitiesService,
           useValue: mockFacilitiesService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string) => {
+              if (key === 'DEFAULT_STAFF_PASSWORD') return 'vndoctor123';
+              return null;
+            }),
+          },
         },
       ],
     }).compile();
