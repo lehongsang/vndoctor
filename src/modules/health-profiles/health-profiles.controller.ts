@@ -131,7 +131,7 @@ export class HealthProfilesController {
   @ApiBearerAuth('access-token')
   @Doc({
     summary: 'App Auth - Lấy tất cả hồ sơ sức khỏe của tài khoản đang đăng nhập',
-    description: 'Trả về danh sách hồ sơ cá nhân và người thân kèm danh mục bệnh nền đã chọn',
+    description: 'Trả về danh sách hồ sơ cá nhân và người thân kèm danh mục bệnh nền và các gói chăm sóc điều trị (Care Subscriptions & Care Team) đã đăng ký.',
     response: { serialization: HealthProfile, isArray: true },
   })
   async getMyProfiles(@CurrentAccount() account: AppAccountJwtPayload) {

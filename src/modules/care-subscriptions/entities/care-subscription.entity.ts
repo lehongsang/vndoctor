@@ -23,7 +23,7 @@ export class PatientCareSubscription extends BaseEntity {
   @Column({ type: 'uuid', name: 'health_profile_id' })
   healthProfileId: string;
 
-  @ManyToOne(() => HealthProfile, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => HealthProfile, (profile: HealthProfile) => profile.careSubscriptions, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'health_profile_id' })
   healthProfile?: Relation<HealthProfile>;
 

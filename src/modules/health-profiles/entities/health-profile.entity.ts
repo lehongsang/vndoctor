@@ -137,6 +137,6 @@ export class HealthProfile extends BaseEntity {
     description: 'Thông tin gói chăm sóc và bác sĩ được phân công (nếu có)',
   })
   @Expose()
-  subscription?: Record<string, unknown>;
+  subscription?: Record<string, unknown> | null;
 }
 

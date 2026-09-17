@@ -16,7 +16,7 @@ import {
   NotFound,
   ErrorCode,
 } from '@/commons/exceptions';
-import { FacilityPatientLinkStatus, ProfileRelationship, StaffRole } from '@/commons/enums/vndoctor.enum';
+import { CareSubscriptionStatus, FacilityPatientLinkStatus, ProfileRelationship, StaffRole } from '@/commons/enums/vndoctor.enum';
 import { ChronicDiseasesService } from '@/modules/chronic-diseases/chronic-diseases.service';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { AuthUserContext } from '@/commons/decorators/current-auth-user.decorator';
@@ -157,14 +157,56 @@ export class HealthProfilesService {
    * Retrieves all Health Profiles belonging to an App Account.
    *
    * @param accountId - Owning Account UUID.
-   * @returns Array of HealthProfile objects with chronic diseases & facility.
+   * @returns Array of HealthProfile objects with chronic diseases, facility & care subscriptions.
    */
   async getMyProfiles(accountId: string): Promise<HealthProfile[]> {
-    return this.healthProfileRepository.find({
+    const profiles = await this.healthProfileRepository.find({
       where: { accountId },
-      relations: ['profileChronicDisease', 'facility'],
+      relations: [
+        'profileChronicDisease',
+        'facility',
+        'careSubscriptions',
+        'careSubscriptions.carePackage',
+        'careSubscriptions.assignedDoctor',
+        'careSubscriptions.assignedNurse',
+        'careSubscriptions.assignedExpert',
+      ],
       order: { relationship: 'ASC', createdAt: 'ASC' },
     });
+
+    for (const profile of profiles) {
+      if (profile.careSubscriptions && profile.careSubscriptions.length > 0) {
+        profile.careSubscriptions.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        const activeSub =
+          profile.careSubscriptions.find(
+            (s) => s.status === CareSubscriptionStatus.ACTIVE,
+          ) || profile.careSubscriptions[0];
+
+        if (activeSub) {
+          profile.subscription = {
+            id: activeSub.id,
+            status: activeSub.status,
+            startedAt: activeSub.startedAt,
+            expiresAt: activeSub.expiresAt,
+            carePackage: activeSub.carePackage,
+            assignedDoctor: activeSub.assignedDoctor,
+            assignedNurse: activeSub.assignedNurse,
+            assignedExpert: activeSub.assignedExpert,
+            createdAt: activeSub.createdAt,
+            updatedAt: activeSub.updatedAt,
+          };
+        } else {
+          profile.subscription = null;
+        }
+      } else {
+        profile.subscription = null;
+        profile.careSubscriptions = [];
+      }
+    }
+
+    return profiles;
   }
 
   /**
@@ -180,7 +222,15 @@ export class HealthProfilesService {
   ): Promise<HealthProfile> {
     const profile = await this.healthProfileRepository.findOne({
       where: { id },
-      relations: ['profileChronicDisease', 'facility'],
+      relations: [
+        'profileChronicDisease',
+        'facility',
+        'careSubscriptions',
+        'careSubscriptions.carePackage',
+        'careSubscriptions.assignedDoctor',
+        'careSubscriptions.assignedNurse',
+        'careSubscriptions.assignedExpert',
+      ],
     });
 
     if (!profile) {
@@ -188,6 +238,36 @@ export class HealthProfilesService {
         ErrorCode.HEALTH_PROFILE_NOT_FOUND,
         `Không tìm thấy hồ sơ sức khỏe với mã ID: ${id}`,
       );
+    }
+
+    if (profile.careSubscriptions && profile.careSubscriptions.length > 0) {
+      profile.careSubscriptions.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      const activeSub =
+        profile.careSubscriptions.find(
+          (s) => s.status === CareSubscriptionStatus.ACTIVE,
+        ) || profile.careSubscriptions[0];
+
+      if (activeSub) {
+        profile.subscription = {
+          id: activeSub.id,
+          status: activeSub.status,
+          startedAt: activeSub.startedAt,
+          expiresAt: activeSub.expiresAt,
+          carePackage: activeSub.carePackage,
+          assignedDoctor: activeSub.assignedDoctor,
+          assignedNurse: activeSub.assignedNurse,
+          assignedExpert: activeSub.assignedExpert,
+          createdAt: activeSub.createdAt,
+          updatedAt: activeSub.updatedAt,
+        };
+      } else {
+        profile.subscription = null;
+      }
+    } else {
+      profile.subscription = null;
+      profile.careSubscriptions = [];
     }
 
     if (userOrAccountId) {
