@@ -38,7 +38,7 @@ export class RiskAssessmentsController {
   @ApiQuery({
     name: 'healthProfileId',
     required: true,
-    description: 'UUID của hồ sơ sức khỏe cá nhân (PatientHealthProfile ID)',
+    description: 'UUID của hồ sơ sức khỏe cá nhân (HealthProfile ID)',
     example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   })
   @Doc({
@@ -48,12 +48,10 @@ export class RiskAssessmentsController {
   })
   async getFormSchema(
     @Query('healthProfileId') healthProfileId: string,
-    @Query('patientHealthProfileId') patientHealthProfileId: string,
     @CurrentAuthUser() user: AuthUserContext,
   ) {
-    const targetProfileId = healthProfileId || patientHealthProfileId;
     const accountId = user.type === 'APP_ACCOUNT' ? user.account?.id : undefined;
-    return this.riskAssessmentsService.getFormSchema(targetProfileId, accountId);
+    return this.riskAssessmentsService.getFormSchema(healthProfileId, accountId);
   }
 
   @Post()
@@ -130,8 +128,8 @@ export class RiskAssessmentsController {
   @Roles(StaffRole.DOCTOR, StaffRole.ADMIN)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'Staff Auth (Doctor) - Bác sĩ thẩm định và kết luận mức độ nguy cơ',
-    description: 'Bác sĩ xác nhận điểm nguy cơ, phân tầng mức độ nguy cơ (LOW, HIGH, VERY_HIGH), chẩn đoán và khuyến nghị phác đồ',
+    summary: 'Staff Auth (Doctor) - Bác sĩ xác nhận (confirm) phiếu phân tầng và đưa ra khuyến nghị',
+    description: 'Truyền vào ID của Result (hoặc Input). Bác sĩ xác nhận kết quả phân tầng của hệ thống và ghi nhận kết luận chẩn đoán, khuyến nghị điều trị.',
     response: { serialization: RiskFactorAssessmentResult },
   })
   async evaluate(

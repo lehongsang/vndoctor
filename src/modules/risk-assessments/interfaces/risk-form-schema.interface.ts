@@ -57,6 +57,12 @@ export interface DynamicFormSchemaResponse {
     dob: string;
     age: number;
     gender: string;
+    recordedChronicDiseases?: Array<{
+      id: string;
+      code?: string;
+      name: string;
+      icd10Code?: string;
+    }>;
   };
   sections: FormSectionSchema[];
 }

@@ -1,7 +1,7 @@
 import { BaseEntity } from '@/commons/entities/base.entity';
 import { VnDoctorRiskLevel } from '@/commons/enums/vndoctor.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, Relation } from 'typeorm';
+import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, Relation } from 'typeorm';
 import { RiskFactorAssessmentInput } from './risk-factor-assessment-input.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 
@@ -13,6 +13,9 @@ import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 @Index('risk_factor_assessment_results_index_14', ['riskLevel'])
 @Index('risk_factor_assessment_results_index_15', ['evaluatedAt'])
 export class RiskFactorAssessmentResult extends BaseEntity {
+  @ApiPropertyOptional({ description: 'ID kết quả phân tầng (alias of id)' })
+  assessmentResultId?: string;
+
   @ApiProperty({ description: 'Assessment Input ID (1-to-1)' })
   @Column({ type: 'uuid', unique: true })
   assessmentInputId: string;
@@ -48,4 +51,9 @@ export class RiskFactorAssessmentResult extends BaseEntity {
   @ApiProperty({ description: 'Evaluation completion timestamp' })
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   evaluatedAt: Date;
+
+  @AfterLoad()
+  populateAssessmentResultId() {
+    this.assessmentResultId = this.id;
+  }
 }

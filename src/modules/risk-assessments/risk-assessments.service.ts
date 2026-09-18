@@ -22,6 +22,7 @@ export interface RedFlagItem {
 }
 
 export type RiskAssessmentResultWithRedFlags = RiskFactorAssessmentResult & {
+  assessmentResultId?: string;
   hasWarningAlert?: boolean;
   redFlags?: RedFlagItem[];
 };
@@ -87,30 +88,58 @@ export class RiskAssessmentsService {
     const genderText = profile.gender === ProfileGender.FEMALE ? 'Nữ' : 'Nam';
 
     // 2. Kiểm tra danh sách bệnh nền đã ghi nhận
-    const diseaseCodes = new Set<string>();
-    const diseaseNames = new Set<string>();
-
+    let recordedDiseases: ChronicDisease[] = [];
     if (profile.profileChronicDisease?.diseaseIds?.length) {
-      const diseases = await this.chronicDiseaseRepo.findByIds(profile.profileChronicDisease.diseaseIds);
-      for (const d of diseases) {
-        diseaseCodes.add(d.code?.toUpperCase() || '');
-        diseaseNames.add(d.name?.toLowerCase() || '');
-      }
+      recordedDiseases = await this.chronicDiseaseRepo.findByIds(profile.profileChronicDisease.diseaseIds);
     }
 
-    const hasRecordedDiabetes =
-      diseaseCodes.has('DIABETES') ||
-      Array.from(diseaseNames).some((n) => n.includes('đái tháo đường') || n.includes('tiểu đường'));
+    const diseaseText = recordedDiseases
+      .map((d) => `${d.code || ''} ${d.name || ''} ${d.icd10Code || ''}`.toLowerCase())
+      .join(' | ');
 
-    const hasRecordedStroke =
-      diseaseCodes.has('STROKE') ||
-      Array.from(diseaseNames).some((n) => n.includes('đột quỵ') || n.includes('tai biến'));
+    const hasRecorded = (patterns: string[]) => {
+      return patterns.some((p) => diseaseText.includes(p.toLowerCase()));
+    };
 
-    const hasRecordedHypertension =
-      diseaseCodes.has('HYPERTENSION') ||
-      Array.from(diseaseNames).some((n) => n.includes('tăng huyết áp') || n.includes('huyết áp cao'));
+    // Khối 2: Tổn thương cơ quan đích (Target Organ Damage)
+    const hasRecordedLVH = hasRecorded(['score2_6_1', 'lvh', 'i51.7', 'phì đại thất trái', 'phì đại cơ tim', 'tim to']);
+    const hasRecordedAlbuminuria = hasRecorded(['score2_6_2', 'r80', 'albumin niệu', 'microalbumin', 'protein niệu']);
+    const hasRecordedCarotidDamage = hasRecorded(['score2_6_3', 'h35.0', 'đáy mắt', 'võng mạc', 'mạch cảnh']);
+    const hasRecordedSilentInfarct = hasRecorded(['score2_6_4', 'silent infarct', 'i63.9', 'nhồi máu não thầm lặng', 'tổn thương thầm lặng trên não']);
 
-    const hasAnyUnderlying = hasRecordedDiabetes || hasRecordedStroke || hasRecordedHypertension || diseaseCodes.size > 0;
+    // Khối 3: Bệnh lý mạn tính & Biến chứng tim mạch - thận (Chronic Diseases)
+    const hasRecordedDiabetes = hasRecorded(['score2_9', 'diabetes', 't2d', 't1d', 'e10', 'e11', 'e14', 'đái tháo đường', 'tiểu đường']);
+    const hasRecordedStroke = hasRecorded(['score2_8_4', 'stroke', 'i64', 'i63', 'đột quỵ', 'tai biến']);
+    const hasRecordedMI = hasRecorded(['score2_8_1', 'myocardial_infarction', 'i21', 'nhồi máu cơ tim']);
+    const hasRecordedACS = hasRecorded(['score2_8_2', 'acute_coronary_syndrome', 'i20.0', 'hội chứng vành cấp', 'đau thắt ngực không ổn định']);
+    const hasRecordedCAD = hasRecorded(['score2_8_3', 'coronary_artery_disease', 'i25', 'bệnh động mạch vành', 'bệnh mạch vành', 'đau thắt ngực ổn định']);
+    const hasRecordedTIA = hasRecorded(['score2_8_5', 'tia', 'g45', 'thiếu máu não thoáng qua', 'thiếu máu não cục bộ thoáng qua']);
+    const hasRecordedAneurysm = hasRecorded(['score2_8_6', 'aortic_aneurysm', 'i71', 'phình động mạch chủ']);
+    const hasRecordedPAD = hasRecorded(['score2_8_7', 'peripheral_artery_disease', 'i73.9', 'i70.2', 'bệnh mạch máu ngoại vi', 'bệnh động mạch ngoại vi', 'mạch chi']);
+    const hasRecordedAtherosclerosis = hasRecorded(['score2_8_8', 'atherosclerosis', 'i70', 'xơ vữa', 'vữa xơ']);
+    const hasRecordedFH = hasRecorded(['score2_5_1', 'score2_5_2', 'familial_hypercholesterolemia', 'tăng cholesterol máu gia đình', 'tăng cholesterol gia đình']);
+
+    // Mapping field code -> boolean pre-filled & locked
+    const lockedFieldMap: Record<string, boolean> = {
+      hasLeftVentricularHypertrophy: hasRecordedLVH,
+      hasAlbuminuriaOrMicroalbuminuria: hasRecordedAlbuminuria,
+      hasCarotidWallDamage: hasRecordedCarotidDamage,
+      hasSilentInfarct: hasRecordedSilentInfarct,
+      diabetes: hasRecordedDiabetes,
+      stroke: hasRecordedStroke,
+      hasMyocardialInfarction: hasRecordedMI,
+      hasAcuteCoronarySyndrome: hasRecordedACS,
+      hasCoronaryArteryDisease: hasRecordedCAD,
+      hasTia: hasRecordedTIA,
+      hasAorticAneurysm: hasRecordedAneurysm,
+      hasPeripheralArteryDisease: hasRecordedPAD,
+      hasAtherosclerosis: hasRecordedAtherosclerosis,
+      hasFamilialHypercholesterolemia: hasRecordedFH,
+    };
+
+    const hasAnyUnderlying =
+      Object.values(lockedFieldMap).some(Boolean) ||
+      recordedDiseases.length > 0;
 
     // 3. Clone và gán metadata Auto-fill & Lock vào Schema
     const sections: FormSectionSchema[] = JSON.parse(
@@ -125,11 +154,7 @@ export class RiskAssessmentsService {
           field.defaultValue = genderText;
         } else if (field.code === 'hasUnderlyingDisease' && hasAnyUnderlying) {
           field.defaultValue = true;
-        } else if (field.code === 'diabetes' && hasRecordedDiabetes) {
-          field.defaultValue = true;
-          field.disabled = true;
-          field.fixedReason = 'Đã ghi nhận trong hồ sơ sức khỏe';
-        } else if (field.code === 'stroke' && hasRecordedStroke) {
+        } else if (lockedFieldMap[field.code]) {
           field.defaultValue = true;
           field.disabled = true;
           field.fixedReason = 'Đã ghi nhận trong hồ sơ sức khỏe';
@@ -147,6 +172,12 @@ export class RiskAssessmentsService {
         dob: profile.dob,
         age: calculatedAge,
         gender: genderText,
+        recordedChronicDiseases: recordedDiseases.map((d) => ({
+          id: d.id,
+          code: d.code,
+          name: d.name,
+          icd10Code: d.icd10Code || undefined,
+        })),
       },
       sections,
     };
@@ -404,16 +435,17 @@ export class RiskAssessmentsService {
     const { hasWarningAlert, redFlags } = this.calculateRedFlags(savedInput);
 
     return Object.assign(savedResult, {
+      assessmentResultId: savedResult.id,
       hasWarningAlert,
       redFlags,
     });
   }
 
   /**
-   * Bác sĩ thẩm định và kết luận mức độ nguy cơ.
+   * Bác sĩ thẩm định, xác nhận (confirm) và đưa ra kết luận / lời khuyên chuyên môn cho kết quả phân tầng.
    *
-   * @param id - Assessment input UUID
-   * @param dto - EvaluateRiskAssessmentDto
+   * @param id - Assessment Result UUID (hoặc Assessment Input UUID)
+   * @param dto - EvaluateRiskAssessmentDto (conclusion, recommendations)
    * @param doctorId - Staff User UUID of evaluating doctor
    * @returns Updated Assessment result with red flags
    */
@@ -422,42 +454,34 @@ export class RiskAssessmentsService {
     dto: EvaluateRiskAssessmentDto,
     doctorId: string,
   ): Promise<RiskAssessmentResultWithRedFlags> {
-    const input = await this.inputRepo.findOne({
-      where: { id },
-      relations: ['assessmentResult'],
+    const result = await this.resultRepo.findOne({
+      where: [{ id }, { assessmentInputId: id }],
+      relations: ['assessmentInput'],
     });
 
-    if (!input) {
-      throw new NotFound(ErrorCode.RISK_ASSESSMENT_NOT_FOUND, 'Không tìm thấy phiếu đánh giá nguy cơ');
-    }
-
-    let result = input.assessmentResult;
     if (!result) {
-      result = this.resultRepo.create({
-        assessmentInputId: input.id,
-      });
+      throw new NotFound(ErrorCode.RISK_ASSESSMENT_NOT_FOUND, 'Không tìm thấy kết quả phân tầng nguy cơ');
     }
 
     result.doctorId = doctorId;
-    result.riskLevel = dto.riskLevel;
-    if (dto.riskScore !== undefined) result.riskScore = dto.riskScore;
     if (dto.conclusion !== undefined) result.conclusion = dto.conclusion;
     if (dto.recommendations !== undefined) result.recommendations = dto.recommendations;
     result.evaluatedAt = new Date();
 
     const savedResult = await this.resultRepo.save(result);
 
-    input.status = AssessmentStatus.EVALUATED;
-    await this.inputRepo.save(input);
-
     const fullResult = (await this.resultRepo.findOne({
       where: { id: savedResult.id },
-      relations: ['doctor'],
+      relations: ['doctor', 'assessmentInput'],
     })) as RiskFactorAssessmentResult;
 
-    const { hasWarningAlert, redFlags } = this.calculateRedFlags(input);
+    const input = result.assessmentInput || (await this.inputRepo.findOne({ where: { id: result.assessmentInputId } }));
+    const { hasWarningAlert, redFlags } = input
+      ? this.calculateRedFlags(input)
+      : { hasWarningAlert: false, redFlags: [] };
 
     return Object.assign(fullResult, {
+      assessmentResultId: fullResult.id,
       hasWarningAlert,
       redFlags,
     });
@@ -562,6 +586,7 @@ export class RiskAssessmentsService {
     const { hasWarningAlert, redFlags } = this.calculateRedFlags(input);
 
     return Object.assign(result, {
+      assessmentResultId: result.id,
       hasWarningAlert,
       redFlags,
     });

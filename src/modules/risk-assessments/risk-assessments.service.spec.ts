@@ -210,10 +210,8 @@ describe('RiskAssessmentsService', () => {
   describe('evaluate', () => {
     it('should allow doctor to evaluate and update conclusion', async () => {
       const res = await service.evaluate(
-        'input-uuid-1',
+        'result-uuid-1',
         {
-          riskLevel: VnDoctorRiskLevel.VERY_HIGH,
-          riskScore: 16.0,
           conclusion: 'Bệnh nhân có nguy cơ tim mạch rất cao cần dùng Statin liều cao',
           recommendations: 'Uống Atorvastatin 40mg hàng ngày',
         },
