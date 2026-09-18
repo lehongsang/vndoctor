@@ -77,7 +77,7 @@ async function runSeed() {
   const dictionaryRepo = dataSource.getRepository(TreatmentTargetDictionary);
   const chronicDiseaseRepo = dataSource.getRepository(ChronicDisease);
 
-  const defaultPassword = 'Password@123';
+  const defaultPassword = process.env.DEFAULT_STAFF_PASSWORD || 'Password@123';
   const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
   // 1. Seed Medical Facility
