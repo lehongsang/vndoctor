@@ -2,6 +2,7 @@ import { BaseEntity } from '@/commons/entities/base.entity';
 import { CarePackageStatus, CarePackageType } from '@/commons/enums/vndoctor.enum';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import { DecimalTransformer } from '@/utils/typeorm-transformers';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
@@ -86,6 +87,7 @@ export class CarePackage extends BaseEntity {
     scale: 2,
     default: 0,
     name: 'price_amount',
+    transformer: DecimalTransformer,
   })
   priceAmount: number;
 

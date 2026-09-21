@@ -80,6 +80,10 @@ export class HealthProfilesService {
       bloodType: dto.bloodType,
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
+      isSmoking: dto.isSmoking ?? false,
+      hasHypertension: dto.hasHypertension ?? false,
+      hasDyslipidemia: dto.hasDyslipidemia ?? false,
+      hasDiabetes: dto.hasDiabetes ?? false,
       accountId,
       facilityId: null,
       isLinked: false,
@@ -132,6 +136,10 @@ export class HealthProfilesService {
       bloodType: dto.bloodType,
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
+      isSmoking: dto.isSmoking ?? false,
+      hasHypertension: dto.hasHypertension ?? false,
+      hasDyslipidemia: dto.hasDyslipidemia ?? false,
+      hasDiabetes: dto.hasDiabetes ?? false,
       accountId: null,
       facilityId: staff.facilityId,
       isLinked: false,
@@ -603,6 +611,10 @@ export class HealthProfilesService {
     if (dto.bloodType !== undefined) profile.bloodType = dto.bloodType;
     if (dto.allergy !== undefined) profile.allergy = dto.allergy;
     if (dto.medicalHistory !== undefined) profile.medicalHistory = dto.medicalHistory;
+    if (dto.isSmoking !== undefined) profile.isSmoking = dto.isSmoking;
+    if (dto.hasHypertension !== undefined) profile.hasHypertension = dto.hasHypertension;
+    if (dto.hasDyslipidemia !== undefined) profile.hasDyslipidemia = dto.hasDyslipidemia;
+    if (dto.hasDiabetes !== undefined) profile.hasDiabetes = dto.hasDiabetes;
 
     await this.healthProfileRepository.save(profile);
 

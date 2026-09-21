@@ -22,6 +22,11 @@ export class VerifyPatientTargetDto {
   @IsOptional()
   glycemicTarget?: string;
 
+  @ApiPropertyOptional({ description: 'Target Renal / Kidney guidance adjusted by doctor' })
+  @IsString()
+  @IsOptional()
+  renalTarget?: string;
+
   @ApiPropertyOptional({ description: 'Diet Advice adjusted by doctor' })
   @IsString()
   @IsOptional()
@@ -32,8 +37,18 @@ export class VerifyPatientTargetDto {
   @IsOptional()
   exerciseAdvice?: string;
 
+  @ApiPropertyOptional({ description: 'Smoking cessation advice adjusted by doctor' })
+  @IsString()
+  @IsOptional()
+  smokingAdvice?: string;
+
   @ApiPropertyOptional({ description: 'Doctor clinical notes & verification remarks' })
   @IsString()
   @IsOptional()
   doctorNotes?: string;
+
+  @ApiPropertyOptional({ description: 'Expert Doctor consultation notes & remarks' })
+  @IsString()
+  @IsOptional()
+  expertNotes?: string;
 }

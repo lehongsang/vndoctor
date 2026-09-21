@@ -6,6 +6,7 @@ import { TreatmentTargetDictionary } from '@/modules/treatment-dictionaries/enti
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import { Examination } from '@/modules/examinations/entities/examination.entity';
 import { RiskFactorAssessmentResult } from '@/modules/risk-assessments/entities/risk-factor-assessment-result.entity';
+import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 import { TreatmentTargetsService } from './treatment-targets.service';
 import { TreatmentTargetsController } from './treatment-targets.controller';
 
@@ -18,6 +19,7 @@ import { TreatmentTargetsController } from './treatment-targets.controller';
       StaffUser,
       Examination,
       RiskFactorAssessmentResult,
+      PatientCareSubscription,
     ]),
   ],
   controllers: [TreatmentTargetsController],

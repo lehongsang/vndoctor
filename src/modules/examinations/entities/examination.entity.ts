@@ -6,6 +6,7 @@ import { HealthProfile } from '@/modules/health-profiles/entities/health-profile
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { RiskFactorAssessmentInput } from '@/modules/risk-assessments/entities/risk-factor-assessment-input.entity';
+import { DecimalTransformer } from '@/utils/typeorm-transformers';
 
 /**
  * Entity representing an Examination record (Phiếu khám bệnh).
@@ -66,7 +67,7 @@ export class Examination extends BaseEntity {
   diastolicBp?: number | null;
 
   @ApiPropertyOptional({ description: 'Body temperature (°C)', example: 36.8 })
-  @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true })
+  @Column({ type: 'decimal', precision: 4, scale: 1, nullable: true, transformer: DecimalTransformer })
   temperature?: number | null;
 
   @ApiPropertyOptional({ description: 'Oxygen saturation SpO2 (%)', example: 98 })
@@ -74,15 +75,15 @@ export class Examination extends BaseEntity {
   spo2?: number | null;
 
   @ApiPropertyOptional({ description: 'Height (cm)', example: 170.0 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   heightCm?: number | null;
 
   @ApiPropertyOptional({ description: 'Weight (kg)', example: 68.0 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   weightKg?: number | null;
 
   @ApiPropertyOptional({ description: 'BMI', example: 23.5 })
-  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true, transformer: DecimalTransformer })
   bmi?: number | null;
 
   @ApiPropertyOptional({ description: 'Reason for visit' })

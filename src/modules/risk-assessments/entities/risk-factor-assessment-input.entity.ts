@@ -5,6 +5,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, Relation } from
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { RiskFactorAssessmentResult } from './risk-factor-assessment-result.entity';
+import { DecimalTransformer } from '@/utils/typeorm-transformers';
 
 /**
  * Entity representing input clinical metrics for Cardiovascular/Metabolic Risk Factor Assessment.
@@ -64,35 +65,35 @@ export class RiskFactorAssessmentInput extends BaseEntity {
   diastolicBp?: number | null;
 
   @ApiPropertyOptional({ description: 'Total Cholesterol (mmol/L)', example: 5.2 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   totalCholesterol?: number | null;
 
   @ApiPropertyOptional({ description: 'HDL Cholesterol (mmol/L)', example: 1.2 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   hdlCholesterol?: number | null;
 
   @ApiPropertyOptional({ description: 'LDL Cholesterol (mmol/L)', example: 3.4 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   ldlCholesterol?: number | null;
 
   @ApiPropertyOptional({ description: 'Triglycerides (mmol/L)', example: 2.1 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   triglycerides?: number | null;
 
   @ApiPropertyOptional({ description: 'Fasting Blood Glucose (mmol/L)', example: 6.5 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   glucoseFasting?: number | null;
 
   @ApiPropertyOptional({ description: 'Height in cm', example: 168.0 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   heightCm?: number | null;
 
   @ApiPropertyOptional({ description: 'Weight in kg', example: 65.5 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   weightKg?: number | null;
 
   @ApiPropertyOptional({ description: 'Body Mass Index', example: 23.2 })
-  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true, transformer: DecimalTransformer })
   bmi?: number | null;
 
   // ==========================================
@@ -120,11 +121,11 @@ export class RiskFactorAssessmentInput extends BaseEntity {
   // ==========================================
 
   @ApiPropertyOptional({ description: 'eGFR (Estimated Glomerular Filtration Rate) mL/min/1.73m2', example: 75.5 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   egfr?: number | null;
 
   @ApiPropertyOptional({ description: 'ACR (Albumin-to-Creatinine Ratio) mg/g', example: 35.2 })
-  @Column({ type: 'decimal', precision: 7, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 7, scale: 2, nullable: true, transformer: DecimalTransformer })
   acr?: number | null;
 
   @ApiPropertyOptional({ description: 'Has diabetes mellitus', default: false })

@@ -4,14 +4,16 @@ import { Repository } from 'typeorm';
 import { PatientTreatmentTarget } from './entities/patient-treatment-target.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { TreatmentTargetDictionary } from '@/modules/treatment-dictionaries/entities/treatment-target-dictionary.entity';
+import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
 import {
-  CreatePatientTargetDto,
+  EscalateExpertTargetDto,
   QueryPatientTargetDto,
   UpdatePatientTargetDto,
   VerifyPatientTargetDto,
 } from './dtos';
-import { Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
-import { PatientTargetStatus } from '@/commons/enums/vndoctor.enum';
+import { BadRequest, Forbidden, NotFound, ErrorCode } from '@/commons/exceptions';
+import { CareSubscriptionStatus, PatientTargetStatus, StaffRole, VnDoctorRiskLevel } from '@/commons/enums/vndoctor.enum';
+import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 
 @Injectable()
 export class TreatmentTargetsService {
@@ -22,97 +24,217 @@ export class TreatmentTargetsService {
     private readonly healthProfileRepo: Repository<HealthProfile>,
     @InjectRepository(TreatmentTargetDictionary)
     private readonly dictionaryRepo: Repository<TreatmentTargetDictionary>,
+    @InjectRepository(PatientCareSubscription)
+    private readonly careSubscriptionRepo: Repository<PatientCareSubscription>,
   ) {}
 
   /**
-   * Create a personalized treatment target for a patient.
+   * Helper to derive Ministry of Health Target Dictionary Code (A1 -> G5)
+   * from risk level and patient age.
    *
-   * @param dto - CreatePatientTargetDto
-   * @param doctorId - Optional Doctor ID if created by Doctor
-   * @param accountId - Optional App Account ID if created by patient
-   * @returns Created PatientTreatmentTarget
+   * @param riskLevel - VnDoctorRiskLevel (LOW, HIGH, VERY_HIGH)
+   * @param age - Patient age in years
+   * @returns Dictionary code string (e.g. 'A1', 'B2', 'C1')
    */
-  async create(
-    dto: CreatePatientTargetDto,
-    doctorId?: string,
-    accountId?: string,
-  ): Promise<PatientTreatmentTarget> {
-    const profile = await this.healthProfileRepo.findOne({
-      where: { id: dto.healthProfileId },
+  public calculateDictionaryCode(riskLevel: VnDoctorRiskLevel, age: number): string {
+    if (riskLevel === VnDoctorRiskLevel.VERY_HIGH) {
+      if (age < 50) return 'C1';
+      if (age < 70) return 'C2';
+      return 'C3';
+    }
+    if (riskLevel === VnDoctorRiskLevel.HIGH) {
+      if (age < 50) return 'B1';
+      if (age < 70) return 'B2';
+      return 'B3';
+    }
+    // LOW risk
+    if (age < 50) return 'A1';
+    if (age < 70) return 'A2';
+    return 'A3';
+  }
+
+  /**
+   * Auto-generate personalized Treatment Target from Ministry of Health dictionary
+   * after a Risk Factor Assessment is calculated.
+   *
+   * Logic:
+   * 1. Check if HealthProfile has an ACTIVE care subscription.
+   * 2. If NO active subscription: Do NOT generate / show target for patient (exclusive feature).
+   * 3. If ACTIVE subscription: Fetch dictionary A1-G5, auto-generate Target in PENDING_REVIEW status,
+   *    and assign to the primary attending doctor in the package.
+   *
+   * @param params - Assessment results and profile metadata
+   * @returns Generated PatientTreatmentTarget or null if no active subscription
+   */
+  async generateFromRiskAssessment(params: {
+    healthProfileId: string;
+    assessmentResultId: string;
+    riskLevel: VnDoctorRiskLevel;
+    age: number;
+    examinationId?: string;
+  }): Promise<PatientTreatmentTarget | null> {
+    const { healthProfileId, assessmentResultId, riskLevel, age, examinationId } = params;
+
+    // 1. Kiểm tra gói chăm sóc còn hiệu lực (ACTIVE)
+    const activeSubscription = await this.careSubscriptionRepo.findOne({
+      where: {
+        healthProfileId,
+        status: CareSubscriptionStatus.ACTIVE,
+      },
+      relations: ['assignedDoctor', 'assignedExpert', 'carePackage'],
     });
 
-    if (!profile) {
-      throw new NotFound(
-        ErrorCode.HEALTH_PROFILE_NOT_FOUND,
-        `Không tìm thấy hồ sơ sức khỏe với mã ID: ${dto.healthProfileId}`,
-      );
+    if (!activeSubscription) {
+      // Bệnh nhân chưa có gói dịch vụ active -> Không sinh mục tiêu điều trị tự động
+      return null;
     }
 
-    if (accountId && profile.accountId !== accountId) {
-      throw new Forbidden(
-        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
-        'Bạn không có quyền tạo mục tiêu điều trị cho hồ sơ sức khỏe của người khác',
-      );
-    }
+    // 2. Map sang mã từ điển Bộ Y Tế (A1 -> G5)
+    const dictionaryCode = this.calculateDictionaryCode(riskLevel, age);
+    const dict = await this.dictionaryRepo.findOne({
+      where: { code: dictionaryCode },
+    });
 
-    let defaultBpTarget = dto.bpTarget;
-    let defaultLipidTarget = dto.lipidTarget;
-    let defaultBmiTarget = dto.bmiTarget;
-    let defaultGlycemicTarget = dto.glycemicTarget;
-    let defaultDietAdvice = dto.dietAdvice;
-    let defaultExerciseAdvice = dto.exerciseAdvice;
+    // 3. Khởi tạo / cập nhật bản ghi PatientTreatmentTarget
+    let target = await this.targetRepo.findOne({
+      where: { assessmentResultId },
+    });
 
-    // If dictionary code is referenced, populate defaults from dictionary if not explicitly provided
-    if (dto.dictionaryCode) {
-      const dict = await this.dictionaryRepo.findOne({
-        where: { code: dto.dictionaryCode.trim().toUpperCase() },
+    if (!target) {
+      target = this.targetRepo.create({
+        healthProfileId,
+        careSubscriptionId: activeSubscription.id,
+        doctorId: activeSubscription.assignedDoctorId ?? null,
+        expertId: activeSubscription.assignedExpertId ?? null,
+        examinationId: examinationId ?? null,
+        assessmentResultId,
+        dictionaryCode,
+        bpTarget: dict?.bpTarget ?? null,
+        lipidTarget: dict?.lipidTarget ?? null,
+        bmiTarget: dict?.bmiTarget ?? null,
+        glycemicTarget: dict?.glycemicTarget ?? null,
+        renalTarget: dict?.renalTarget ?? null,
+        dietAdvice: dict?.dietAdvice ?? null,
+        exerciseAdvice: dict?.exerciseAdvice ?? null,
+        smokingAdvice: dict?.smokingAdvice ?? dict?.notes ?? null,
+        doctorNotes: null,
+        expertNotes: null,
+        status: PatientTargetStatus.PENDING_REVIEW,
+        verifiedAt: null,
       });
-      if (dict) {
-        defaultBpTarget = defaultBpTarget ?? dict.bpTarget ?? undefined;
-        defaultLipidTarget = defaultLipidTarget ?? dict.lipidTarget ?? undefined;
-        defaultBmiTarget = defaultBmiTarget ?? dict.bmiTarget ?? undefined;
-        defaultGlycemicTarget = defaultGlycemicTarget ?? dict.glycemicTarget ?? undefined;
-        defaultDietAdvice = defaultDietAdvice ?? dict.dietAdvice ?? undefined;
-        defaultExerciseAdvice = defaultExerciseAdvice ?? dict.exerciseAdvice ?? undefined;
+    } else {
+      target.careSubscriptionId = activeSubscription.id;
+      target.doctorId = activeSubscription.assignedDoctorId ?? target.doctorId;
+      target.expertId = activeSubscription.assignedExpertId ?? target.expertId;
+      target.dictionaryCode = dictionaryCode;
+      target.bpTarget = dict?.bpTarget ?? target.bpTarget;
+      target.lipidTarget = dict?.lipidTarget ?? target.lipidTarget;
+      target.bmiTarget = dict?.bmiTarget ?? target.bmiTarget;
+      target.glycemicTarget = dict?.glycemicTarget ?? target.glycemicTarget;
+      target.renalTarget = dict?.renalTarget ?? target.renalTarget;
+      target.dietAdvice = dict?.dietAdvice ?? target.dietAdvice;
+      target.exerciseAdvice = dict?.exerciseAdvice ?? target.exerciseAdvice;
+      target.smokingAdvice = dict?.smokingAdvice ?? dict?.notes ?? target.smokingAdvice;
+    }
+
+    return this.targetRepo.save(target);
+  }
+
+  /**
+   * Bệnh nhân xem danh sách mục tiêu điều trị thuộc hồ sơ sức khỏe của mình.
+   *
+   * Business rule:
+   * Chỉ trả về các mục tiêu mà hồ sơ đang có gói dịch vụ ACTIVE, HOẶC đã được bác sĩ xác nhận (DOCTOR_VERIFIED / EXPERT_VERIFIED).
+   *
+   * @param query - QueryPatientTargetDto
+   * @param accountId - App Account UUID
+   * @returns Danh sách mục tiêu điều trị
+   */
+  async findAllForPatient(
+    query: QueryPatientTargetDto,
+    accountId: string,
+  ): Promise<{ data: PatientTreatmentTarget[]; total: number; page: number; limit: number }> {
+    if (query.healthProfileId) {
+      const profile = await this.healthProfileRepo.findOne({
+        where: { id: query.healthProfileId },
+      });
+      if (!profile) {
+        throw new NotFound(
+          ErrorCode.HEALTH_PROFILE_NOT_FOUND,
+          'Không tìm thấy hồ sơ sức khỏe',
+        );
+      }
+      if (profile.accountId && profile.accountId !== accountId) {
+        throw new Forbidden(
+          ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+          'Bạn không có quyền xem mục tiêu điều trị của hồ sơ này',
+        );
       }
     }
 
-    const target = this.targetRepo.create({
-      healthProfileId: dto.healthProfileId,
-      doctorId: doctorId ?? null,
-      examinationId: dto.examinationId ?? null,
-      assessmentResultId: dto.assessmentResultId ?? null,
-      dictionaryCode: dto.dictionaryCode ? dto.dictionaryCode.trim().toUpperCase() : null,
-      bpTarget: defaultBpTarget ?? null,
-      lipidTarget: defaultLipidTarget ?? null,
-      bmiTarget: defaultBmiTarget ?? null,
-      glycemicTarget: defaultGlycemicTarget ?? null,
-      dietAdvice: defaultDietAdvice ?? null,
-      exerciseAdvice: defaultExerciseAdvice ?? null,
-      doctorNotes: dto.doctorNotes ?? null,
-      status: dto.status ?? (doctorId ? PatientTargetStatus.DOCTOR_VERIFIED : PatientTargetStatus.DRAFT),
-      verifiedAt: doctorId ? new Date() : null,
-    });
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
 
-    return this.targetRepo.save(target);
+    const qb = this.targetRepo
+      .createQueryBuilder('target')
+      .innerJoinAndSelect('target.healthProfile', 'profile')
+      .leftJoinAndSelect('target.careSubscription', 'sub')
+      .leftJoinAndSelect('sub.carePackage', 'carePackage')
+      .leftJoinAndSelect('target.doctor', 'doctor')
+      .leftJoinAndSelect('target.expert', 'expert')
+      .leftJoinAndSelect('target.examination', 'examination')
+      .leftJoinAndSelect('target.assessmentResult', 'assessmentResult')
+      .leftJoinAndSelect('target.dictionary', 'dictionary')
+      .where('profile.accountId = :accountId', { accountId })
+      .andWhere(
+        '(sub.status = :activeStatus OR target.status IN (:...verifiedStatuses))',
+        {
+          activeStatus: CareSubscriptionStatus.ACTIVE,
+          verifiedStatuses: [
+            PatientTargetStatus.DOCTOR_VERIFIED,
+            PatientTargetStatus.EXPERT_VERIFIED,
+            PatientTargetStatus.COMPLETED,
+          ],
+        },
+      );
+
+    if (query.healthProfileId) {
+      qb.andWhere('target.healthProfileId = :healthProfileId', {
+        healthProfileId: query.healthProfileId,
+      });
+    }
+
+    if (query.status) {
+      qb.andWhere('target.status = :status', { status: query.status });
+    }
+
+    qb.orderBy('target.createdAt', 'DESC').skip(skip).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+    return { data, total, page, limit };
   }
 
   /**
-   * Doctor verifies and adjusts a patient's treatment target.
+   * Bệnh nhân xem chi tiết 1 mục tiêu điều trị của mình.
    *
    * @param id - Target UUID
-   * @param dto - VerifyPatientTargetDto
-   * @param doctorId - Doctor's Staff User ID
-   * @returns Verified PatientTreatmentTarget
+   * @param accountId - App Account UUID
+   * @returns PatientTreatmentTarget
    */
-  async verify(
-    id: string,
-    dto: VerifyPatientTargetDto,
-    doctorId: string,
-  ): Promise<PatientTreatmentTarget> {
+  async findOneForPatient(id: string, accountId: string): Promise<PatientTreatmentTarget> {
     const target = await this.targetRepo.findOne({
       where: { id },
-      relations: ['healthProfile'],
+      relations: [
+        'healthProfile',
+        'careSubscription',
+        'careSubscription.carePackage',
+        'doctor',
+        'expert',
+        'examination',
+        'assessmentResult',
+        'dictionary',
+      ],
     });
 
     if (!target) {
@@ -122,85 +244,121 @@ export class TreatmentTargetsService {
       );
     }
 
-    target.doctorId = doctorId;
-    target.status = PatientTargetStatus.DOCTOR_VERIFIED;
-    target.verifiedAt = new Date();
-
-    if (dto.bpTarget !== undefined) target.bpTarget = dto.bpTarget;
-    if (dto.lipidTarget !== undefined) target.lipidTarget = dto.lipidTarget;
-    if (dto.bmiTarget !== undefined) target.bmiTarget = dto.bmiTarget;
-    if (dto.glycemicTarget !== undefined) target.glycemicTarget = dto.glycemicTarget;
-    if (dto.dietAdvice !== undefined) target.dietAdvice = dto.dietAdvice;
-    if (dto.exerciseAdvice !== undefined) target.exerciseAdvice = dto.exerciseAdvice;
-    if (dto.doctorNotes !== undefined) target.doctorNotes = dto.doctorNotes;
-
-    return this.targetRepo.save(target);
-  }
-
-  /**
-   * Update an existing treatment target.
-   *
-   * @param id - Target UUID
-   * @param dto - UpdatePatientTargetDto
-   * @param doctorId - Optional Doctor ID
-   * @param accountId - Optional App Account ID
-   * @returns Updated PatientTreatmentTarget
-   */
-  async update(
-    id: string,
-    dto: UpdatePatientTargetDto,
-    doctorId?: string,
-    accountId?: string,
-  ): Promise<PatientTreatmentTarget> {
-    const target = await this.targetRepo.findOne({
-      where: { id },
-      relations: ['healthProfile'],
-    });
-
-    if (!target) {
-      throw new NotFound(
-        ErrorCode.TREATMENT_TARGET_NOT_FOUND,
-        `Không tìm thấy mục tiêu điều trị với mã ID: ${id}`,
-      );
-    }
-
-    if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
+    if (!target.healthProfile || target.healthProfile.accountId !== accountId) {
       throw new Forbidden(
         ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
-        'Bạn không có quyền cập nhật mục tiêu điều trị của bệnh nhân khác',
+        'Bạn không có quyền truy cập mục tiêu điều trị này',
       );
     }
 
-    if (doctorId) {
-      target.doctorId = doctorId;
+    const hasActiveSub = target.careSubscription?.status === CareSubscriptionStatus.ACTIVE;
+    const isVerified = [
+      PatientTargetStatus.DOCTOR_VERIFIED,
+      PatientTargetStatus.EXPERT_VERIFIED,
+      PatientTargetStatus.COMPLETED,
+    ].includes(target.status);
+
+    if (!hasActiveSub && !isVerified) {
+      throw new Forbidden(
+        ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+        'Mục tiêu điều trị này yêu cầu gói chăm sóc sức khỏe còn hiệu lực hoặc đã được bác sĩ phê duyệt',
+      );
     }
 
-    Object.assign(target, dto);
-
-    return this.targetRepo.save(target);
+    return target;
   }
 
   /**
-   * Query treatment targets with filtering and pagination.
+   * Lấy mục tiêu điều trị theo ID phân tầng nguy cơ (assessmentResultId hoặc assessmentInputId).
+   * Hỗ trợ cho cả Bệnh nhân (chỉ xem nếu sở hữu hồ sơ và có gói active/đã duyệt) và Bác sĩ/Nhân viên y tế.
+   *
+   * @param assessmentId - UUID của RiskFactorAssessmentResult hoặc RiskFactorAssessmentInput
+   * @param accountId - Optional App Account UUID (nếu là bệnh nhân)
+   * @returns PatientTreatmentTarget
+   */
+  async findByAssessmentId(
+    assessmentId: string,
+    accountId?: string,
+  ): Promise<PatientTreatmentTarget> {
+    const target = await this.targetRepo
+      .createQueryBuilder('target')
+      .leftJoinAndSelect('target.healthProfile', 'profile')
+      .leftJoinAndSelect('target.careSubscription', 'sub')
+      .leftJoinAndSelect('sub.carePackage', 'carePackage')
+      .leftJoinAndSelect('target.doctor', 'doctor')
+      .leftJoinAndSelect('target.expert', 'expert')
+      .leftJoinAndSelect('target.examination', 'examination')
+      .leftJoinAndSelect('target.assessmentResult', 'assessmentResult')
+      .leftJoinAndSelect('target.dictionary', 'dictionary')
+      .where(
+        'target.assessmentResultId = :assessmentId OR assessmentResult.assessmentInputId = :assessmentId OR target.id = :assessmentId',
+        { assessmentId },
+      )
+      .getOne();
+
+    if (!target) {
+      throw new NotFound(
+        ErrorCode.TREATMENT_TARGET_NOT_FOUND,
+        'Không tìm thấy mục tiêu điều trị liên kết với kết quả phân tầng này',
+      );
+    }
+
+    // Nếu người gọi là Bệnh nhân (App Account) -> kiểm tra quyền sở hữu và điều kiện gói dịch vụ
+    if (accountId) {
+      if (!target.healthProfile || target.healthProfile.accountId !== accountId) {
+        throw new Forbidden(
+          ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+          'Bạn không có quyền truy cập mục tiêu điều trị này',
+        );
+      }
+
+      const hasActiveSub = target.careSubscription?.status === CareSubscriptionStatus.ACTIVE;
+      const isVerified = [
+        PatientTargetStatus.DOCTOR_VERIFIED,
+        PatientTargetStatus.EXPERT_VERIFIED,
+        PatientTargetStatus.COMPLETED,
+      ].includes(target.status);
+
+      if (!hasActiveSub && !isVerified) {
+        throw new Forbidden(
+          ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+          'Mục tiêu điều trị chỉ hiển thị khi có gói dịch vụ chăm sóc đang kích hoạt hoặc đã được bác sĩ thẩm định',
+        );
+      }
+    }
+
+    return target;
+  }
+
+  /**
+   * Bác sĩ & Nhân viên y tế CMS xem danh sách mục tiêu điều trị.
    *
    * @param query - QueryPatientTargetDto
-   * @param accountId - Optional App Account ID
-   * @returns Paginated treatment targets
+   * @param staff - Authenticated Staff context
+   * @returns Danh sách mục tiêu điều trị phân trang
    */
-  async findAll(
+  async findAllForStaff(
     query: QueryPatientTargetDto,
-    accountId?: string,
+    staff?: StaffJwtPayload,
   ): Promise<{ data: PatientTreatmentTarget[]; total: number; page: number; limit: number }> {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
     const qb = this.targetRepo
       .createQueryBuilder('target')
       .leftJoinAndSelect('target.healthProfile', 'profile')
+      .leftJoinAndSelect('target.careSubscription', 'sub')
+      .leftJoinAndSelect('sub.carePackage', 'carePackage')
       .leftJoinAndSelect('target.doctor', 'doctor')
+      .leftJoinAndSelect('target.expert', 'expert')
       .leftJoinAndSelect('target.examination', 'examination')
       .leftJoinAndSelect('target.assessmentResult', 'assessmentResult')
       .leftJoinAndSelect('target.dictionary', 'dictionary');
 
-    if (accountId) {
-      qb.andWhere('profile.accountId = :accountId', { accountId });
+    // Nếu bác sĩ gọi và không truyền lọc riêng, mặc định lấy các target được gán cho chính bác sĩ hoặc chuyên gia
+    if (staff && staff.role === StaffRole.DOCTOR && !query.doctorId && !query.expertId) {
+      qb.andWhere('(target.doctorId = :staffId OR target.expertId = :staffId)', { staffId: staff.id });
     }
 
     if (query.healthProfileId) {
@@ -209,51 +367,55 @@ export class TreatmentTargetsService {
       });
     }
 
+    if (query.careSubscriptionId) {
+      qb.andWhere('target.careSubscriptionId = :careSubscriptionId', {
+        careSubscriptionId: query.careSubscriptionId,
+      });
+    }
+
     if (query.doctorId) {
       qb.andWhere('target.doctorId = :doctorId', { doctorId: query.doctorId });
+    }
+
+    if (query.expertId) {
+      qb.andWhere('target.expertId = :expertId', { expertId: query.expertId });
     }
 
     if (query.status) {
       qb.andWhere('target.status = :status', { status: query.status });
     }
 
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-    const skip = (page - 1) * limit;
-
-    qb.orderBy('target.createdAt', 'DESC')
-      .skip(skip)
-      .take(limit);
+    qb.orderBy('target.createdAt', 'DESC').skip(skip).take(limit);
 
     const [data, total] = await qb.getManyAndCount();
-
     return { data, total, page, limit };
   }
 
   /**
-   * Retrieve a single treatment target by ID.
+   * Bác sĩ / Staff xem chi tiết mục tiêu điều trị trên CMS.
    *
    * @param id - Target UUID
-   * @param accountId - Optional App Account ID
    * @returns PatientTreatmentTarget
    */
-  async findOne(id: string, accountId?: string): Promise<PatientTreatmentTarget> {
+  async findOneForStaff(id: string): Promise<PatientTreatmentTarget> {
     const target = await this.targetRepo.findOne({
       where: { id },
-      relations: ['healthProfile', 'doctor', 'examination', 'assessmentResult', 'dictionary'],
+      relations: [
+        'healthProfile',
+        'careSubscription',
+        'careSubscription.carePackage',
+        'doctor',
+        'expert',
+        'examination',
+        'assessmentResult',
+        'dictionary',
+      ],
     });
 
     if (!target) {
       throw new NotFound(
         ErrorCode.TREATMENT_TARGET_NOT_FOUND,
         `Không tìm thấy mục tiêu điều trị với mã ID: ${id}`,
-      );
-    }
-
-    if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
-      throw new Forbidden(
-        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
-        'Bạn không có quyền truy cập mục tiêu điều trị của bệnh nhân khác',
       );
     }
 
@@ -261,33 +423,127 @@ export class TreatmentTargetsService {
   }
 
   /**
-   * Soft delete a treatment target.
+   * Bác sĩ phụ trách hoặc Bác sĩ chuyên gia cập nhật, tinh chỉnh các chỉ số mục tiêu.
    *
    * @param id - Target UUID
-   * @param accountId - Optional App Account ID for ownership check
-   * @returns Deletion status
+   * @param dto - UpdatePatientTargetDto
+   * @param staff - Staff context
+   * @returns Updated PatientTreatmentTarget
    */
-  async remove(id: string, accountId?: string): Promise<{ success: boolean; message: string }> {
-    const target = await this.targetRepo.findOne({
-      where: { id },
-      relations: ['healthProfile'],
-    });
+  async update(
+    id: string,
+    dto: UpdatePatientTargetDto,
+    staff: StaffJwtPayload,
+  ): Promise<PatientTreatmentTarget> {
+    const target = await this.findOneForStaff(id);
 
-    if (!target) {
-      throw new NotFound(
-        ErrorCode.TREATMENT_TARGET_NOT_FOUND,
-        `Không tìm thấy mục tiêu điều trị với mã ID: ${id}`,
+    if (dto.bpTarget !== undefined) target.bpTarget = dto.bpTarget;
+    if (dto.lipidTarget !== undefined) target.lipidTarget = dto.lipidTarget;
+    if (dto.bmiTarget !== undefined) target.bmiTarget = dto.bmiTarget;
+    if (dto.glycemicTarget !== undefined) target.glycemicTarget = dto.glycemicTarget;
+    if (dto.renalTarget !== undefined) target.renalTarget = dto.renalTarget;
+    if (dto.dietAdvice !== undefined) target.dietAdvice = dto.dietAdvice;
+    if (dto.exerciseAdvice !== undefined) target.exerciseAdvice = dto.exerciseAdvice;
+    if (dto.smokingAdvice !== undefined) target.smokingAdvice = dto.smokingAdvice;
+    if (dto.doctorNotes !== undefined) target.doctorNotes = dto.doctorNotes;
+    if (dto.expertNotes !== undefined) target.expertNotes = dto.expertNotes;
+
+    // Ghi nhận bác sĩ thao tác gần nhất nếu chưa có
+    if (!target.doctorId && staff.role === StaffRole.DOCTOR) {
+      target.doctorId = staff.id;
+    }
+
+    return this.targetRepo.save(target);
+  }
+
+  /**
+   * Bác sĩ hoặc Bác sĩ Chuyên gia xác nhận phê duyệt mục tiêu điều trị.
+   *
+   * @param id - Target UUID
+   * @param dto - VerifyPatientTargetDto
+   * @param staff - Staff context
+   * @returns Verified PatientTreatmentTarget
+   */
+  async verify(
+    id: string,
+    dto: VerifyPatientTargetDto,
+    staff: StaffJwtPayload,
+  ): Promise<PatientTreatmentTarget> {
+    const target = await this.findOneForStaff(id);
+
+    // Nếu target đang ở trạng thái chuyển tiếp chuyên gia hoặc người duyệt là chuyên gia
+    if (
+      target.status === PatientTargetStatus.ESCALATED_TO_EXPERT ||
+      (target.expertId && target.expertId === staff.id)
+    ) {
+      target.expertId = staff.id;
+      target.status = PatientTargetStatus.EXPERT_VERIFIED;
+    } else {
+      target.doctorId = staff.id;
+      target.status = PatientTargetStatus.DOCTOR_VERIFIED;
+    }
+
+    target.verifiedAt = new Date();
+
+    if (dto.bpTarget !== undefined) target.bpTarget = dto.bpTarget;
+    if (dto.lipidTarget !== undefined) target.lipidTarget = dto.lipidTarget;
+    if (dto.bmiTarget !== undefined) target.bmiTarget = dto.bmiTarget;
+    if (dto.glycemicTarget !== undefined) target.glycemicTarget = dto.glycemicTarget;
+    if (dto.renalTarget !== undefined) target.renalTarget = dto.renalTarget;
+    if (dto.dietAdvice !== undefined) target.dietAdvice = dto.dietAdvice;
+    if (dto.exerciseAdvice !== undefined) target.exerciseAdvice = dto.exerciseAdvice;
+    if (dto.smokingAdvice !== undefined) target.smokingAdvice = dto.smokingAdvice;
+    if (dto.doctorNotes !== undefined) target.doctorNotes = dto.doctorNotes;
+    if (dto.expertNotes !== undefined) target.expertNotes = dto.expertNotes;
+
+    return this.targetRepo.save(target);
+  }
+
+  /**
+   * Bác sĩ phụ trách chuyển tiếp mục tiêu điều trị sang Bác sĩ Chuyên gia trong gói VIP.
+   *
+   * @param id - Target UUID
+   * @param dto - EscalateExpertTargetDto
+   * @param staff - Staff context
+   * @returns Escalated PatientTreatmentTarget
+   */
+  async escalateToExpert(
+    id: string,
+    dto: EscalateExpertTargetDto,
+    staff: StaffJwtPayload,
+  ): Promise<PatientTreatmentTarget> {
+    const target = await this.findOneForStaff(id);
+
+    const targetExpertId = dto.expertId || target.expertId || target.careSubscription?.assignedExpertId;
+
+    if (!targetExpertId) {
+      throw new BadRequest(
+        ErrorCode.INVALID_INPUT,
+        'Hồ sơ hoặc gói chăm sóc này chưa được chỉ định Bác sĩ Chuyên gia để chuyển tiếp',
       );
     }
 
-    if (accountId && target.healthProfile && target.healthProfile.accountId !== accountId) {
-      throw new Forbidden(
-        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
-        'Bạn không có quyền xóa mục tiêu điều trị của bệnh nhân khác',
-      );
+    target.doctorId = staff.id;
+    target.expertId = targetExpertId;
+    target.status = PatientTargetStatus.ESCALATED_TO_EXPERT;
+
+    if (dto.doctorNotes) {
+      target.doctorNotes = dto.doctorNotes;
     }
 
+    return this.targetRepo.save(target);
+  }
+
+  /**
+   * Xóa mềm mục tiêu điều trị.
+   *
+   * @param id - Target UUID
+   * @returns Success response
+   */
+  async remove(id: string): Promise<{ success: boolean; message: string }> {
+    const target = await this.findOneForStaff(id);
     await this.targetRepo.softRemove(target);
     return { success: true, message: 'Treatment target deleted successfully' };
   }
 }
+

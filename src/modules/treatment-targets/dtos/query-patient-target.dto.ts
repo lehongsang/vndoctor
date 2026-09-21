@@ -9,10 +9,20 @@ export class QueryPatientTargetDto extends PartialType(GetManyBaseQueryParams) {
   @IsOptional()
   healthProfileId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by Doctor ID' })
+  @ApiPropertyOptional({ description: 'Filter by Care Subscription ID' })
+  @IsUUID()
+  @IsOptional()
+  careSubscriptionId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by Primary Doctor ID' })
   @IsUUID()
   @IsOptional()
   doctorId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by Expert Doctor ID' })
+  @IsUUID()
+  @IsOptional()
+  expertId?: string;
 
   @ApiPropertyOptional({ enum: PatientTargetStatus, description: 'Filter by Target status' })
   @IsEnum(PatientTargetStatus)

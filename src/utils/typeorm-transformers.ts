@@ -31,3 +31,30 @@ export const PointTransformer: ValueTransformer = {
     return `(${value.longitude},${value.latitude})`;
   },
 };
+
+/**
+ * TypeORM transformer to parse PostgreSQL decimal/numeric columns (which are returned as strings by default)
+ * into JavaScript numbers for proper API responses and calculations.
+ */
+export const DecimalTransformer: ValueTransformer = {
+  /**
+   * Deserialize decimal string from PostgreSQL to JavaScript number.
+   */
+  from: (value: string | number | null | undefined): number | null => {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    const num = Number(value);
+    return isNaN(num) ? null : num;
+  },
+
+  /**
+   * Serialize numeric value to database.
+   */
+  to: (value: number | string | null | undefined): number | string | null => {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    return value;
+  },
+};

@@ -1,4 +1,5 @@
 import { BaseEntity } from '@/commons/entities/base.entity';
+import { DecimalTransformer } from '@/utils/typeorm-transformers';
 import { Column, Entity } from 'typeorm';
 
 export enum MediaStatus {
@@ -18,7 +19,7 @@ export class Media extends BaseEntity {
   @Column()
   mimeType: string;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', transformer: DecimalTransformer })
   size: number;
 
   @Column({ nullable: true })

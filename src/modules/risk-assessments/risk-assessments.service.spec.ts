@@ -11,6 +11,7 @@ import { ChronicDisease } from '@/modules/chronic-diseases/entities/chronic-dise
 import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
 import { AssessmentStatus, ProfileGender, VnDoctorRiskLevel } from '@/commons/enums/vndoctor.enum';
 import { NotFound } from '@/commons/exceptions';
+import { TreatmentTargetsService } from '@/modules/treatment-targets/treatment-targets.service';
 import { RiskDictionaryService } from './services/risk-dictionary.service';
 
 describe('RiskAssessmentsService', () => {
@@ -82,6 +83,12 @@ describe('RiskAssessmentsService', () => {
         RiskAssessmentsService,
         RiskDictionaryService,
         {
+          provide: TreatmentTargetsService,
+          useValue: {
+            generateFromRiskAssessment: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
           provide: getRepositoryToken(RiskFactorAssessmentInput),
           useValue: {
             create: jest.fn().mockImplementation((dto: Partial<RiskFactorAssessmentInput>) => ({ id: 'new-input-id', ...dto } as RiskFactorAssessmentInput)),
@@ -152,6 +159,35 @@ describe('RiskAssessmentsService', () => {
       expect(diabetesField?.disabled).toBe(true);
       expect(diabetesField?.defaultValue).toBe(true);
       expect(diabetesField?.fixedReason).toContain('hồ sơ sức khỏe');
+    });
+
+    it('should autofill isSmoking, diabetes, and hasUnderlyingDisease from HealthProfile', async () => {
+      profileRepo.findOne.mockResolvedValueOnce({
+        id: 'profile-uuid-2',
+        accountId: 'acc-uuid-1',
+        fullName: 'Le Van B',
+        gender: ProfileGender.MALE,
+        dob: '1980-01-01',
+        isSmoking: true,
+        hasHypertension: true,
+        hasDyslipidemia: true,
+        hasDiabetes: true,
+        profileChronicDisease: null,
+      } as unknown as HealthProfile);
+
+      const schema = await service.getFormSchema('profile-uuid-2', 'acc-uuid-1');
+
+      const generalSection = schema.sections.find((s) => s.code === 'GENERAL_METRICS');
+      const isSmokingField = generalSection?.fields.find((f) => f.code === 'isSmoking');
+      expect(isSmokingField?.defaultValue).toBe(true);
+
+      const hasUnderlyingField = generalSection?.fields.find((f) => f.code === 'hasUnderlyingDisease');
+      expect(hasUnderlyingField?.defaultValue).toBe(true);
+
+      const chronicSection = schema.sections.find((s) => s.code === 'CHRONIC_DISEASES');
+      const diabetesField = chronicSection?.fields.find((f) => f.code === 'diabetes');
+      expect(diabetesField?.defaultValue).toBe(true);
+      expect(diabetesField?.disabled).toBe(true);
     });
 
     it('should throw NotFound if health profile does not exist', async () => {

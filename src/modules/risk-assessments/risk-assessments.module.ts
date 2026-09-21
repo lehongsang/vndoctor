@@ -6,6 +6,7 @@ import { HealthProfile } from '@/modules/health-profiles/entities/health-profile
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { ChronicDisease } from '@/modules/chronic-diseases/entities/chronic-disease.entity';
 import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
+import { TreatmentTargetsModule } from '@/modules/treatment-targets/treatment-targets.module';
 import { RiskAssessmentsService } from './risk-assessments.service';
 import { RiskAssessmentsController } from './risk-assessments.controller';
 import { RiskDictionaryService } from './services/risk-dictionary.service';
@@ -20,6 +21,7 @@ import { RiskDictionaryService } from './services/risk-dictionary.service';
       ChronicDisease,
       ProfileChronicDisease,
     ]),
+    TreatmentTargetsModule,
   ],
   controllers: [RiskAssessmentsController],
   providers: [RiskAssessmentsService, RiskDictionaryService],

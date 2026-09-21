@@ -3,6 +3,7 @@ import { HealthMetricType } from '@/commons/enums/vndoctor.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
+import { DecimalTransformer } from '@/utils/typeorm-transformers';
 
 /**
  * Entity representing personal health metric measurements recorded over time.
@@ -24,11 +25,11 @@ export class HealthRecord extends BaseEntity {
   metricType: HealthMetricType;
 
   @ApiProperty({ description: 'Primary measurement value (e.g. Systolic BP, Glucose, Weight)', example: 125.0 })
-  @Column({ type: 'decimal', precision: 8, scale: 2 })
+  @Column({ type: 'decimal', precision: 8, scale: 2, transformer: DecimalTransformer })
   valueNumeric: number;
 
   @ApiPropertyOptional({ description: 'Secondary measurement value (e.g. Diastolic BP for Blood Pressure)', example: 82.0 })
-  @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true, transformer: DecimalTransformer })
   secondaryValue?: number | null;
 
   @ApiProperty({ description: 'Measurement unit', example: 'mmHg' })

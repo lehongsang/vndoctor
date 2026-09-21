@@ -112,6 +112,22 @@ export class HealthProfile extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   medicalHistory?: string | null;
 
+  @ApiPropertyOptional({ description: 'Có hút thuốc lá hay không', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  isSmoking: boolean;
+
+  @ApiPropertyOptional({ description: 'Có bị bệnh tăng huyết áp không', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasHypertension: boolean;
+
+  @ApiPropertyOptional({ description: 'Có bị mỡ máu / rối loạn lipid máu không', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasDyslipidemia: boolean;
+
+  @ApiPropertyOptional({ description: 'Có bị đái tháo đường không', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasDiabetes: boolean;
+
   @OneToOne(() => ProfileChronicDisease, (pcd: ProfileChronicDisease) => pcd.healthProfile, { cascade: true })
   profileChronicDisease?: Relation<ProfileChronicDisease>;
 

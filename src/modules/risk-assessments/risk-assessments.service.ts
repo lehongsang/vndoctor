@@ -7,6 +7,7 @@ import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profi
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { TreatmentTargetsService } from '@/modules/treatment-targets/treatment-targets.service';
 import { CreateRiskAssessmentDto, EvaluateRiskAssessmentDto, QueryRiskAssessmentDto } from './dtos';
 import { RiskFactorAssessmentInput } from './entities/risk-factor-assessment-input.entity';
 import { RiskFactorAssessmentResult } from './entities/risk-factor-assessment-result.entity';
@@ -47,6 +48,7 @@ export class RiskAssessmentsService {
     @InjectRepository(ProfileChronicDisease)
     private readonly profileChronicDiseaseRepo: Repository<ProfileChronicDisease>,
     private readonly riskDictionaryService: RiskDictionaryService,
+    private readonly treatmentTargetsService: TreatmentTargetsService,
   ) {}
 
   /**
@@ -108,7 +110,9 @@ export class RiskAssessmentsService {
     const hasRecordedSilentInfarct = hasRecorded(['score2_6_4', 'silent infarct', 'i63.9', 'nhồi máu não thầm lặng', 'tổn thương thầm lặng trên não']);
 
     // Khối 3: Bệnh lý mạn tính & Biến chứng tim mạch - thận (Chronic Diseases)
-    const hasRecordedDiabetes = hasRecorded(['score2_9', 'diabetes', 't2d', 't1d', 'e10', 'e11', 'e14', 'đái tháo đường', 'tiểu đường']);
+    const hasRecordedDiabetes =
+      hasRecorded(['score2_9', 'diabetes', 't2d', 't1d', 'e10', 'e11', 'e14', 'đái tháo đường', 'tiểu đường']) ||
+      !!profile.hasDiabetes;
     const hasRecordedStroke = hasRecorded(['score2_8_4', 'stroke', 'i64', 'i63', 'đột quỵ', 'tai biến']);
     const hasRecordedMI = hasRecorded(['score2_8_1', 'myocardial_infarction', 'i21', 'nhồi máu cơ tim']);
     const hasRecordedACS = hasRecorded(['score2_8_2', 'acute_coronary_syndrome', 'i20.0', 'hội chứng vành cấp', 'đau thắt ngực không ổn định']);
@@ -139,7 +143,10 @@ export class RiskAssessmentsService {
 
     const hasAnyUnderlying =
       Object.values(lockedFieldMap).some(Boolean) ||
-      recordedDiseases.length > 0;
+      recordedDiseases.length > 0 ||
+      !!profile.hasHypertension ||
+      !!profile.hasDyslipidemia ||
+      !!profile.hasDiabetes;
 
     // 3. Clone và gán metadata Auto-fill & Lock vào Schema
     const sections: FormSectionSchema[] = JSON.parse(
@@ -152,6 +159,8 @@ export class RiskAssessmentsService {
           field.defaultValue = calculatedAge;
         } else if (field.code === 'gender') {
           field.defaultValue = genderText;
+        } else if (field.code === 'isSmoking') {
+          field.defaultValue = profile.isSmoking ?? false;
         } else if (field.code === 'hasUnderlyingDisease' && hasAnyUnderlying) {
           field.defaultValue = true;
         } else if (lockedFieldMap[field.code]) {
@@ -431,7 +440,19 @@ export class RiskAssessmentsService {
 
     const savedResult = await this.resultRepo.save(initialResult);
 
-    // Bước 6: Quét cờ đỏ cảnh báo và trả về
+    // Bước 6: Tự động khởi tạo Mục tiêu điều trị (Treatment Target) từ kết quả phân tầng & Gói chăm sóc
+    try {
+      await this.treatmentTargetsService.generateFromRiskAssessment({
+        healthProfileId: dto.healthProfileId,
+        assessmentResultId: savedResult.id,
+        riskLevel,
+        age: calculatedAge ?? 45,
+      });
+    } catch {
+      // Do not block risk assessment creation if target generation encounters any edge issue
+    }
+
+    // Bước 7: Quét cờ đỏ cảnh báo và trả về
     const { hasWarningAlert, redFlags } = this.calculateRedFlags(savedInput);
 
     return Object.assign(savedResult, {

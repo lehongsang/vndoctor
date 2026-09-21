@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayUnique,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsNotEmpty,
@@ -80,6 +81,26 @@ export class CreateFacilityHealthProfileDto {
   @IsString()
   @IsOptional()
   medicalHistory?: string;
+
+  @ApiPropertyOptional({ description: 'Có hút thuốc lá hay không', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  isSmoking?: boolean;
+
+  @ApiPropertyOptional({ description: 'Có bị bệnh tăng huyết áp không', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasHypertension?: boolean;
+
+  @ApiPropertyOptional({ description: 'Có bị mỡ máu / rối loạn lipid máu không', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasDyslipidemia?: boolean;
+
+  @ApiPropertyOptional({ description: 'Có bị đái tháo đường không', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasDiabetes?: boolean;
 
   @ApiPropertyOptional({
     type: [String],

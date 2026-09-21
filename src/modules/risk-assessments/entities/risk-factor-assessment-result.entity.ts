@@ -4,6 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AfterLoad, Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, Relation } from 'typeorm';
 import { RiskFactorAssessmentInput } from './risk-factor-assessment-input.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import { DecimalTransformer } from '@/utils/typeorm-transformers';
 
 /**
  * Entity representing result & doctor conclusion for Cardiovascular Risk Factor Assessment.
@@ -33,7 +34,7 @@ export class RiskFactorAssessmentResult extends BaseEntity {
   doctor?: Relation<StaffUser> | null;
 
   @ApiPropertyOptional({ description: 'Calculated 10-year risk score (%)', example: 7.5 })
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
   riskScore?: number | null;
 
   @ApiPropertyOptional({ enum: VnDoctorRiskLevel, enumName: 'VnDoctorRiskLevel' })
