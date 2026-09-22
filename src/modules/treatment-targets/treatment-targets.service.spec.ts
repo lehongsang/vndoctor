@@ -65,15 +65,18 @@ describe('TreatmentTargetsService', () => {
     }),
     softRemove: jest.fn().mockImplementation((entity) => Promise.resolve(entity)),
     createQueryBuilder: jest.fn().mockReturnValue({
+      innerJoin: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
-      getManyAndCount: jest.fn().mockResolvedValue([[mockTarget], 1]),
-      getOne: jest.fn().mockResolvedValue(mockTarget),
+      getManyAndCount: jest.fn().mockImplementation(() => Promise.resolve([[ { ...mockTarget, healthProfile: { ...mockProfile } as HealthProfile, careSubscription: { ...mockSubscription } as PatientCareSubscription } ], 1])),
+      getOne: jest.fn().mockImplementation(() => Promise.resolve({ ...mockTarget, healthProfile: { ...mockProfile } as HealthProfile, careSubscription: { ...mockSubscription } as PatientCareSubscription })),
     }),
   };
 

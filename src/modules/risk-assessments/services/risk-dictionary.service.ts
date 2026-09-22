@@ -209,7 +209,7 @@ export class RiskDictionaryService implements OnModuleInit {
    * Tra cứu theo risk-score-non-ascvd-dictionary.json
    */
   public calculateNonAscvd(input: NonAscvdCalculationInput): {
-    riskScore: number;
+    riskScore: number | null;
     riskLevel: VnDoctorRiskLevel;
     matchedCodes: string[];
   } {
@@ -274,9 +274,8 @@ export class RiskDictionaryService implements OnModuleInit {
     if (input.hasCarotidWallDamage) matchedCodes.push('6.3');
     if (input.hasSilentInfarct) matchedCodes.push('6.4');
 
-    // 5. Tra cứu mức nguy cơ cao nhất từ dictionary
+    // 5. Tra cứu mức nguy cơ cao nhất từ dictionary (Phân tầng định tính, không tính điểm SCORE2)
     let highestLevel: VnDoctorRiskLevel = VnDoctorRiskLevel.LOW;
-    let highestScore = 2.0;
 
     for (const code of matchedCodes) {
       const nonAscvdItem = this.nonAscvdMap.get(code);
@@ -284,27 +283,23 @@ export class RiskDictionaryService implements OnModuleInit {
         const itemLevel = String(nonAscvdItem.riskLevel);
         if (itemLevel === 'VERY_HIGH' || itemLevel === String(VnDoctorRiskLevel.VERY_HIGH)) {
           highestLevel = VnDoctorRiskLevel.VERY_HIGH;
-          highestScore = 15.0;
           break; // Đã đạt mức cao nhất
         } else if (itemLevel === 'HIGH' || itemLevel === String(VnDoctorRiskLevel.HIGH)) {
           highestLevel = VnDoctorRiskLevel.HIGH;
-          highestScore = 8.0;
         }
       } else {
         // Nếu là mã 8.x hoặc 7.4/7.5 -> VERY_HIGH
         if (code.startsWith('8.') || code === '7.4' || code === '7.5' || code.includes('9.5') || code.includes('9.6')) {
           highestLevel = VnDoctorRiskLevel.VERY_HIGH;
-          highestScore = 15.0;
           break;
         } else if (code.startsWith('7.') || code.startsWith('6.') || code.startsWith('9.')) {
           highestLevel = VnDoctorRiskLevel.HIGH;
-          highestScore = 8.0;
         }
       }
     }
 
     return {
-      riskScore: highestScore,
+      riskScore: null,
       riskLevel: highestLevel,
       matchedCodes,
     };

@@ -341,7 +341,7 @@ export class RiskAssessmentsService {
     const hasSilentBrainInfarct = dto.hasSilentInfarct ?? dto.hasSilentBrainInfarct ?? false;
 
     // Bước 3: Tra cứu bộ luật phân tầng từ RiskDictionaryService
-    let riskScore = 1.5;
+    let riskScore: number | null = null;
     let riskLevel = VnDoctorRiskLevel.LOW;
 
     const hasUnderlying = Boolean(dto.hasUnderlyingDisease);

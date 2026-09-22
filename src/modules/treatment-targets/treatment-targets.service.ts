@@ -178,14 +178,8 @@ export class TreatmentTargetsService {
 
     const qb = this.targetRepo
       .createQueryBuilder('target')
-      .innerJoinAndSelect('target.healthProfile', 'profile')
-      .leftJoinAndSelect('target.careSubscription', 'sub')
-      .leftJoinAndSelect('sub.carePackage', 'carePackage')
-      .leftJoinAndSelect('target.doctor', 'doctor')
-      .leftJoinAndSelect('target.expert', 'expert')
-      .leftJoinAndSelect('target.examination', 'examination')
-      .leftJoinAndSelect('target.assessmentResult', 'assessmentResult')
-      .leftJoinAndSelect('target.dictionary', 'dictionary')
+      .innerJoin('target.healthProfile', 'profile')
+      .leftJoin('target.careSubscription', 'sub')
       .where('profile.accountId = :accountId', { accountId })
       .andWhere(
         '(sub.status = :activeStatus OR target.status IN (:...verifiedStatuses))',
@@ -223,19 +217,13 @@ export class TreatmentTargetsService {
    * @returns PatientTreatmentTarget
    */
   async findOneForPatient(id: string, accountId: string): Promise<PatientTreatmentTarget> {
-    const target = await this.targetRepo.findOne({
-      where: { id },
-      relations: [
-        'healthProfile',
-        'careSubscription',
-        'careSubscription.carePackage',
-        'doctor',
-        'expert',
-        'examination',
-        'assessmentResult',
-        'dictionary',
-      ],
-    });
+    const target = await this.targetRepo
+      .createQueryBuilder('target')
+      .innerJoin('target.healthProfile', 'profile')
+      .leftJoin('target.careSubscription', 'sub')
+      .addSelect(['profile.accountId', 'sub.status'])
+      .where('target.id = :id', { id })
+      .getOne();
 
     if (!target) {
       throw new NotFound(
@@ -244,7 +232,7 @@ export class TreatmentTargetsService {
       );
     }
 
-    if (!target.healthProfile || target.healthProfile.accountId !== accountId) {
+    if (target.healthProfile?.accountId !== accountId) {
       throw new Forbidden(
         ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
         'Bạn không có quyền truy cập mục tiêu điều trị này',
@@ -265,6 +253,8 @@ export class TreatmentTargetsService {
       );
     }
 
+    delete target.healthProfile;
+    delete target.careSubscription;
     return target;
   }
 
@@ -282,14 +272,10 @@ export class TreatmentTargetsService {
   ): Promise<PatientTreatmentTarget> {
     const target = await this.targetRepo
       .createQueryBuilder('target')
-      .leftJoinAndSelect('target.healthProfile', 'profile')
-      .leftJoinAndSelect('target.careSubscription', 'sub')
-      .leftJoinAndSelect('sub.carePackage', 'carePackage')
-      .leftJoinAndSelect('target.doctor', 'doctor')
-      .leftJoinAndSelect('target.expert', 'expert')
-      .leftJoinAndSelect('target.examination', 'examination')
-      .leftJoinAndSelect('target.assessmentResult', 'assessmentResult')
-      .leftJoinAndSelect('target.dictionary', 'dictionary')
+      .innerJoin('target.healthProfile', 'profile')
+      .leftJoin('target.careSubscription', 'sub')
+      .leftJoin('target.assessmentResult', 'assessmentResult')
+      .addSelect(['profile.accountId', 'sub.status', 'assessmentResult.assessmentInputId'])
       .where(
         'target.assessmentResultId = :assessmentId OR assessmentResult.assessmentInputId = :assessmentId OR target.id = :assessmentId',
         { assessmentId },
@@ -305,7 +291,7 @@ export class TreatmentTargetsService {
 
     // Nếu người gọi là Bệnh nhân (App Account) -> kiểm tra quyền sở hữu và điều kiện gói dịch vụ
     if (accountId) {
-      if (!target.healthProfile || target.healthProfile.accountId !== accountId) {
+      if (target.healthProfile?.accountId !== accountId) {
         throw new Forbidden(
           ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
           'Bạn không có quyền truy cập mục tiêu điều trị này',
@@ -327,6 +313,9 @@ export class TreatmentTargetsService {
       }
     }
 
+    delete target.healthProfile;
+    delete target.careSubscription;
+    delete target.assessmentResult;
     return target;
   }
 
@@ -345,16 +334,7 @@ export class TreatmentTargetsService {
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
     const skip = (page - 1) * limit;
 
-    const qb = this.targetRepo
-      .createQueryBuilder('target')
-      .leftJoinAndSelect('target.healthProfile', 'profile')
-      .leftJoinAndSelect('target.careSubscription', 'sub')
-      .leftJoinAndSelect('sub.carePackage', 'carePackage')
-      .leftJoinAndSelect('target.doctor', 'doctor')
-      .leftJoinAndSelect('target.expert', 'expert')
-      .leftJoinAndSelect('target.examination', 'examination')
-      .leftJoinAndSelect('target.assessmentResult', 'assessmentResult')
-      .leftJoinAndSelect('target.dictionary', 'dictionary');
+    const qb = this.targetRepo.createQueryBuilder('target');
 
     // Nếu bác sĩ gọi và không truyền lọc riêng, mặc định lấy các target được gán cho chính bác sĩ hoặc chuyên gia
     if (staff && staff.role === StaffRole.DOCTOR && !query.doctorId && !query.expertId) {
@@ -400,16 +380,6 @@ export class TreatmentTargetsService {
   async findOneForStaff(id: string): Promise<PatientTreatmentTarget> {
     const target = await this.targetRepo.findOne({
       where: { id },
-      relations: [
-        'healthProfile',
-        'careSubscription',
-        'careSubscription.carePackage',
-        'doctor',
-        'expert',
-        'examination',
-        'assessmentResult',
-        'dictionary',
-      ],
     });
 
     if (!target) {
