@@ -79,17 +79,15 @@ export class VnDoctorAuthService {
     private readonly redisService: RedisService,
     private readonly smsService: SmsService,
   ) {
-    const baseSecret =
-      this.configService.get<string>('JWT_SECRET') ||
-      'vndoctor-super-secret-key-2026';
-
     this.staffSecret =
       this.configService.get<string>('JWT_STAFF_SECRET') ||
-      baseSecret;
+      this.configService.get<string>('JWT_SECRET') ||
+      'vndoctor-staff-secret-key-2026';
 
     this.appSecret =
       this.configService.get<string>('JWT_APP_SECRET') ||
-      baseSecret;
+      this.configService.get<string>('JWT_SECRET') ||
+      'vndoctor-app-secret-key-2026';
 
     this.staffRefreshSecret =
       this.configService.get<string>('JWT_STAFF_REFRESH_SECRET') ||

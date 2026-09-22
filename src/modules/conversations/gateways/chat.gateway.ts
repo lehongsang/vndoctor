@@ -84,10 +84,22 @@ export class ChatGateway
         ? rawAuth.slice(7)
         : rawAuth;
 
-      const secret =
-        this.configService.get<string>('JWT_APP_SECRET') ||
+      const unverified = jwt.decode(token) as { type?: string } | null;
+      let secret =
         this.configService.get<string>('JWT_SECRET') ||
         'vndoctor-secret-key-2026';
+
+      if (unverified?.type === 'STAFF') {
+        secret =
+          this.configService.get<string>('JWT_STAFF_SECRET') ||
+          this.configService.get<string>('JWT_SECRET') ||
+          'vndoctor-staff-secret-key-2026';
+      } else if (unverified?.type === 'APP_ACCOUNT') {
+        secret =
+          this.configService.get<string>('JWT_APP_SECRET') ||
+          this.configService.get<string>('JWT_SECRET') ||
+          'vndoctor-app-secret-key-2026';
+      }
 
       const decoded = jwt.verify(token, secret) as AuthenticatedUserPayload;
       client.data.user = decoded;

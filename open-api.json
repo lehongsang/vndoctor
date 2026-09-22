@@ -109,9 +109,128 @@
         ]
       }
     },
+    "/api/auth/staff/logout": {
+      "post": {
+        "description": "Vô hiệu hóa Access Token và Refresh Token hiện tại trên toàn hệ thống thông qua Redis Blacklist",
+        "operationId": "VnDoctorAuthController_logoutStaff",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/LogoutResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Đăng xuất Nhân viên y tế / Bác sĩ (Web CMS)",
+        "tags": [
+          "Authentication (Xác thực CMS & App)"
+        ]
+      }
+    },
+    "/api/auth/app/send-otp": {
+      "post": {
+        "description": "Tạo mã OTP 6 số ngẫu nhiên, lưu Redis (5 phút), áp dụng cooldown 60s và gửi qua SMS Brandname",
+        "operationId": "VnDoctorAuthController_sendAppOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/SendOtpResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Public - Gửi mã OTP SMS xác thực số điện thoại (Mobile App)",
+        "tags": [
+          "Authentication (Xác thực CMS & App)"
+        ]
+      }
+    },
+    "/api/auth/app/verify-otp": {
+      "post": {
+        "description": "Kiểm tra mã OTP (giới hạn 5 lần thử), nếu đúng trả về Verification Token có hạn 10 phút để đăng ký tài khoản",
+        "operationId": "VnDoctorAuthController_verifyAppOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/VerifyOtpResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Public - Xác thực mã OTP SMS và nhận Verification Token (Mobile App)",
+        "tags": [
+          "Authentication (Xác thực CMS & App)"
+        ]
+      }
+    },
     "/api/auth/app/register": {
       "post": {
-        "description": "Đăng ký tài khoản mới trên ứng dụng di động qua số điện thoại & mật khẩu",
+        "description": "Đăng ký tài khoản mới trên ứng dụng di động qua verificationToken hoặc số điện thoại & mật khẩu",
         "operationId": "VnDoctorAuthController_registerApp",
         "parameters": [],
         "requestBody": {
@@ -255,9 +374,52 @@
         ]
       }
     },
+    "/api/auth/app/logout": {
+      "post": {
+        "description": "Vô hiệu hóa Access Token và Refresh Token hiện tại trên toàn hệ thống thông qua Redis Blacklist",
+        "operationId": "VnDoctorAuthController_logoutApp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/LogoutResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Đăng xuất Bệnh nhân (Mobile App)",
+        "tags": [
+          "Authentication (Xác thực CMS & App)"
+        ]
+      }
+    },
     "/api/staff": {
       "post": {
-        "description": "VNDOCTOR_ADMIN hoặc FacilityAdmin tạo tài khoản cho bác sĩ/nhân sự. Email là bắt buộc, mật khẩu mặc định tự động là vndoctor123 nếu không truyền.",
+        "description": "VNDOCTOR_ADMIN hoặc FacilityAdmin tạo tài khoản cho bác sĩ/nhân sự/admin cơ sở con. Email là bắt buộc, mật khẩu mặc định hệ thống tự khởi tạo là vndoctor123.",
         "operationId": "StaffController_createStaff",
         "parameters": [],
         "requestBody": {
@@ -292,7 +454,7 @@
             "access-token": []
           }
         ],
-        "summary": "Role: VNDOCTOR_ADMIN / ADMIN - Tạo tài khoản Bác sĩ / Nhân sự y tế",
+        "summary": "Role: VNDOCTOR_ADMIN / ADMIN - Tạo tài khoản Bác sĩ / Nhân sự / Admin cơ sở",
         "tags": [
           "Staff & Doctors (Nhân viên y tế & Bác sĩ)"
         ]
@@ -563,6 +725,45 @@
         "tags": [
           "Staff & Doctors (Nhân viên y tế & Bác sĩ)"
         ]
+      },
+      "delete": {
+        "description": "Xóa mềm tài khoản nhân viên y tế (không được tự xóa chính mình).",
+        "operationId": "StaffController_deleteStaff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Role: VNDOCTOR_ADMIN / ADMIN - Xóa mềm nhân viên y tế",
+        "tags": [
+          "Staff & Doctors (Nhân viên y tế & Bác sĩ)"
+        ]
       }
     },
     "/api/staff/change-password": {
@@ -650,7 +851,7 @@
         ]
       },
       "get": {
-        "description": "Tìm kiếm, phân trang và lọc theo cấp bậc (facilityType) hoặc cơ sở cha (parentId)",
+        "description": "Tìm kiếm, phân trang và lọc theo cấp bậc (facilityType), cơ sở cha (parentId), hoặc tuyến trung ương (isRoot)",
         "operationId": "FacilitiesController_getFacilities",
         "parameters": [
           {
@@ -700,7 +901,7 @@
             "name": "facilityType",
             "required": false,
             "in": "query",
-            "description": "Lọc theo cấp cơ sở y tế",
+            "description": "Lọc theo cấp cơ sở y tế (CENTRAL_HOSPITAL, PROVINCIAL_HOSPITAL, DISTRICT_HOSPITAL, COMMUNE_HEALTH_STATION, CLINIC)",
             "schema": {
               "$ref": "#/components/schemas/FacilityType"
             }
@@ -712,6 +913,15 @@
             "description": "Lọc các cơ sở con trực thuộc cơ sở cha theo parentId",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "isRoot",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ lấy các cơ sở y tế cấp cao nhất (Tuyến trung ương/đầu ngành không có cơ sở cha parentId)",
+            "schema": {
+              "type": "boolean"
             }
           },
           {
@@ -753,7 +963,7 @@
     },
     "/api/facilities/hierarchy/tree": {
       "get": {
-        "description": "Lấy toàn bộ cây phả hệ mạng lưới cơ sở y tế từ cấp cao nhất xuống xã/phòng khám",
+        "description": "Lấy toàn bộ cây phả hệ mạng lưới cơ sở y tế từ cấp cao nhất xuống xã/phòng khám (hỗ trợ lọc theo rootId và trạng thái)",
         "operationId": "FacilitiesController_getFacilityTree",
         "parameters": [
           {
@@ -762,6 +972,14 @@
             "in": "query",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -794,7 +1012,7 @@
     },
     "/api/facilities/{id}/children": {
       "get": {
-        "description": "Lấy danh sách các cơ sở y tế cấp dưới trực tiếp thuộc quản lý của một cơ sở cha",
+        "description": "Lấy danh sách các cơ sở y tế cấp dưới trực tiếp thuộc quản lý của một cơ sở cha, kèm thông tin quản trị viên (Admin) của từng cơ sở con (hỗ trợ tìm kiếm, phân trang và lọc theo cấp bậc/trạng thái)",
         "operationId": "FacilitiesController_getChildrenFacilities",
         "parameters": [
           {
@@ -803,6 +1021,85 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "facilityType",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo cấp cơ sở y tế (CENTRAL_HOSPITAL, PROVINCIAL_HOSPITAL, DISTRICT_HOSPITAL, COMMUNE_HEALTH_STATION, CLINIC)",
+            "schema": {
+              "$ref": "#/components/schemas/FacilityType"
+            }
+          },
+          {
+            "name": "parentId",
+            "required": false,
+            "in": "query",
+            "description": "Lọc các cơ sở con trực thuộc cơ sở cha theo parentId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isRoot",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ lấy các cơ sở y tế cấp cao nhất (Tuyến trung ương/đầu ngành không có cơ sở cha parentId)",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo trạng thái hoạt động",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -827,7 +1124,7 @@
             "access-token": []
           }
         ],
-        "summary": "Role: Tất cả nhân sự - Danh sách cơ sở con trực thuộc",
+        "summary": "Role: Tất cả nhân sự - Danh sách cơ sở con trực thuộc (kèm Admin)",
         "tags": [
           "Facilities (Cơ sở y tế & Phân cấp)"
         ]
@@ -920,6 +1217,105 @@
           }
         ],
         "summary": "Role: VNDOCTOR_ADMIN / ADMIN - Cập nhật thông tin cơ sở y tế",
+        "tags": [
+          "Facilities (Cơ sở y tế & Phân cấp)"
+        ]
+      },
+      "delete": {
+        "description": "Vô hiệu hóa cơ sở y tế (soft delete). VNDOCTOR_ADMIN có thể xóa bất kỳ cơ sở nào. FacilityAdmin chỉ có thể xóa cơ sở con trực thuộc. Không thể xóa nếu cơ sở đang có cơ sở con đang hoạt động.",
+        "operationId": "FacilitiesController_deleteFacility",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Không thể xóa cơ sở y tế đang có cơ sở con hoạt động",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "FACILITY_HAS_CHILDREN": {
+                    "summary": "Không thể xóa cơ sở y tế đang có cơ sở con hoạt động",
+                    "value": {
+                      "statusCode": 400,
+                      "message": "Không thể xóa cơ sở y tế đang có cơ sở con hoạt động",
+                      "code": "FACILITY_HAS_CHILDREN"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Không có quyền thao tác trên cơ sở y tế này",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "FACILITY_ACCESS_DENIED": {
+                    "summary": "Không có quyền thao tác trên cơ sở y tế này",
+                    "value": {
+                      "statusCode": 403,
+                      "message": "Không có quyền thao tác trên cơ sở y tế này",
+                      "code": "FACILITY_ACCESS_DENIED"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cơ sở y tế không tồn tại",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "FACILITY_NOT_FOUND": {
+                    "summary": "Cơ sở y tế không tồn tại",
+                    "value": {
+                      "statusCode": 404,
+                      "message": "Cơ sở y tế không tồn tại",
+                      "code": "FACILITY_NOT_FOUND"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Role: VNDOCTOR_ADMIN / ADMIN - Xóa mềm (vô hiệu hóa) cơ sở y tế",
         "tags": [
           "Facilities (Cơ sở y tế & Phân cấp)"
         ]
@@ -1243,11 +1639,186 @@
         "tags": [
           "Chronic Diseases (Danh mục Bệnh mạn tính)"
         ]
+      },
+      "delete": {
+        "description": "Xóa mềm bệnh mạn tính khỏi danh mục hoạt động",
+        "operationId": "ChronicDiseasesController_deleteChronicDisease",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Role: ADMIN - Xóa mềm bệnh mạn tính",
+        "tags": [
+          "Chronic Diseases (Danh mục Bệnh mạn tính)"
+        ]
       }
     },
     "/api/health-profiles": {
+      "get": {
+        "description": "Nhân viên y tế lấy danh sách các hồ sơ sức khỏe đã được liên kết vào cơ sở y tế của mình (Facility nào chỉ xem hồ sơ của Facility đó).",
+        "operationId": "HealthProfilesController_getFacilityProfiles",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "ID cơ sở y tế (Chỉ định CSYT khi là Admin hệ thống)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "required": false,
+            "in": "query",
+            "description": "ID tài khoản sở hữu",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "relationship",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo mối quan hệ",
+            "schema": {
+              "$ref": "#/components/schemas/ProfileRelationship"
+            }
+          },
+          {
+            "name": "linkStatus",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo trạng thái liên kết với cơ sở y tế (Mặc định: ACTIVE)",
+            "schema": {
+              "$ref": "#/components/schemas/FacilityPatientLinkStatus"
+            }
+          },
+          {
+            "name": "citizenId",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo CCCD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "phoneNumber",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo SĐT",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HealthProfile"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Lấy tất cả hồ sơ sức khỏe đã gắn với cơ sở y tế",
+        "tags": [
+          "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
+        ]
+      },
       "post": {
-        "description": "Bệnh nhân tạo hồ sơ sức khỏe mới thuộc tài khoản của mình (quan hệ SELF, FATHER, MOTHER...)",
+        "description": "Bệnh nhân tạo hồ sơ mới cho bản thân hoặc người thân gắn với tài khoản đang đăng nhập.",
         "operationId": "HealthProfilesController_createProfile",
         "parameters": [],
         "requestBody": {
@@ -1282,7 +1853,430 @@
             "access-token": []
           }
         ],
-        "summary": "App Auth - Tạo mới hồ sơ sức khỏe (Bản thân hoặc người thân)",
+        "summary": "App Auth - Tạo mới hồ sơ sức khỏe cho tài khoản",
+        "tags": [
+          "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/health-profiles/facility": {
+      "get": {
+        "description": "Nhân viên y tế lấy danh sách các hồ sơ sức khỏe đã được liên kết vào cơ sở y tế của mình.",
+        "operationId": "HealthProfilesController_getFacilityProfilesAlias",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "ID cơ sở y tế (Chỉ định CSYT khi là Admin hệ thống)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "required": false,
+            "in": "query",
+            "description": "ID tài khoản sở hữu",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "relationship",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo mối quan hệ",
+            "schema": {
+              "$ref": "#/components/schemas/ProfileRelationship"
+            }
+          },
+          {
+            "name": "linkStatus",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo trạng thái liên kết với cơ sở y tế (Mặc định: ACTIVE)",
+            "schema": {
+              "$ref": "#/components/schemas/FacilityPatientLinkStatus"
+            }
+          },
+          {
+            "name": "citizenId",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo CCCD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "phoneNumber",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo SĐT",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HealthProfile"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Lấy danh sách hồ sơ sức khỏe tại cơ sở y tế (Alias)",
+        "tags": [
+          "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
+        ]
+      },
+      "post": {
+        "description": "Nhân viên y tế tạo hồ sơ bệnh nhân độc lập tại viện (không gắn tài khoản App, tự động liên kết với viện).",
+        "operationId": "HealthProfilesController_createFacilityProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFacilityHealthProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/HealthProfile"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Tạo mới hồ sơ sức khỏe tại cơ sở y tế",
+        "tags": [
+          "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/health-profiles/profileList": {
+      "get": {
+        "description": "Truy vấn lấy ra tất cả các hồ sơ sức khỏe đã mua gói chăm sóc và được assign bác sĩ vào gói để bác sĩ quản lý các hồ sơ dưới quyền chăm sóc (take care) của mình.",
+        "operationId": "HealthProfilesController_getProfileList",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Từ khóa tìm kiếm theo tên bệnh nhân, SĐT, CCCD, mã gói chăm sóc",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "doctorId",
+            "required": false,
+            "in": "query",
+            "description": "ID Bác sĩ được chỉ định (Mặc định là Bác sĩ đang đăng nhập)",
+            "schema": {
+              "example": "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+              "type": "string"
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "ID cơ sở y tế (Chỉ định CSYT khi là Admin hệ thống)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "carePackageId",
+            "required": false,
+            "in": "query",
+            "description": "ID gói chăm sóc để lọc",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriptionStatus",
+            "required": false,
+            "in": "query",
+            "description": "Trạng thái gói chăm sóc của bệnh nhân (Mặc định: ACTIVE)",
+            "schema": {
+              "$ref": "#/components/schemas/CareSubscriptionStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HealthProfile"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff/Doctor Auth - Danh sách hồ sơ bệnh nhân đã mua gói & được gán Bác sĩ",
+        "tags": [
+          "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/health-profiles/profile-list": {
+      "get": {
+        "description": "Truy vấn lấy ra tất cả các hồ sơ sức khỏe đã mua gói chăm sóc và được assign bác sĩ vào gói.",
+        "operationId": "HealthProfilesController_getProfileListAlias",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Từ khóa tìm kiếm theo tên bệnh nhân, SĐT, CCCD, mã gói chăm sóc",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "doctorId",
+            "required": false,
+            "in": "query",
+            "description": "ID Bác sĩ được chỉ định (Mặc định là Bác sĩ đang đăng nhập)",
+            "schema": {
+              "example": "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+              "type": "string"
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "ID cơ sở y tế (Chỉ định CSYT khi là Admin hệ thống)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "carePackageId",
+            "required": false,
+            "in": "query",
+            "description": "ID gói chăm sóc để lọc",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriptionStatus",
+            "required": false,
+            "in": "query",
+            "description": "Trạng thái gói chăm sóc của bệnh nhân (Mặc định: ACTIVE)",
+            "schema": {
+              "$ref": "#/components/schemas/CareSubscriptionStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HealthProfile"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff/Doctor Auth - Danh sách hồ sơ bệnh nhân đã mua gói & được gán Bác sĩ (Kebab-case Alias)",
         "tags": [
           "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
         ]
@@ -1290,7 +2284,7 @@
     },
     "/api/health-profiles/me": {
       "get": {
-        "description": "Trả về danh sách hồ sơ cá nhân và người thân kèm danh mục bệnh nền đã chọn",
+        "description": "Trả về danh sách hồ sơ cá nhân và người thân kèm danh mục bệnh nền và các gói chăm sóc điều trị (Care Subscriptions & Care Team) đã đăng ký.",
         "operationId": "HealthProfilesController_getMyProfiles",
         "parameters": [],
         "responses": {
@@ -1365,7 +2359,7 @@
         ]
       },
       "patch": {
-        "description": "Cập nhật thông tin nhân khẩu học, nhóm máu, dị ứng hoặc bệnh mạn tính",
+        "description": "Bệnh nhân hoặc Nhân viên y tế cập nhật thông tin nhân khẩu học, nhóm máu, dị ứng hoặc bệnh mạn tính",
         "operationId": "HealthProfilesController_updateProfile",
         "parameters": [
           {
@@ -1409,13 +2403,13 @@
             "access-token": []
           }
         ],
-        "summary": "App Auth - Cập nhật hồ sơ sức khỏe",
+        "summary": "App / Staff Auth - Cập nhật hồ sơ sức khỏe",
         "tags": [
           "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
         ]
       },
       "delete": {
-        "description": "Xóa một hồ sơ sức khỏe của người thân khỏi tài khoản",
+        "description": "Xóa một hồ sơ sức khỏe khỏi tài khoản hoặc hệ thống",
         "operationId": "HealthProfilesController_deleteProfile",
         "parameters": [
           {
@@ -1448,15 +2442,373 @@
             "access-token": []
           }
         ],
-        "summary": "App Auth - Xóa hồ sơ sức khỏe",
+        "summary": "App / Staff Auth - Xóa hồ sơ sức khỏe",
         "tags": [
           "Health Profiles (Hồ sơ Sức khỏe Bệnh nhân)"
         ]
       }
     },
+    "/api/patient-links/sse": {
+      "get": {
+        "description": "Kết nối SSE để App Bệnh nhân lắng nghe real-time các sự kiện lời mời liên kết (patient_link_invitation) và cập nhật trạng thái liên kết.",
+        "operationId": "PatientLinksController_sseEvents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Server-Sent Events (SSE) stream nhận thông báo lời mời liên kết hồ sơ",
+        "tags": [
+          "Patient Links (Liên kết Cơ sở Y tế - Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/patient-links/my-invitations": {
+      "get": {
+        "description": "Bệnh nhân xem các lời mời liên kết hồ sơ bệnh án từ cơ sở y tế đang ở trạng thái PENDING.",
+        "operationId": "PatientLinksController_getMyInvitations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HealthProfile"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Danh sách lời mời liên kết hồ sơ y tế đang chờ duyệt",
+        "tags": [
+          "Patient Links (Liên kết Cơ sở Y tế - Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/patient-links/my-links": {
+      "get": {
+        "description": "Lấy toàn bộ các liên kết cơ sở y tế đang hoạt động (ACTIVE) của các hồ sơ thuộc tài khoản App.",
+        "operationId": "PatientLinksController_getMyLinks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HealthProfile"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Danh sách cơ sở y tế đã liên kết với tài khoản bệnh nhân",
+        "tags": [
+          "Patient Links (Liên kết Cơ sở Y tế - Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/patient-links/invitations/{id}/accept": {
+      "patch": {
+        "description": "Chuyển trạng thái liên kết từ PENDING sang ACTIVE.",
+        "operationId": "PatientLinksController_acceptInvitation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/HealthProfile"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bạn không sở hữu hồ sơ sức khỏe này",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "HEALTH_PROFILE_ACCESS_DENIED": {
+                    "summary": "Bạn không sở hữu hồ sơ sức khỏe này",
+                    "value": {
+                      "statusCode": 403,
+                      "message": "Bạn không sở hữu hồ sơ sức khỏe này",
+                      "code": "HEALTH_PROFILE_ACCESS_DENIED"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bản ghi liên kết không tồn tại",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "PATIENT_LINK_NOT_FOUND": {
+                    "summary": "Bản ghi liên kết không tồn tại",
+                    "value": {
+                      "statusCode": 404,
+                      "message": "Bản ghi liên kết không tồn tại",
+                      "code": "PATIENT_LINK_NOT_FOUND"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Bệnh nhân đồng ý lời mời liên kết hồ sơ y tế",
+        "tags": [
+          "Patient Links (Liên kết Cơ sở Y tế - Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/patient-links/invitations/{id}/reject": {
+      "patch": {
+        "description": "Từ chối lời mời liên kết (chuyển trạng thái sang UNLINKED).",
+        "operationId": "PatientLinksController_rejectInvitation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bạn không sở hữu hồ sơ sức khỏe này",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "HEALTH_PROFILE_ACCESS_DENIED": {
+                    "summary": "Bạn không sở hữu hồ sơ sức khỏe này",
+                    "value": {
+                      "statusCode": 403,
+                      "message": "Bạn không sở hữu hồ sơ sức khỏe này",
+                      "code": "HEALTH_PROFILE_ACCESS_DENIED"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bản ghi liên kết không tồn tại",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "PATIENT_LINK_NOT_FOUND": {
+                    "summary": "Bản ghi liên kết không tồn tại",
+                    "value": {
+                      "statusCode": 404,
+                      "message": "Bản ghi liên kết không tồn tại",
+                      "code": "PATIENT_LINK_NOT_FOUND"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Bệnh nhân từ chối lời mời liên kết hồ sơ y tế",
+        "tags": [
+          "Patient Links (Liên kết Cơ sở Y tế - Bệnh nhân)"
+        ]
+      }
+    },
+    "/api/patient-links/request": {
+      "post": {
+        "description": "Cơ sở y tế gửi yêu cầu liên kết hồ sơ bệnh nhân tới tài khoản App qua SĐT. Hệ thống tạo liên kết PENDING và phát SSE thông báo tới App bệnh nhân.",
+        "operationId": "PatientLinksController_requestLink",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPatientLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/HealthProfile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tài khoản bệnh nhân chưa đăng ký trên ứng dụng",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "ACCOUNT_NOT_FOUND": {
+                    "summary": "Tài khoản bệnh nhân chưa đăng ký trên ứng dụng",
+                    "value": {
+                      "statusCode": 404,
+                      "message": "Tài khoản bệnh nhân chưa đăng ký trên ứng dụng",
+                      "code": "ACCOUNT_NOT_FOUND"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Hồ sơ đã được liên kết với cơ sở y tế này từ trước",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "PATIENT_ALREADY_LINKED": {
+                    "summary": "Hồ sơ đã được liên kết với cơ sở y tế này từ trước",
+                    "value": {
+                      "statusCode": 409,
+                      "message": "Hồ sơ đã được liên kết với cơ sở y tế này từ trước",
+                      "code": "PATIENT_ALREADY_LINKED"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Gửi yêu cầu liên kết hồ sơ đến App bệnh nhân qua SĐT",
+        "tags": [
+          "Patient Links (Liên kết Cơ sở Y tế - Bệnh nhân)"
+        ]
+      }
+    },
     "/api/patient-links": {
       "post": {
-        "description": "Nhân viên y tế hoặc tiếp đón liên kết hồ sơ bệnh nhân vào viện qua SĐT & healthProfileId",
+        "description": "Nhân viên y tế hoặc tiếp đón liên kết hồ sơ bệnh nhân vào viện qua SĐT & healthProfileId. Nếu chọn PENDING, hệ thống sẽ tự phát SSE gửi lời mời đến App bệnh nhân.",
         "operationId": "PatientLinksController_createLink",
         "parameters": [],
         "requestBody": {
@@ -1480,7 +2832,7 @@
                       "$ref": "#/components/schemas/AppResponseSerialization"
                     }
                   ],
-                  "$ref": "#/components/schemas/FacilityPatientLink"
+                  "$ref": "#/components/schemas/HealthProfile"
                 }
               }
             }
@@ -1580,6 +2932,15 @@
             }
           },
           {
+            "name": "citizenId",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo CCCD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "hospitalPatientCode",
             "required": false,
             "in": "query",
@@ -1622,9 +2983,98 @@
         "operationId": "PatientLinksController_searchPatients",
         "parameters": [
           {
-            "name": "keyword",
-            "required": true,
+            "name": "search",
+            "required": false,
             "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo ID cơ sở y tế",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "healthProfileId",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo ID hồ sơ sức khỏe bệnh nhân",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo trạng thái liên kết",
+            "schema": {
+              "$ref": "#/components/schemas/FacilityPatientLinkStatus"
+            }
+          },
+          {
+            "name": "phoneNumber",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo số điện thoại",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "citizenId",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo CCCD",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hospitalPatientCode",
+            "required": false,
+            "in": "query",
+            "description": "Tìm kiếm theo mã bệnh nhân viện cấp",
             "schema": {
               "type": "string"
             }
@@ -1690,7 +3140,7 @@
                       "$ref": "#/components/schemas/AppResponseSerialization"
                     }
                   ],
-                  "$ref": "#/components/schemas/FacilityPatientLink"
+                  "$ref": "#/components/schemas/HealthProfile"
                 }
               }
             }
@@ -1740,7 +3190,7 @@
                       "$ref": "#/components/schemas/AppResponseSerialization"
                     }
                   ],
-                  "$ref": "#/components/schemas/FacilityPatientLink"
+                  "$ref": "#/components/schemas/HealthProfile"
                 }
               }
             }
@@ -2129,9 +3579,52 @@
         ]
       }
     },
+    "/api/risk-assessments/form-schema": {
+      "get": {
+        "description": "Trả về cấu trúc 3 khối trường (GENERAL_METRICS, TARGET_ORGAN_DAMAGE, CHRONIC_DISEASES). Tự động điền tuổi, giới tính và khóa (disabled: true) các trường bệnh nền đã có trong hồ sơ sức khỏe.",
+        "operationId": "RiskAssessmentsController_getFormSchema",
+        "parameters": [
+          {
+            "name": "healthProfileId",
+            "required": true,
+            "in": "query",
+            "description": "UUID của hồ sơ sức khỏe cá nhân (HealthProfile ID)",
+            "schema": {
+              "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Lấy Dynamic JSON Schema Form Phân Tầng Nguy Cơ (Auto-fill & Lock)",
+        "tags": [
+          "Risk Assessments (Đánh giá Yếu tố Nguy cơ Tim mạch / PTYTNC)"
+        ]
+      }
+    },
     "/api/risk-assessments": {
       "post": {
-        "description": "Bệnh nhân hoặc nhân viên nhập các chỉ số lâm sàng để hệ thống tự động tra cứu từ điển và trả về kết quả phân tầng nguy cơ",
+        "description": "Hỗ trợ Bệnh nhân hoặc Bác sĩ/Nhân viên y tế gửi dữ liệu đánh giá nguy cơ (SCORE2 hoặc có bệnh nền). Tự động tra cứu từ điển y khoa và trả về phân tầng cùng cờ đỏ cảnh báo.",
         "operationId": "RiskAssessmentsController_create",
         "parameters": [],
         "requestBody": {
@@ -2166,7 +3659,7 @@
             "access-token": []
           }
         ],
-        "summary": "App Auth - Gửi dữ liệu đánh giá yếu tố nguy cơ tim mạch",
+        "summary": "App / Staff Auth - Gửi dữ liệu đánh giá yếu tố nguy cơ tim mạch",
         "tags": [
           "Risk Assessments (Đánh giá Yếu tố Nguy cơ Tim mạch / PTYTNC)"
         ]
@@ -2458,7 +3951,46 @@
             "access-token": []
           }
         ],
-        "summary": "App Auth - Lấy chi tiết kết quả đánh giá nguy cơ",
+        "summary": "App / Staff Auth - Lấy chi tiết kết quả đánh giá nguy cơ",
+        "tags": [
+          "Risk Assessments (Đánh giá Yếu tố Nguy cơ Tim mạch / PTYTNC)"
+        ]
+      },
+      "delete": {
+        "description": "Bệnh nhân (sở hữu hồ sơ) hoặc Bác sĩ/Admin xóa mềm phiếu đánh giá nguy cơ",
+        "operationId": "RiskAssessmentsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Xóa mềm phiếu đánh giá nguy cơ",
         "tags": [
           "Risk Assessments (Đánh giá Yếu tố Nguy cơ Tim mạch / PTYTNC)"
         ]
@@ -2466,7 +3998,7 @@
     },
     "/api/risk-assessments/{id}/evaluate": {
       "post": {
-        "description": "Bác sĩ xác nhận điểm nguy cơ, phân tầng mức độ nguy cơ (LOW, HIGH, VERY_HIGH), chẩn đoán và khuyến nghị phác đồ",
+        "description": "Truyền vào ID của Result (hoặc Input). Bác sĩ xác nhận kết quả phân tầng của hệ thống và ghi nhận kết luận chẩn đoán, khuyến nghị điều trị.",
         "operationId": "RiskAssessmentsController_evaluate",
         "parameters": [
           {
@@ -2510,9 +4042,606 @@
             "access-token": []
           }
         ],
-        "summary": "Staff Auth (Doctor) - Bác sĩ thẩm định và kết luận mức độ nguy cơ",
+        "summary": "Staff Auth (Doctor) - Bác sĩ xác nhận (confirm) phiếu phân tầng và đưa ra khuyến nghị",
         "tags": [
           "Risk Assessments (Đánh giá Yếu tố Nguy cơ Tim mạch / PTYTNC)"
+        ]
+      }
+    },
+    "/api/treatment-targets/my-targets": {
+      "get": {
+        "description": "Lấy danh sách các mục tiêu điều trị thuộc hồ sơ sức khỏe của bệnh nhân. Chỉ hiển thị nếu hồ sơ có gói chăm sóc ACTIVE hoặc đã được bác sĩ xác nhận.",
+        "operationId": "TreatmentTargetsController_findAllForApp",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "healthProfileId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Health Profile ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "careSubscriptionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Care Subscription ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "doctorId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Primary Doctor ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expertId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Expert Doctor ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Target status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PENDING_REVIEW",
+                "ESCALATED_TO_EXPERT",
+                "DOCTOR_VERIFIED",
+                "EXPERT_VERIFIED",
+                "COMPLETED",
+                "CANCELLED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PatientTreatmentTarget"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Danh sách mục tiêu điều trị của bệnh nhân",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      }
+    },
+    "/api/treatment-targets/my-targets/{id}": {
+      "get": {
+        "description": "Xem chi tiết mục tiêu điều trị theo ID (yêu cầu gói chăm sóc ACTIVE hoặc đã duyệt)",
+        "operationId": "TreatmentTargetsController_findOneForApp",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/PatientTreatmentTarget"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App Auth - Chi tiết mục tiêu điều trị của bệnh nhân",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      }
+    },
+    "/api/treatment-targets/by-assessment/{assessmentId}": {
+      "get": {
+        "description": "Tra cứu mục tiêu điều trị được sinh từ kết quả phân tầng nguy cơ tương ứng. Hỗ trợ cả Bệnh nhân (chỉ xem hồ sơ của mình khi có gói ACTIVE hoặc đã duyệt) và Bác sĩ/Nhân viên y tế.",
+        "operationId": "TreatmentTargetsController_findByAssessment",
+        "parameters": [
+          {
+            "name": "assessmentId",
+            "required": true,
+            "in": "path",
+            "description": "UUID của kết quả phân tầng nguy cơ (assessmentResultId hoặc assessmentInputId)",
+            "schema": {
+              "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/PatientTreatmentTarget"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "App & Staff Auth - Lấy mục tiêu điều trị theo ID phân tầng nguy cơ",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      }
+    },
+    "/api/treatment-targets": {
+      "get": {
+        "description": "Bác sĩ/Nhân viên y tế tra cứu và lọc danh sách mục tiêu điều trị của bệnh nhân",
+        "operationId": "TreatmentTargetsController_findAllForStaff",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "healthProfileId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Health Profile ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "careSubscriptionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Care Subscription ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "doctorId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Primary Doctor ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expertId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Expert Doctor ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Target status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PENDING_REVIEW",
+                "ESCALATED_TO_EXPERT",
+                "DOCTOR_VERIFIED",
+                "EXPERT_VERIFIED",
+                "COMPLETED",
+                "CANCELLED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PatientTreatmentTarget"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Danh sách mục tiêu điều trị (CMS)",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      }
+    },
+    "/api/treatment-targets/{id}": {
+      "get": {
+        "description": "Bác sĩ/Nhân viên y tế xem chi tiết mục tiêu điều trị theo ID",
+        "operationId": "TreatmentTargetsController_findOneForStaff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/PatientTreatmentTarget"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Xem chi tiết mục tiêu điều trị (CMS)",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      },
+      "patch": {
+        "description": "Bác sĩ điều chỉnh các chỉ số mục tiêu (huyết áp, mỡ máu, HbA1c, BMI, chế độ ăn, tập luyện...) do hệ thống tự sinh",
+        "operationId": "TreatmentTargetsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePatientTargetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/PatientTreatmentTarget"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth (Doctor/Admin) - Bác sĩ cập nhật, tinh chỉnh mục tiêu điều trị tự sinh",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      },
+      "delete": {
+        "description": "Bác sĩ hoặc Quản trị viên xóa mềm mục tiêu điều trị",
+        "operationId": "TreatmentTargetsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth (Doctor/Admin) - Xóa mềm mục tiêu điều trị",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      }
+    },
+    "/api/treatment-targets/{id}/verify": {
+      "post": {
+        "description": "Bác sĩ phụ trách hoặc Bác sĩ chuyên gia xác nhận phê duyệt mục tiêu (DOCTOR_VERIFIED / EXPERT_VERIFIED)",
+        "operationId": "TreatmentTargetsController_verify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPatientTargetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/PatientTreatmentTarget"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth (Doctor/Admin) - Bác sĩ phê duyệt mục tiêu điều trị",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
+        ]
+      }
+    },
+    "/api/treatment-targets/{id}/escalate-expert": {
+      "post": {
+        "description": "Khi ca bệnh phức tạp hoặc thuộc gói VIP có chuyên gia, bác sĩ phụ trách chuyển tiếp mục tiêu sang Bác sĩ Chuyên gia để xin ý kiến và phê duyệt",
+        "operationId": "TreatmentTargetsController_escalateToExpert",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EscalateExpertTargetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/PatientTreatmentTarget"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth (Doctor) - Bác sĩ chuyển tiếp mục tiêu sang Bác sĩ Chuyên gia (Gói VIP)",
+        "tags": [
+          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa theo Từ điển Bộ Y Tế)"
         ]
       }
     },
@@ -2945,6 +5074,45 @@
         "tags": [
           "Examinations (Phiếu Khám Bệnh Lâm Sàng)"
         ]
+      },
+      "delete": {
+        "description": "Xóa mềm phiếu khám bệnh và chuyển trạng thái sang CANCELLED",
+        "operationId": "ExaminationsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth (Doctor/Admin) - Xóa mềm phiếu khám bệnh",
+        "tags": [
+          "Examinations (Phiếu Khám Bệnh Lâm Sàng)"
+        ]
       }
     },
     "/api/treatment-dictionaries": {
@@ -3053,560 +5221,6 @@
         "summary": "Public / App / CMS - Chi tiết một mã mục tiêu điều trị",
         "tags": [
           "Treatment Dictionaries (Từ điển Mục tiêu điều trị A1-G5)"
-        ]
-      }
-    },
-    "/api/treatment-targets": {
-      "post": {
-        "description": "Bác sĩ thiết lập bộ mục tiêu điều trị (huyết áp, mỡ máu, HbA1c, BMI...) cho hồ sơ sức khỏe",
-        "operationId": "TreatmentTargetsController_createByDoctor",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePatientTargetDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "$ref": "#/components/schemas/PatientTreatmentTarget"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Staff Auth (Doctor) - Tạo mục tiêu điều trị cá nhân cho bệnh nhân",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      },
-      "get": {
-        "description": "Tìm kiếm và lọc danh sách mục tiêu điều trị trên hệ thống CMS",
-        "operationId": "TreatmentTargetsController_findAllForStaff",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": 10,
-              "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": "createdAt",
-              "type": "string"
-            }
-          },
-          {
-            "name": "sortOrder",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/SortOrder"
-            }
-          },
-          {
-            "name": "healthProfileId",
-            "required": false,
-            "in": "query",
-            "description": "Filter by Health Profile ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "doctorId",
-            "required": false,
-            "in": "query",
-            "description": "Filter by Doctor ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "description": "Filter by Target status",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "DRAFT",
-                "DOCTOR_VERIFIED",
-                "COMPLETED",
-                "CANCELLED"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/PatientTreatmentTarget"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Staff Auth - Danh sách mục tiêu điều trị (CMS)",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      }
-    },
-    "/api/treatment-targets/self": {
-      "post": {
-        "description": "Bệnh nhân tự tạo hoặc chọn mã từ điển mục tiêu điều trị tham khảo",
-        "operationId": "TreatmentTargetsController_createByPatient",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePatientTargetDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "$ref": "#/components/schemas/PatientTreatmentTarget"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "App Auth - Người dùng tự khởi tạo mục tiêu điều trị (Draft)",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      }
-    },
-    "/api/treatment-targets/{id}/verify": {
-      "post": {
-        "description": "Bác sĩ kiểm tra, điều chỉnh các chỉ số mục tiêu và xác nhận phê duyệt (DOCTOR_VERIFIED)",
-        "operationId": "TreatmentTargetsController_verify",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyPatientTargetDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "$ref": "#/components/schemas/PatientTreatmentTarget"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Staff Auth (Doctor) - Bác sĩ duyệt & điều chỉnh mục tiêu điều trị",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      }
-    },
-    "/api/treatment-targets/my-targets": {
-      "get": {
-        "description": "Lấy danh sách các mục tiêu điều trị gắn với các hồ sơ sức khỏe của tài khoản App",
-        "operationId": "TreatmentTargetsController_findAllForApp",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": 10,
-              "type": "number"
-            }
-          },
-          {
-            "name": "sortBy",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": "createdAt",
-              "type": "string"
-            }
-          },
-          {
-            "name": "sortOrder",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/SortOrder"
-            }
-          },
-          {
-            "name": "healthProfileId",
-            "required": false,
-            "in": "query",
-            "description": "Filter by Health Profile ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "doctorId",
-            "required": false,
-            "in": "query",
-            "description": "Filter by Doctor ID",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "description": "Filter by Target status",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "DRAFT",
-                "DOCTOR_VERIFIED",
-                "COMPLETED",
-                "CANCELLED"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/PatientTreatmentTarget"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "App Auth - Danh sách mục tiêu điều trị của bệnh nhân",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      }
-    },
-    "/api/treatment-targets/my-targets/{id}": {
-      "get": {
-        "description": "Xem chi tiết mục tiêu điều trị theo ID",
-        "operationId": "TreatmentTargetsController_findOneForApp",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "$ref": "#/components/schemas/PatientTreatmentTarget"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "App Auth - Chi tiết mục tiêu điều trị của bệnh nhân",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      },
-      "patch": {
-        "description": "Bệnh nhân cập nhật ghi chú hoặc thông tin mục tiêu điều trị cá nhân",
-        "operationId": "TreatmentTargetsController_updateByPatient",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePatientTargetDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "$ref": "#/components/schemas/PatientTreatmentTarget"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "App Auth - Bệnh nhân cập nhật mục tiêu điều trị (Draft)",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      }
-    },
-    "/api/treatment-targets/{id}": {
-      "get": {
-        "description": "Xem chi tiết mục tiêu điều trị theo ID",
-        "operationId": "TreatmentTargetsController_findOneForStaff",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "$ref": "#/components/schemas/PatientTreatmentTarget"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Staff Auth - Xem chi tiết mục tiêu điều trị (CMS)",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
-        ]
-      },
-      "patch": {
-        "description": "Bác sĩ cập nhật nội dung hoặc chỉ số trong mục tiêu điều trị",
-        "operationId": "TreatmentTargetsController_updateByDoctor",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePatientTargetDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
-                    }
-                  ],
-                  "$ref": "#/components/schemas/PatientTreatmentTarget"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "Staff Auth (Doctor) - Chỉnh sửa mục tiêu điều trị",
-        "tags": [
-          "Treatment Targets (Mục tiêu Điều trị Cá nhân hóa)"
         ]
       }
     },
@@ -3852,6 +5466,45 @@
         "tags": [
           "Treatment Plans (Phác đồ & Mẫu Phác đồ Điều trị)"
         ]
+      },
+      "delete": {
+        "description": "Xóa mềm mẫu phác đồ của cơ sở y tế",
+        "operationId": "TreatmentPlansController_deleteTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth - Xóa mềm mẫu phác đồ điều trị",
+        "tags": [
+          "Treatment Plans (Phác đồ & Mẫu Phác đồ Điều trị)"
+        ]
       }
     },
     "/api/treatment-plans": {
@@ -3941,6 +5594,15 @@
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Facility ID",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -4058,6 +5720,15 @@
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "name": "facilityId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by Facility ID",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -4261,6 +5932,45 @@
         "tags": [
           "Treatment Plans (Phác đồ & Mẫu Phác đồ Điều trị)"
         ]
+      },
+      "delete": {
+        "description": "Xóa mềm phác đồ điều trị của bệnh nhân",
+        "operationId": "TreatmentPlansController_deletePlan",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Staff Auth (Doctor/Admin) - Xóa mềm phác đồ điều trị",
+        "tags": [
+          "Treatment Plans (Phác đồ & Mẫu Phác đồ Điều trị)"
+        ]
       }
     },
     "/api/care-packages": {
@@ -4306,7 +6016,7 @@
         ]
       },
       "get": {
-        "description": "Lấy danh sách các gói chăm sóc có phân trang, lọc theo cơ sở y tế, loại gói (STANDARD/VIP), trạng thái (ACTIVE/INACTIVE) và tìm kiếm",
+        "description": "Lấy danh sách các gói chăm sóc. Nhân viên cơ sở y tế chỉ xem được các gói của cơ sở mình. Người dùng App (bệnh nhân) xem được tất cả các gói của mọi cơ sở.",
         "operationId": "CarePackagesController_findAll",
         "parameters": [
           {
@@ -4407,7 +6117,12 @@
             }
           }
         },
-        "summary": "Public / All - Danh sách gói chăm sóc sức khỏe",
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Danh sách gói chăm sóc sức khỏe",
         "tags": [
           "Care Packages (Gói Dịch Vụ Chăm Sóc Sức Khỏe)"
         ]
@@ -4495,6 +6210,45 @@
           }
         ],
         "summary": "Facility Admin Auth - Chỉnh sửa thông tin gói chăm sóc",
+        "tags": [
+          "Care Packages (Gói Dịch Vụ Chăm Sóc Sức Khỏe)"
+        ]
+      },
+      "delete": {
+        "description": "Chỉ Admin của cơ sở y tế sở hữu gói mới có quyền xóa mềm gói chăm sóc",
+        "operationId": "CarePackagesController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Facility Admin Auth - Xóa mềm gói chăm sóc sức khỏe",
         "tags": [
           "Care Packages (Gói Dịch Vụ Chăm Sóc Sức Khỏe)"
         ]
@@ -4870,6 +6624,45 @@
           }
         ],
         "summary": "Staff Auth - Xem chi tiết gói đăng ký và đội ngũ Care Team",
+        "tags": [
+          "Care Subscriptions (Đăng Ký Gói & Phân Công Care Team)"
+        ]
+      },
+      "delete": {
+        "description": "Xóa mềm lượt đăng ký gói chăm sóc sức khỏe của bệnh nhân.",
+        "operationId": "CareSubscriptionsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "CMS Admin - Xóa mềm lượt đăng ký gói chăm sóc",
         "tags": [
           "Care Subscriptions (Đăng Ký Gói & Phân Công Care Team)"
         ]
@@ -5322,6 +7115,45 @@
         "tags": [
           "Care Requests (Yêu Cầu Hỗ Trợ Chăm Sóc Y Tế)"
         ]
+      },
+      "delete": {
+        "description": "Xóa mềm yêu cầu chăm sóc của bệnh nhân.",
+        "operationId": "CareRequestsController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "CMS Staff - Xóa mềm yêu cầu hỗ trợ chăm sóc y tế",
+        "tags": [
+          "Care Requests (Yêu Cầu Hỗ Trợ Chăm Sóc Y Tế)"
+        ]
       }
     },
     "/api/care-requests/{id}/assign": {
@@ -5482,7 +7314,7 @@
     },
     "/api/conversations/me": {
       "get": {
-        "description": "Trả về các nhóm chat Care Team và chat 1-1 với Bác sĩ của tài khoản App đang đăng nhập.",
+        "description": "Trả về các nhóm chat Care Team và chat 1-1 với Bác sĩ của tài khoản App đang đăng nhập (đã sắp xếp ghim lên đầu).",
         "operationId": "ConversationsController_getMyConversations",
         "parameters": [
           {
@@ -5708,45 +7540,31 @@
                 }
               }
             }
-          }
-        },
-        "security": [
-          {
-            "access-token": []
-          }
-        ],
-        "summary": "App Auth - Mở phòng chat trực tiếp 1-1 với Bác sĩ",
-        "tags": [
-          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
-        ]
-      }
-    },
-    "/api/conversations/{id}": {
-      "get": {
-        "description": "Lấy chi tiết phòng chat, thành viên Care Team và hồ sơ bệnh nhân.",
-        "operationId": "ConversationsController_findById",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
+          },
+          "404": {
+            "description": "Hồ sơ sức khỏe không tồn tại / Bác sĩ không tồn tại",
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/AppResponseSerialization"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "HEALTH_PROFILE_NOT_FOUND": {
+                    "summary": "Hồ sơ sức khỏe không tồn tại",
+                    "value": {
+                      "statusCode": 404,
+                      "message": "Hồ sơ sức khỏe không tồn tại",
+                      "code": "HEALTH_PROFILE_NOT_FOUND"
                     }
-                  ],
-                  "$ref": "#/components/schemas/Conversation"
+                  },
+                  "STAFF_NOT_FOUND": {
+                    "summary": "Bác sĩ không tồn tại",
+                    "value": {
+                      "statusCode": 404,
+                      "message": "Bác sĩ không tồn tại",
+                      "code": "STAFF_NOT_FOUND"
+                    }
+                  }
                 }
               }
             }
@@ -5757,16 +7575,16 @@
             "access-token": []
           }
         ],
-        "summary": "Staff Auth - Xem chi tiết thông tin phòng chat",
+        "summary": "Dual Auth - Mở phòng chat trực tiếp 1-1 với Bác sĩ",
         "tags": [
           "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
         ]
       }
     },
-    "/api/conversations/{id}/messages": {
+    "/api/conversations/{id}/messages/search": {
       "get": {
-        "description": "Lấy danh sách tin nhắn theo thứ tự thời gian phân trang (Cursor pagination với tham số before).",
-        "operationId": "ConversationsController_getMessages",
+        "description": "Tìm kiếm tin nhắn văn bản khớp với từ khóa trong cuộc hội thoại.",
+        "operationId": "ConversationsController_searchMessages",
         "parameters": [
           {
             "name": "id",
@@ -5777,33 +7595,10 @@
             }
           },
           {
-            "name": "page",
-            "required": false,
+            "name": "keyword",
+            "required": true,
             "in": "query",
-            "description": "Trang hiện tại (bắt đầu từ 1)",
             "schema": {
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Số lượng tin nhắn lấy ra trên 1 trang",
-            "schema": {
-              "default": 30,
-              "type": "number"
-            }
-          },
-          {
-            "name": "before",
-            "required": false,
-            "in": "query",
-            "description": "Lấy các tin nhắn trước thời điểm này (Cursor-based pagination)",
-            "schema": {
-              "format": "date-time",
-              "example": "2026-09-08T10:00:00.000Z",
               "type": "string"
             }
           }
@@ -5837,14 +7632,411 @@
             "access-token": []
           }
         ],
-        "summary": "Staff Auth - Lấy lịch sử tin nhắn trong phòng chat",
+        "summary": "Dual Auth - Tìm kiếm tin nhắn trong phòng chat theo từ khóa",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/conversations/{id}/pinned-messages": {
+      "get": {
+        "description": "Lấy toàn bộ tin nhắn được ghim (lời dặn, đơn thuốc, cảnh báo...) trong cuộc hội thoại.",
+        "operationId": "ConversationsController_getPinnedMessages",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Lấy danh sách tin nhắn đã ghim trong phòng chat",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/conversations/{id}/resources": {
+      "get": {
+        "description": "Tổng hợp danh sách các ảnh, tệp tin, phiếu khám bệnh, PTYTNC, chỉ số đo đã chia sẻ trong phòng chat.",
+        "operationId": "ConversationsController_getResources",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Lọc theo loại tài nguyên (IMAGE, FILE, EXAMINATION, RISK_ASSESSMENT, HEALTH_RECORD, etc.)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "TEXT",
+                "IMAGE",
+                "FILE",
+                "EXAMINATION",
+                "RISK_ASSESSMENT",
+                "HEALTH_RECORD",
+                "CARE_REQUEST",
+                "SYSTEM"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Trang hiện tại (bắt đầu từ 1)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số lượng mục trên mỗi trang",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Resource Hub (Kho tài nguyên hội thoại)",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/conversations/{id}/media": {
+      "post": {
+        "description": "Tải lên hình ảnh / file đính kèm phục vụ trao đổi trong phòng chat y tế.",
+        "operationId": "ConversationsController_uploadMedia",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Upload hình ảnh hoặc tài liệu cho tin nhắn chat",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/conversations/{id}/pin": {
+      "patch": {
+        "description": "Ghim hoặc bỏ ghim phòng chat lên đầu danh sách hội thoại.",
+        "operationId": "ConversationsController_pinConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Ghim / Bỏ ghim cuộc hội thoại",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/conversations/{id}/read": {
+      "patch": {
+        "description": "Cập nhật trạng thái đã đọc toàn bộ tin nhắn trong phòng chat.",
+        "operationId": "ConversationsController_markAsRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Đánh dấu đã đọc phòng chat qua REST API",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/conversations/{id}/messages": {
+      "get": {
+        "description": "Lấy danh sách tin nhắn theo thứ tự thời gian phân trang (hỗ trợ cursor before/after dạng ISO Date hoặc Message UUID).",
+        "operationId": "ConversationsController_getMessages",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Trang hiện tại (bắt đầu từ 1 - dùng cho offset pagination)",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số lượng tin nhắn lấy ra trên 1 trang",
+            "schema": {
+              "default": 30,
+              "type": "number"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Cursor lấy các tin nhắn cũ hơn (có thể là ISO Date string hoặc Message UUID)",
+            "schema": {
+              "example": "2026-09-08T10:00:00.000Z hoặc 018fa300-0000-7000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "after",
+            "required": false,
+            "in": "query",
+            "description": "Cursor lấy các tin nhắn mới hơn (có thể là ISO Date string hoặc Message UUID)",
+            "schema": {
+              "example": "2026-09-08T10:00:00.000Z hoặc 018fa300-0000-7000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "required": false,
+            "in": "query",
+            "description": "Từ khóa tìm kiếm nội dung tin nhắn trong cuộc hội thoại",
+            "schema": {
+              "example": "huyết áp",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Lấy lịch sử tin nhắn trong phòng chat",
         "tags": [
           "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
         ]
       },
       "post": {
-        "description": "Nhân viên y tế gửi tin nhắn văn bản, hình ảnh hoặc đính kèm thực thể y tế (resourceId) vào phòng chat.",
-        "operationId": "ConversationsController_sendMessageByStaff",
+        "description": "Gửi tin nhắn văn bản, hình ảnh hoặc đính kèm thực thể y tế (resourceId) vào phòng chat.",
+        "operationId": "ConversationsController_sendMessage",
         "parameters": [
           {
             "name": "id",
@@ -5887,7 +8079,88 @@
             "access-token": []
           }
         ],
-        "summary": "Staff Auth - Gửi tin nhắn qua REST API (Bác sĩ/Điều dưỡng)",
+        "summary": "Dual Auth - Gửi tin nhắn qua REST API (Bác sĩ / Bệnh nhân)",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/conversations/{id}": {
+      "get": {
+        "description": "Lấy chi tiết phòng chat, thành viên Care Team và hồ sơ bệnh nhân.",
+        "operationId": "ConversationsController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ],
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Xem chi tiết thông tin phòng chat",
+        "tags": [
+          "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      },
+      "delete": {
+        "description": "Đóng cuộc hội thoại (chuyển trạng thái sang CLOSED).",
+        "operationId": "ConversationsController_deleteConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Dual Auth - Xóa / Đóng cuộc hội thoại",
         "tags": [
           "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
         ]
@@ -5947,7 +8220,7 @@
     },
     "/api/conversations/messages/{id}": {
       "delete": {
-        "description": "Đánh dấu tin nhắn đã thu hồi (isDeleted = true).",
+        "description": "Đánh dấu tin nhắn đã thu hồi (isDeleted = true). Chỉ người gửi mới được thu hồi.",
         "operationId": "ConversationsController_deleteMessage",
         "parameters": [
           {
@@ -5981,9 +8254,190 @@
             "access-token": []
           }
         ],
-        "summary": "Staff Auth - Thu hồi tin nhắn đã gửi",
+        "summary": "Dual Auth - Thu hồi tin nhắn đã gửi",
         "tags": [
           "Conversations & Chat (Hội Thoại & Nhắn Tin Y Tế)"
+        ]
+      }
+    },
+    "/api/ocr/pdf": {
+      "post": {
+        "description": "Tiếp nhận file PDF/Ảnh hồ sơ bệnh án, gửi sang máy chủ OCR vndoctor.vn để trích xuất cấu trúc dữ liệu y khoa (thông tin bệnh nhân, chẩn đoán, sinh hiệu, kết quả xét nghiệm, đơn thuốc...)",
+        "operationId": "OcrController_processPdf",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/OcrPdfDto"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "string",
+                        "format": "binary"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/OcrPdfDto"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "string",
+                        "format": "binary"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "OCR & Trích xuất Hồ sơ Bệnh án từ PDF hoặc Hình ảnh",
+        "tags": [
+          "OCR (Document Intelligence & Trích xuất Hồ sơ Bệnh án)"
+        ]
+      }
+    },
+    "/api/ocr/cccd": {
+      "post": {
+        "description": "Tiếp nhận ảnh chụp CCCD/CMND mặt trước và mặt sau, nhận diện QR code và bóc tách thông tin cá nhân định danh.",
+        "operationId": "OcrController_processCccd",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/OcrCccdDto"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "front_file": {
+                        "type": "string",
+                        "format": "binary"
+                      },
+                      "back_file": {
+                        "type": "string",
+                        "format": "binary"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/OcrCccdDto"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "front_file": {
+                        "type": "string",
+                        "format": "binary"
+                      },
+                      "back_file": {
+                        "type": "string",
+                        "format": "binary"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "OCR Căn cước công dân (CCCD 2 mặt)",
+        "tags": [
+          "OCR (Document Intelligence & Trích xuất Hồ sơ Bệnh án)"
+        ]
+      }
+    },
+    "/api/ocr/health": {
+      "get": {
+        "description": "Trả về tình trạng hoạt động (healthy) và danh sách các endpoint OCR được hỗ trợ.",
+        "operationId": "OcrController_checkHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AppResponseSerialization"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Kiểm tra trạng thái kết nối tới máy chủ OCR",
+        "tags": [
+          "OCR (Document Intelligence & Trích xuất Hồ sơ Bệnh án)"
         ]
       }
     }
@@ -6015,26 +8469,106 @@
       "ErrorCode": {
         "type": "string",
         "enum": [
+          "BAD_REQUEST",
           "INVALID_INPUT",
           "MISSING_REQUIRED_FIELD",
           "UNAUTHORIZED",
-          "INVALID_CREDENTIALS",
-          "SESSION_EXPIRED",
           "FORBIDDEN",
           "INSUFFICIENT_PERMISSIONS",
           "RESOURCE_NOT_FOUND",
-          "USER_NOT_FOUND",
-          "PRESCRIPTION_SCHEDULE_NOT_FOUND",
-          "TIMESLOT_NOT_FOUND",
           "RESOURCE_ALREADY_EXISTS",
           "DUPLICATE_ENTRY",
+          "TOO_MANY_REQUESTS",
+          "INTERNAL_SERVER_ERROR",
+          "METHOD_NOT_ALLOWED",
+          "REQUEST_TIMEOUT",
+          "PAYLOAD_TOO_LARGE",
+          "UNPROCESSABLE_ENTITY",
+          "BAD_GATEWAY",
+          "SERVICE_UNAVAILABLE",
+          "GATEWAY_TIMEOUT",
+          "HTTP_ERROR",
+          "INVALID_CREDENTIALS",
+          "SESSION_EXPIRED",
+          "TOKEN_MISSING",
+          "TOKEN_INVALID_FORMAT",
+          "TOKEN_INVALID",
+          "TOKEN_EXPIRED",
+          "TOKEN_BLACKLISTED",
+          "TOKEN_AUDIENCE_MISMATCH",
+          "REFRESH_TOKEN_INVALID",
+          "REFRESH_TOKEN_EXPIRED",
+          "REFRESH_TOKEN_BLACKLISTED",
+          "OTP_INVALID",
+          "OTP_EXPIRED",
+          "OTP_MAX_ATTEMPTS_EXCEEDED",
+          "OTP_COOLDOWN_ACTIVE",
+          "VERIFICATION_TOKEN_INVALID",
+          "VERIFICATION_TOKEN_EXPIRED",
+          "ACCOUNT_NOT_FOUND",
+          "ACCOUNT_PHONE_ALREADY_EXISTS",
+          "ACCOUNT_EMAIL_ALREADY_EXISTS",
+          "ACCOUNT_INACTIVE",
+          "ACCOUNT_LOCKED",
+          "STAFF_NOT_FOUND",
+          "STAFF_USERNAME_ALREADY_EXISTS",
+          "STAFF_CODE_ALREADY_EXISTS",
+          "STAFF_INACTIVE",
+          "STAFF_LOCKED",
+          "STAFF_CANNOT_DELETE_SELF",
+          "FACILITY_NOT_FOUND",
+          "FACILITY_CODE_ALREADY_EXISTS",
+          "FACILITY_PARENT_NOT_FOUND",
+          "FACILITY_PARENT_CANNOT_BE_SELF",
+          "FACILITY_ACCESS_DENIED",
+          "FACILITY_HAS_CHILDREN",
+          "PATIENT_NOT_FOUND",
+          "PATIENT_LINK_NOT_FOUND",
+          "PATIENT_ALREADY_LINKED",
+          "PATIENT_NOT_LINKED",
+          "HEALTH_PROFILE_NOT_FOUND",
+          "HEALTH_PROFILE_ACCESS_DENIED",
+          "HEALTH_RECORD_NOT_FOUND",
+          "EXAMINATION_NOT_FOUND",
+          "EXAMINATION_ALREADY_COMPLETED",
+          "EXAMINATION_ALREADY_CANCELLED",
+          "CHRONIC_DISEASE_NOT_FOUND",
+          "CHRONIC_DISEASE_CODE_ALREADY_EXISTS",
+          "TREATMENT_PLAN_NOT_FOUND",
+          "TREATMENT_TARGET_NOT_FOUND",
+          "TREATMENT_DICTIONARY_NOT_FOUND",
+          "TREATMENT_DICTIONARY_CODE_ALREADY_EXISTS",
+          "PRESCRIPTION_SCHEDULE_NOT_FOUND",
+          "TIMESLOT_NOT_FOUND",
           "TIMESLOT_ALREADY_EXISTS",
+          "CARE_REQUEST_NOT_FOUND",
+          "CARE_REQUEST_ALREADY_ASSIGNED",
+          "CARE_REQUEST_ALREADY_RESOLVED",
+          "CARE_REQUEST_OPEN_EXISTS",
           "SOS_CASE_ALREADY_ASSIGNED",
           "SOS_CASE_ALREADY_RESOLVED",
           "SOS_CASE_OPEN_EXISTS",
-          "PATIENT_NOT_LINKED",
-          "TOO_MANY_REQUESTS",
-          "INTERNAL_SERVER_ERROR",
+          "CARE_PACKAGE_NOT_FOUND",
+          "CARE_PACKAGE_CODE_ALREADY_EXISTS",
+          "CARE_PACKAGE_INACTIVE",
+          "CARE_SUBSCRIPTION_NOT_FOUND",
+          "CARE_SUBSCRIPTION_EXPIRED",
+          "CARE_SUBSCRIPTION_ALREADY_ACTIVE",
+          "CARE_SUBSCRIPTION_INVALID_STATUS",
+          "CARE_SUBSCRIPTION_ALREADY_CANCELLED",
+          "CARE_SUBSCRIPTION_ALREADY_EXPIRED",
+          "CONVERSATION_NOT_FOUND",
+          "CONVERSATION_ACCESS_DENIED",
+          "CONVERSATION_CLOSED",
+          "CONVERSATION_ARCHIVED",
+          "CONVERSATION_MESSAGE_NOT_FOUND",
+          "CONVERSATION_MESSAGE_CANNOT_DELETE",
+          "RISK_ASSESSMENT_NOT_FOUND",
+          "RISK_ASSESSMENT_RESULT_NOT_FOUND",
+          "FILE_REQUIRED",
+          "FILE_TOO_LARGE",
+          "FILE_TYPE_INVALID",
+          "FILE_UPLOAD_FAILED",
           "OCR_FAILED"
         ]
       },
@@ -6045,11 +8579,7 @@
             "type": "number",
             "example": 400
           },
-          "message": {
-            "type": "string",
-            "example": "Error occurred"
-          },
-          "code": {
+          "errorCode": {
             "example": "INVALID_INPUT",
             "allOf": [
               {
@@ -6057,14 +8587,20 @@
               }
             ]
           },
-          "data": {
-            "type": "object"
+          "messageCode": {
+            "type": "string",
+            "example": "INVALID_INPUT"
+          },
+          "message": {
+            "type": "object",
+            "example": "Dữ liệu đầu vào không hợp lệ"
           }
         },
         "required": [
           "statusCode",
-          "message",
-          "code"
+          "errorCode",
+          "messageCode",
+          "message"
         ]
       },
       "StaffRole": {
@@ -6091,6 +8627,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "facilityId": {
             "type": "object",
@@ -6272,6 +8812,152 @@
           "refreshToken"
         ]
       },
+      "LogoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Trạng thái đăng xuất thành công",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Thông báo kết quả",
+            "example": "Đăng xuất thành công"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
+      "LogoutDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh Token cần thu hồi đồng thời khi đăng xuất (tùy chọn)",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "SendOtpResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Trạng thái gửi mã OTP thành công",
+            "example": true
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "description": "Thời gian hiệu lực của mã OTP (giây)",
+            "example": 300
+          },
+          "retryAfterSeconds": {
+            "type": "number",
+            "description": "Thời gian có thể yêu cầu gửi lại OTP (giây)",
+            "example": 60
+          },
+          "otp": {
+            "type": "string",
+            "description": "Mã OTP trả về khi hệ thống đang ở chế độ mock/test để tiện kiểm thử",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "success",
+          "expiresInSeconds",
+          "retryAfterSeconds"
+        ]
+      },
+      "OtpPurpose": {
+        "type": "string",
+        "enum": [
+          "REGISTER",
+          "FORGOT_PASSWORD",
+          "CHANGE_PHONE",
+          "LOGIN_OTP"
+        ],
+        "description": "Mục đích gửi OTP"
+      },
+      "SendOtpDto": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "description": "Số điện thoại nhận mã OTP (định dạng Việt Nam: 09x, 08x, 03x, 07x, 05x hoặc +84)",
+            "example": "0987654321"
+          },
+          "type": {
+            "description": "Mục đích gửi OTP",
+            "example": "REGISTER",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OtpPurpose"
+              }
+            ]
+          }
+        },
+        "required": [
+          "phoneNumber",
+          "type"
+        ]
+      },
+      "VerifyOtpResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Trạng thái xác thực thành công",
+            "example": true
+          },
+          "verificationToken": {
+            "type": "string",
+            "description": "Token chứng minh số điện thoại đã được xác thực OTP (thời hạn 10 phút)",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expiresInSeconds": {
+            "type": "number",
+            "description": "Thời gian hiệu lực của Verification Token (giây)",
+            "example": 600
+          }
+        },
+        "required": [
+          "success",
+          "verificationToken",
+          "expiresInSeconds"
+        ]
+      },
+      "VerifyOtpDto": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "description": "Số điện thoại đã nhận mã OTP",
+            "example": "0987654321"
+          },
+          "otp": {
+            "type": "string",
+            "description": "Mã OTP gồm 6 chữ số",
+            "example": "123456"
+          },
+          "type": {
+            "description": "Mục đích xác thực OTP",
+            "example": "REGISTER",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OtpPurpose"
+              }
+            ]
+          }
+        },
+        "required": [
+          "phoneNumber",
+          "otp",
+          "type"
+        ]
+      },
       "Account": {
         "type": "object",
         "properties": {
@@ -6285,6 +8971,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "phoneNumber": {
             "type": "string",
@@ -6360,14 +9050,19 @@
       "AppRegisterDto": {
         "type": "object",
         "properties": {
+          "verificationToken": {
+            "type": "string",
+            "description": "Token xác thực OTP đã nhận từ endpoint POST /auth/app/verify-otp",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
           "phoneNumber": {
             "type": "string",
-            "description": "Số điện thoại đăng ký tài khoản bệnh nhân",
+            "description": "Số điện thoại đăng ký tài khoản bệnh nhân (bắt buộc nếu không dùng verificationToken)",
             "example": "0987654321"
           },
           "password": {
             "type": "string",
-            "description": "Mật khẩu đăng nhập",
+            "description": "Mật khẩu đăng nhập (tối thiểu 6 ký tự)",
             "example": "Pass@123"
           },
           "email": {
@@ -6377,7 +9072,6 @@
           }
         },
         "required": [
-          "phoneNumber",
           "password"
         ]
       },
@@ -6386,7 +9080,7 @@
         "properties": {
           "phoneNumber": {
             "type": "string",
-            "description": "Số điện thoại đăng ký tài khoản bệnh nhân",
+            "description": "Số điện thoại đăng nhập",
             "example": "0987654321"
           },
           "password": {
@@ -6405,13 +9099,8 @@
         "properties": {
           "facilityId": {
             "type": "string",
-            "description": "ID cơ sở y tế (Nếu là FacilityAdmin tạo, hệ thống sẽ tự động gán viện của Admin)",
+            "description": "ID cơ sở y tế (Nếu là FacilityAdmin tạo: mặc định gán viện của Admin nếu để trống, hoặc có thể gán cho cơ sở con trực thuộc)",
             "example": "d3b07384-d113-46fb-a709-a1b74a6fc6d0"
-          },
-          "staffCode": {
-            "type": "string",
-            "description": "Mã nhân viên / Mã CCHN (Duy nhất)",
-            "example": "CCHN-00123"
           },
           "fullName": {
             "type": "string",
@@ -6427,12 +9116,6 @@
             "type": "string",
             "description": "Tên đăng nhập (Tùy chọn - nếu không nhập hệ thống sẽ tự động lấy từ Email)",
             "example": "dr_an"
-          },
-          "password": {
-            "type": "string",
-            "description": "Mật khẩu khởi tạo (Mặc định là vndoctor123 nếu không truyền)",
-            "example": "vndoctor123",
-            "default": "vndoctor123"
           },
           "role": {
             "description": "Vai trò nhân sự (Bắt buộc chọn)",
@@ -6455,7 +9138,6 @@
           }
         },
         "required": [
-          "staffCode",
           "fullName",
           "email",
           "role"
@@ -6576,6 +9258,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
+          },
           "facilityCode": {
             "type": "string",
             "description": "Unique facility code",
@@ -6614,6 +9300,14 @@
             "type": "boolean",
             "description": "Active status",
             "default": true
+          },
+          "admin": {
+            "description": "Thông tin Quản trị viên (Admin) của cơ sở y tế",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffUser"
+              }
+            ]
           }
         },
         "required": [
@@ -6630,11 +9324,6 @@
       "CreateFacilityDto": {
         "type": "object",
         "properties": {
-          "facilityCode": {
-            "type": "string",
-            "description": "Mã cơ sở y tế (duy nhất)",
-            "example": "BV-CHO-RAY"
-          },
           "facilityName": {
             "type": "string",
             "description": "Tên cơ sở y tế",
@@ -6671,7 +9360,6 @@
           }
         },
         "required": [
-          "facilityCode",
           "facilityName",
           "address"
         ]
@@ -6729,6 +9417,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
+          },
           "code": {
             "type": "string",
             "description": "Unique code of disease (e.g., DIABETES, HYPERTENSION)",
@@ -6783,6 +9475,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "healthProfileId": {
             "type": "string",
@@ -6894,6 +9590,16 @@
           }
         }
       },
+      "FacilityPatientLinkStatus": {
+        "type": "string",
+        "enum": [
+          "NOT_LINKED",
+          "PENDING",
+          "ACTIVE",
+          "UNLINKED"
+        ],
+        "description": "Trạng thái liên kết tại cơ sở y tế (NOT_LINKED, PENDING, ACTIVE, UNLINKED)"
+      },
       "ProfileRelationship": {
         "type": "string",
         "enum": [
@@ -6937,9 +9643,40 @@
             "format": "date-time",
             "type": "string"
           },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
+          },
           "accountId": {
-            "type": "string",
-            "description": "Owning Account ID"
+            "type": "object",
+            "description": "Owning Account ID (nullable if created independently by medical facility)"
+          },
+          "facilityId": {
+            "type": "object",
+            "description": "ID cơ sở y tế quản lý hồ sơ (nullable nếu chưa liên kết với CSYT nào)"
+          },
+          "isLinked": {
+            "type": "boolean",
+            "description": "Trạng thái đã liên kết thành công giữa Cơ sở y tế và Tài khoản App",
+            "default": false
+          },
+          "linkStatus": {
+            "description": "Trạng thái liên kết tại cơ sở y tế (NOT_LINKED, PENDING, ACTIVE, UNLINKED)",
+            "default": "NOT_LINKED",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FacilityPatientLinkStatus"
+              }
+            ]
+          },
+          "hospitalPatientCode": {
+            "type": "object",
+            "description": "Mã bệnh nhân nội bộ tại viện (hệ thống tự sinh hoặc viện cấp)",
+            "example": "BN-20260916-A1B2"
+          },
+          "linkedAt": {
+            "type": "object",
+            "description": "Thời điểm liên kết được kích hoạt"
           },
           "relationship": {
             "default": "SELF",
@@ -6995,17 +9732,55 @@
           "medicalHistory": {
             "type": "object",
             "description": "Personal and family medical history"
+          },
+          "isSmoking": {
+            "type": "boolean",
+            "description": "Có hút thuốc lá hay không",
+            "default": false,
+            "example": false
+          },
+          "hasHypertension": {
+            "type": "boolean",
+            "description": "Có bị bệnh tăng huyết áp không",
+            "default": false,
+            "example": false
+          },
+          "hasDyslipidemia": {
+            "type": "boolean",
+            "description": "Có bị mỡ máu / rối loạn lipid máu không",
+            "default": false,
+            "example": false
+          },
+          "hasDiabetes": {
+            "type": "boolean",
+            "description": "Có bị đái tháo đường không",
+            "default": false,
+            "example": false
+          },
+          "subscription": {
+            "type": "object",
+            "description": "Thông tin gói chăm sóc và bác sĩ được phân công (nếu có)"
           }
         },
         "required": [
           "id",
           "createdAt",
           "updatedAt",
-          "accountId",
+          "isLinked",
+          "linkStatus",
           "relationship",
           "fullName",
           "dob",
           "gender"
+        ]
+      },
+      "CareSubscriptionStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "ACTIVE",
+          "EXPIRED",
+          "CANCELLED"
         ]
       },
       "CreateHealthProfileDto": {
@@ -7072,6 +9847,30 @@
             "description": "Tiền sử bệnh lý bản thân và gia đình",
             "example": "Bố có tiền sử đột quỵ lúc 60 tuổi"
           },
+          "isSmoking": {
+            "type": "boolean",
+            "description": "Có hút thuốc lá hay không",
+            "default": false,
+            "example": false
+          },
+          "hasHypertension": {
+            "type": "boolean",
+            "description": "Có bị bệnh tăng huyết áp không",
+            "default": false,
+            "example": false
+          },
+          "hasDyslipidemia": {
+            "type": "boolean",
+            "description": "Có bị mỡ máu / rối loạn lipid máu không",
+            "default": false,
+            "example": false
+          },
+          "hasDiabetes": {
+            "type": "boolean",
+            "description": "Có bị đái tháo đường không",
+            "default": false,
+            "example": false
+          },
           "chronicDiseaseIds": {
             "description": "Danh sách UUID các bệnh mạn tính nền đã mắc",
             "example": [
@@ -7085,6 +9884,111 @@
         },
         "required": [
           "relationship",
+          "fullName",
+          "dob",
+          "gender"
+        ]
+      },
+      "CreateFacilityHealthProfileDto": {
+        "type": "object",
+        "properties": {
+          "relationship": {
+            "description": "Mối quan hệ (nếu có, mặc định OTHER)",
+            "default": "OTHER",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileRelationship"
+              }
+            ]
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Họ và tên bệnh nhân",
+            "example": "Trần Thị Mai"
+          },
+          "dob": {
+            "type": "string",
+            "description": "Ngày sinh (YYYY-MM-DD)",
+            "example": "1985-05-20"
+          },
+          "gender": {
+            "description": "Giới tính",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileGender"
+              }
+            ]
+          },
+          "citizenId": {
+            "type": "string",
+            "description": "Căn cước công dân (12 số)",
+            "example": "079185001234"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Số điện thoại liên hệ của bệnh nhân",
+            "example": "0987654321"
+          },
+          "address": {
+            "type": "string",
+            "description": "Địa chỉ nơi ở hiện tại",
+            "example": "Số 12 Nguyễn Thị Minh Khai, Quận 1, TP.HCM"
+          },
+          "bloodType": {
+            "description": "Nhóm máu",
+            "default": "UNKNOWN",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfileBloodType"
+              }
+            ]
+          },
+          "allergy": {
+            "type": "string",
+            "description": "Tiền sử dị ứng (thuốc, thức ăn...)",
+            "example": "Dị ứng kháng sinh Penicillin, hải sản"
+          },
+          "medicalHistory": {
+            "type": "string",
+            "description": "Tiền sử bệnh lý bản thân và gia đình",
+            "example": "Bố có tiền sử đột quỵ lúc 60 tuổi"
+          },
+          "isSmoking": {
+            "type": "boolean",
+            "description": "Có hút thuốc lá hay không",
+            "default": false,
+            "example": false
+          },
+          "hasHypertension": {
+            "type": "boolean",
+            "description": "Có bị bệnh tăng huyết áp không",
+            "default": false,
+            "example": false
+          },
+          "hasDyslipidemia": {
+            "type": "boolean",
+            "description": "Có bị mỡ máu / rối loạn lipid máu không",
+            "default": false,
+            "example": false
+          },
+          "hasDiabetes": {
+            "type": "boolean",
+            "description": "Có bị đái tháo đường không",
+            "default": false,
+            "example": false
+          },
+          "chronicDiseaseIds": {
+            "description": "Danh sách UUID các bệnh mạn tính nền đã mắc",
+            "example": [
+              "018e6e5a-1234-7000-8000-000000000001"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
           "fullName",
           "dob",
           "gender"
@@ -7154,6 +10058,30 @@
             "description": "Tiền sử bệnh lý bản thân và gia đình",
             "example": "Bố có tiền sử đột quỵ lúc 60 tuổi"
           },
+          "isSmoking": {
+            "type": "boolean",
+            "description": "Có hút thuốc lá hay không",
+            "default": false,
+            "example": false
+          },
+          "hasHypertension": {
+            "type": "boolean",
+            "description": "Có bị bệnh tăng huyết áp không",
+            "default": false,
+            "example": false
+          },
+          "hasDyslipidemia": {
+            "type": "boolean",
+            "description": "Có bị mỡ máu / rối loạn lipid máu không",
+            "default": false,
+            "example": false
+          },
+          "hasDiabetes": {
+            "type": "boolean",
+            "description": "Có bị đái tháo đường không",
+            "default": false,
+            "example": false
+          },
           "chronicDiseaseIds": {
             "description": "Danh sách UUID các bệnh mạn tính nền đã mắc",
             "example": [
@@ -7166,67 +10094,23 @@
           }
         }
       },
-      "FacilityPatientLinkStatus": {
-        "type": "string",
-        "enum": [
-          "PENDING",
-          "ACTIVE",
-          "UNLINKED"
-        ]
-      },
-      "FacilityPatientLink": {
+      "RequestPatientLinkDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "facilityId": {
-            "type": "string",
-            "description": "Facility ID"
-          },
           "healthProfileId": {
             "type": "string",
-            "description": "Health Profile ID on Mobile App"
+            "description": "UUID của hồ sơ sức khỏe cần gửi yêu cầu liên kết",
+            "example": "018e6e5a-1234-7000-8000-000000000001"
           },
           "phoneNumber": {
             "type": "string",
-            "description": "Phone number used for lookup & linking"
-          },
-          "hospitalPatientCode": {
-            "type": "object",
-            "description": "Hospital internal patient code (Mã BN)"
-          },
-          "status": {
-            "default": "ACTIVE",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FacilityPatientLinkStatus"
-              }
-            ]
-          },
-          "linkedAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when linking was activated"
+            "description": "Số điện thoại của tài khoản App bệnh nhân để gửi yêu cầu liên kết",
+            "example": "0987654321"
           }
         },
         "required": [
-          "id",
-          "createdAt",
-          "updatedAt",
-          "facilityId",
           "healthProfileId",
-          "phoneNumber",
-          "status",
-          "linkedAt"
+          "phoneNumber"
         ]
       },
       "CreatePatientLinkDto": {
@@ -7247,10 +10131,16 @@
             "description": "Số điện thoại dùng để tìm kiếm và liên kết",
             "example": "0987654321"
           },
-          "hospitalPatientCode": {
+          "status": {
             "type": "string",
-            "description": "Mã bệnh nhân do viện cấp (Mã hồ sơ BN)",
-            "example": "BN-2026-0099"
+            "description": "Trạng thái liên kết (ACTIVE: liên kết ngay, PENDING: gửi lời mời tới app)",
+            "enum": [
+              "NOT_LINKED",
+              "PENDING",
+              "ACTIVE",
+              "UNLINKED"
+            ],
+            "default": "ACTIVE"
           }
         },
         "required": [
@@ -7271,8 +10161,8 @@
           },
           "hospitalPatientCode": {
             "type": "string",
-            "description": "Mã bệnh nhân do viện cấp",
-            "example": "BN-2026-0099"
+            "description": "Mã bệnh nhân nội bộ do viện cấp",
+            "example": "BN-2026-0001"
           }
         }
       },
@@ -7300,6 +10190,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "healthProfileId": {
             "type": "string",
@@ -7336,6 +10230,10 @@
             "format": "date-time",
             "type": "string",
             "description": "Timestamp when measurement was taken"
+          },
+          "evaluation": {
+            "type": "object",
+            "description": "Đánh giá & Phân độ tự động theo tiêu chuẩn VNHA (dành cho metricType = BLOOD_PRESSURE)"
           }
         },
         "required": [
@@ -7462,6 +10360,14 @@
             "format": "date-time",
             "type": "string"
           },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "assessmentResultId": {
+            "type": "string",
+            "description": "ID kết quả phân tầng (alias of id)"
+          },
           "assessmentInputId": {
             "type": "string",
             "description": "Assessment Input ID (1-to-1)"
@@ -7528,7 +10434,8 @@
           "hasUnderlyingDisease": {
             "type": "boolean",
             "description": "Patient has underlying chronic disease",
-            "default": false
+            "default": false,
+            "example": false
           },
           "chronicDiseaseIds": {
             "description": "List of Chronic Disease UUIDs diagnosed",
@@ -7537,79 +10444,60 @@
               "type": "string"
             }
           },
-          "hasLeftVentricularHypertrophy": {
-            "type": "boolean",
-            "description": "Phì đại thất trái (Left Ventricular Hypertrophy)",
-            "default": false
-          },
-          "hasAlbuminuria": {
-            "type": "boolean",
-            "description": "Albumin niệu (Albuminuria)",
-            "default": false
-          },
-          "hasRetinopathy": {
-            "type": "boolean",
-            "description": "Bệnh võng mạc do đái tháo đường (Diabetic Retinopathy)",
-            "default": false
-          },
-          "hasSilentBrainInfarct": {
-            "type": "boolean",
-            "description": "Nhồi máu não thầm lặng (Silent Brain Infarct)",
-            "default": false
-          },
-          "egfr": {
+          "age": {
             "type": "number",
-            "description": "Độ lọc cầu thận eGFR (mL/min/1.73m2)",
-            "example": 85
+            "description": "Tuổi thật (0 - 200)",
+            "example": 45
           },
-          "acr": {
-            "type": "number",
-            "description": "Tỷ lệ Albumin/Creatinine niệu ACR (mg/g)",
-            "example": 25.5
-          },
-          "heightCm": {
-            "type": "number",
-            "description": "Chiều cao (cm)",
-            "example": 168
-          },
-          "weightKg": {
-            "type": "number",
-            "description": "Cân nặng (kg)",
-            "example": 66.5
-          },
-          "bmi": {
-            "type": "number",
-            "description": "Chỉ số khối cơ thể BMI",
-            "example": 23.5
-          },
-          "systolicBp": {
-            "type": "number",
-            "description": "Huyết áp tâm thu Systolic BP (mmHg)",
-            "example": 135
-          },
-          "diastolicBp": {
-            "type": "number",
-            "description": "Huyết áp tâm trương Diastolic BP (mmHg)",
-            "example": 85
+          "gender": {
+            "type": "string",
+            "description": "Giới tính (Nam / Nữ)",
+            "example": "Nam"
           },
           "isSmoking": {
             "type": "boolean",
-            "description": "Đang hút thuốc lá / thuốc lào",
-            "default": false
+            "description": "Thói quen hút thuốc lá",
+            "default": false,
+            "example": true
+          },
+          "sbp": {
+            "type": "number",
+            "description": "Huyết áp tâm thu sbp (50 - 260 mmHg)",
+            "example": 145
+          },
+          "systolicBp": {
+            "type": "number",
+            "description": "Huyết áp tâm thu (alias của sbp)",
+            "example": 145
+          },
+          "diastolicBp": {
+            "type": "number",
+            "description": "Huyết áp tâm trương (mmHg)",
+            "example": 85
+          },
+          "cholesterol": {
+            "type": "number",
+            "description": "Cholesterol toàn phần (1 - 30 mmol/L)",
+            "example": 7
           },
           "totalCholesterol": {
             "type": "number",
-            "description": "Cholesterol toàn phần (mmol/L)",
-            "example": 5.2
+            "description": "Total Cholesterol (alias của cholesterol)",
+            "example": 7
+          },
+          "hdl": {
+            "type": "number",
+            "description": "HDL - Cholesterol (0.1 - 10 mmol/L)",
+            "example": 1.5
           },
           "hdlCholesterol": {
             "type": "number",
-            "description": "HDL-Cholesterol (mmol/L)",
-            "example": 1.3
+            "description": "HDL Cholesterol (alias của hdl)",
+            "example": 1.5
           },
           "ldlCholesterol": {
             "type": "number",
-            "description": "LDL-Cholesterol (mmol/L)",
+            "description": "LDL Cholesterol (mmol/L)",
             "example": 3.2
           },
           "triglycerides": {
@@ -7619,8 +10507,137 @@
           },
           "glucoseFasting": {
             "type": "number",
-            "description": "Đường huyết đói Glucose (mmol/L)",
-            "example": 6.2
+            "description": "Đường huyết đói (mmol/L)",
+            "example": 6.5
+          },
+          "heightCm": {
+            "type": "number",
+            "description": "Chiều cao (cm)",
+            "example": 168
+          },
+          "weightKg": {
+            "type": "number",
+            "description": "Cân nặng (kg)",
+            "example": 65.5
+          },
+          "bmi": {
+            "type": "number",
+            "description": "Chỉ số khối cơ thể BMI",
+            "example": 23.2
+          },
+          "hasLeftVentricularHypertrophy": {
+            "type": "boolean",
+            "description": "Phì đại thất trái trên ECG / siêu âm tim",
+            "default": false
+          },
+          "hasAlbuminuriaOrMicroalbuminuria": {
+            "type": "boolean",
+            "description": "Có Albumin / Microalbumin niệu",
+            "default": false
+          },
+          "hasAlbuminuria": {
+            "type": "boolean",
+            "description": "Có Albumin niệu (alias)",
+            "default": false
+          },
+          "hasCarotidWallDamage": {
+            "type": "boolean",
+            "description": "Tổn thương đáy mắt / thành mạch cảnh",
+            "default": false
+          },
+          "hasRetinopathy": {
+            "type": "boolean",
+            "description": "Tổn thương đáy mắt (alias)",
+            "default": false
+          },
+          "hasSilentInfarct": {
+            "type": "boolean",
+            "description": "Tổn thương thầm lặng trên não",
+            "default": false
+          },
+          "hasSilentBrainInfarct": {
+            "type": "boolean",
+            "description": "Tổn thương thầm lặng trên não (alias)",
+            "default": false
+          },
+          "diabetes": {
+            "type": "boolean",
+            "description": "Có mắc đái tháo đường hay không",
+            "default": false
+          },
+          "diabetesDurationYears": {
+            "type": "number",
+            "description": "Số năm mắc đái tháo đường (0 - 100 năm)",
+            "example": 10
+          },
+          "glycemicControl": {
+            "type": "string",
+            "description": "Mức kiểm soát đường máu (Tốt / Không tốt)",
+            "example": "Không tốt"
+          },
+          "eGFR": {
+            "type": "number",
+            "description": "Độ thanh thải cầu thận eGFR (0 - 200 mL/phút/1.73m2)",
+            "example": 45
+          },
+          "egfr": {
+            "type": "number",
+            "description": "Độ thanh thải cầu thận (alias của eGFR)",
+            "example": 45
+          },
+          "acr": {
+            "type": "number",
+            "description": "Tỷ lệ Albumin/Creatinin niệu ACR (0 - 5000 mg/g)",
+            "example": 30
+          },
+          "stroke": {
+            "type": "boolean",
+            "description": "Tiền sử đột quỵ não",
+            "default": false
+          },
+          "hasMyocardialInfarction": {
+            "type": "boolean",
+            "description": "Nhồi máu cơ tim",
+            "default": false
+          },
+          "hasAcuteCoronarySyndrome": {
+            "type": "boolean",
+            "description": "Hội chứng vành cấp",
+            "default": false
+          },
+          "hasCoronaryArteryDisease": {
+            "type": "boolean",
+            "description": "Bệnh lý động mạch vành",
+            "default": false
+          },
+          "hasTia": {
+            "type": "boolean",
+            "description": "Cơn thiếu máu não cục bộ thoáng qua (TIA)",
+            "default": false
+          },
+          "hasAorticAneurysm": {
+            "type": "boolean",
+            "description": "Phình động mạch chủ",
+            "default": false
+          },
+          "hasPeripheralArteryDisease": {
+            "type": "boolean",
+            "description": "Bệnh mạch máu ngoại vi",
+            "default": false
+          },
+          "hasAtherosclerosis": {
+            "type": "boolean",
+            "description": "Vữa xơ mạch máu lớn",
+            "default": false
+          },
+          "hasFamilialHypercholesterolemia": {
+            "type": "boolean",
+            "description": "Tăng Cholesterol máu gia đình",
+            "default": false
+          },
+          "formSnapshot": {
+            "type": "object",
+            "description": "Form Snapshot JSON"
           },
           "status": {
             "default": "SUBMITTED",
@@ -7632,40 +10649,265 @@
           }
         },
         "required": [
-          "healthProfileId"
+          "healthProfileId",
+          "hasUnderlyingDisease"
         ]
       },
       "EvaluateRiskAssessmentDto": {
         "type": "object",
         "properties": {
-          "riskLevel": {
-            "description": "Assessed Cardiovascular & Metabolic Risk Level (LOW, HIGH, VERY_HIGH)",
-            "example": "HIGH",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/VnDoctorRiskLevel"
-              }
-            ]
-          },
-          "riskScore": {
-            "type": "number",
-            "description": "Calculated 10-year risk score percentage (%)",
-            "example": 8.5
-          },
           "conclusion": {
             "type": "string",
-            "description": "Doctor diagnostic conclusion",
-            "example": "Nguy cơ tim mạch cao do tăng huyết áp kèm đái tháo đường"
+            "description": "Kết luận chẩn đoán chuyên môn của bác sĩ",
+            "example": "Bệnh nhân có nguy cơ tim mạch rất cao do tăng huyết áp kèm đái tháo đường và tổn thương cơ quan đích"
           },
           "recommendations": {
             "type": "string",
-            "description": "Doctor lifestyle and treatment recommendations",
+            "description": "Lời khuyên, hướng dẫn lối sống và phác đồ điều trị của bác sĩ",
             "example": "Điều chỉnh lối sống, giảm muối, kiểm soát HbA1c < 7.0%, tái khám sau 1 tháng"
+          }
+        }
+      },
+      "PatientTargetStatus": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "PENDING_REVIEW",
+          "ESCALATED_TO_EXPERT",
+          "DOCTOR_VERIFIED",
+          "EXPERT_VERIFIED",
+          "COMPLETED",
+          "CANCELLED"
+        ],
+        "description": "Trạng thái: PENDING_REVIEW / DOCTOR_VERIFIED / ESCALATED_TO_EXPERT / EXPERT_VERIFIED / COMPLETED / CANCELLED"
+      },
+      "PatientTreatmentTarget": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "healthProfileId": {
+            "type": "string",
+            "description": "Health Profile ID of patient",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "careSubscriptionId": {
+            "type": "object",
+            "description": "ID of active Care Subscription associated with this target"
+          },
+          "doctorId": {
+            "type": "object",
+            "description": "Primary Attending Doctor ID",
+            "example": "f901ab23-1122-3344-5566-778899aabbcc"
+          },
+          "expertId": {
+            "type": "object",
+            "description": "Specialist / Expert Doctor ID (if escalated for second opinion)"
+          },
+          "examinationId": {
+            "type": "object",
+            "description": "Associated Medical Examination ID (if linked)"
+          },
+          "assessmentResultId": {
+            "type": "object",
+            "description": "Associated Risk Assessment Result ID (if linked)"
+          },
+          "dictionaryCode": {
+            "type": "object",
+            "description": "Referenced target dictionary code (e.g. A1, B2, C1)",
+            "example": "A1"
+          },
+          "bpTarget": {
+            "type": "object",
+            "description": "Target Blood Pressure",
+            "example": "< 130/80 mmHg"
+          },
+          "lipidTarget": {
+            "type": "object",
+            "description": "Target Lipid (LDL-C)",
+            "example": "< 1.8 mmol/L"
+          },
+          "bmiTarget": {
+            "type": "object",
+            "description": "Target BMI / Weight",
+            "example": "BMI 20 - 22.9 kg/m2"
+          },
+          "glycemicTarget": {
+            "type": "object",
+            "description": "Target Glycemic / HbA1c",
+            "example": "HbA1c < 7.0%"
+          },
+          "renalTarget": {
+            "type": "object",
+            "description": "Target Renal / Kidney guidance"
+          },
+          "dietAdvice": {
+            "type": "object",
+            "description": "Dietary guidance"
+          },
+          "exerciseAdvice": {
+            "type": "object",
+            "description": "Exercise guidance"
+          },
+          "smokingAdvice": {
+            "type": "object",
+            "description": "Smoking cessation advice"
+          },
+          "doctorNotes": {
+            "type": "object",
+            "description": "Primary Doctor clinical notes"
+          },
+          "expertNotes": {
+            "type": "object",
+            "description": "Specialist / Expert Doctor consultation notes"
+          },
+          "status": {
+            "default": "PENDING_REVIEW",
+            "description": "Trạng thái: PENDING_REVIEW / DOCTOR_VERIFIED / ESCALATED_TO_EXPERT / EXPERT_VERIFIED / COMPLETED / CANCELLED",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatientTargetStatus"
+              }
+            ]
+          },
+          "verifiedAt": {
+            "type": "object",
+            "description": "Verification timestamp by Doctor or Expert"
           }
         },
         "required": [
-          "riskLevel"
+          "id",
+          "createdAt",
+          "updatedAt",
+          "healthProfileId",
+          "status"
         ]
+      },
+      "UpdatePatientTargetDto": {
+        "type": "object",
+        "properties": {
+          "bpTarget": {
+            "type": "string",
+            "description": "Target Blood Pressure",
+            "example": "< 130/80 mmHg"
+          },
+          "lipidTarget": {
+            "type": "string",
+            "description": "Target Lipid (LDL-C)",
+            "example": "< 1.8 mmol/L"
+          },
+          "bmiTarget": {
+            "type": "string",
+            "description": "Target BMI / Weight",
+            "example": "BMI 20 - 22.9 kg/m2"
+          },
+          "glycemicTarget": {
+            "type": "string",
+            "description": "Target Glycemic / HbA1c",
+            "example": "HbA1c < 7.0%"
+          },
+          "renalTarget": {
+            "type": "string",
+            "description": "Target Renal / Kidney guidance"
+          },
+          "dietAdvice": {
+            "type": "string",
+            "description": "Dietary guidance"
+          },
+          "exerciseAdvice": {
+            "type": "string",
+            "description": "Exercise guidance"
+          },
+          "smokingAdvice": {
+            "type": "string",
+            "description": "Smoking cessation advice"
+          },
+          "doctorNotes": {
+            "type": "string",
+            "description": "Primary Doctor clinical notes"
+          },
+          "expertNotes": {
+            "type": "string",
+            "description": "Specialist / Expert Doctor consultation notes"
+          }
+        }
+      },
+      "VerifyPatientTargetDto": {
+        "type": "object",
+        "properties": {
+          "bpTarget": {
+            "type": "string",
+            "description": "Target Blood Pressure adjusted by doctor",
+            "example": "< 130/80 mmHg"
+          },
+          "lipidTarget": {
+            "type": "string",
+            "description": "Target Lipid adjusted by doctor",
+            "example": "< 1.8 mmol/L"
+          },
+          "bmiTarget": {
+            "type": "string",
+            "description": "Target BMI adjusted by doctor",
+            "example": "BMI 20 - 22.9"
+          },
+          "glycemicTarget": {
+            "type": "string",
+            "description": "Target Glycemic adjusted by doctor",
+            "example": "HbA1c < 7.0%"
+          },
+          "renalTarget": {
+            "type": "string",
+            "description": "Target Renal / Kidney guidance adjusted by doctor"
+          },
+          "dietAdvice": {
+            "type": "string",
+            "description": "Diet Advice adjusted by doctor"
+          },
+          "exerciseAdvice": {
+            "type": "string",
+            "description": "Exercise Advice adjusted by doctor"
+          },
+          "smokingAdvice": {
+            "type": "string",
+            "description": "Smoking cessation advice adjusted by doctor"
+          },
+          "doctorNotes": {
+            "type": "string",
+            "description": "Doctor clinical notes & verification remarks"
+          },
+          "expertNotes": {
+            "type": "string",
+            "description": "Expert Doctor consultation notes & remarks"
+          }
+        }
+      },
+      "EscalateExpertTargetDto": {
+        "type": "object",
+        "properties": {
+          "expertId": {
+            "type": "string",
+            "description": "ID của Bác sĩ Chuyên gia được chuyển tiếp (nếu muốn chỉ định cụ thể khác với gói)",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "doctorNotes": {
+            "type": "string",
+            "description": "Ghi chú lý do chuyển tiếp sang Bác sĩ Chuyên gia",
+            "example": "Bệnh nhân có nhiều bệnh nền phối hợp, đề nghị chuyên gia tim mạch cho ý kiến về đích LDL-C"
+          }
+        }
       },
       "ExaminationStatus": {
         "type": "string",
@@ -7688,6 +10930,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "examinationCode": {
             "type": "string",
@@ -8060,268 +11306,6 @@
           "createdAt"
         ]
       },
-      "PatientTreatmentTarget": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "healthProfileId": {
-            "type": "string",
-            "description": "Health Profile ID of patient",
-            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
-          },
-          "doctorId": {
-            "type": "object",
-            "description": "Staff Doctor ID who verified/edited the targets",
-            "example": "f901ab23-1122-3344-5566-778899aabbcc"
-          },
-          "examinationId": {
-            "type": "object",
-            "description": "Associated Medical Examination ID (if linked)"
-          },
-          "assessmentResultId": {
-            "type": "object",
-            "description": "Associated Risk Assessment Result ID (if linked)"
-          },
-          "dictionaryCode": {
-            "type": "object",
-            "description": "Referenced target dictionary code (e.g. A1, B2)",
-            "example": "A1"
-          },
-          "bpTarget": {
-            "type": "object",
-            "description": "Target Blood Pressure",
-            "example": "< 130/80 mmHg"
-          },
-          "lipidTarget": {
-            "type": "object",
-            "description": "Target Lipid (LDL-C)",
-            "example": "< 1.8 mmol/L"
-          },
-          "bmiTarget": {
-            "type": "object",
-            "description": "Target BMI / Weight",
-            "example": "BMI 20 - 22.9 kg/m2"
-          },
-          "glycemicTarget": {
-            "type": "object",
-            "description": "Target Glycemic / HbA1c",
-            "example": "HbA1c < 7.0%"
-          },
-          "dietAdvice": {
-            "type": "object",
-            "description": "Dietary guidance"
-          },
-          "exerciseAdvice": {
-            "type": "object",
-            "description": "Exercise guidance"
-          },
-          "doctorNotes": {
-            "type": "object",
-            "description": "Doctor clinical notes"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "DOCTOR_VERIFIED",
-              "COMPLETED",
-              "CANCELLED"
-            ],
-            "default": "DRAFT"
-          },
-          "verifiedAt": {
-            "type": "object",
-            "description": "Verification timestamp by Doctor"
-          }
-        },
-        "required": [
-          "id",
-          "createdAt",
-          "updatedAt",
-          "healthProfileId",
-          "status"
-        ]
-      },
-      "CreatePatientTargetDto": {
-        "type": "object",
-        "properties": {
-          "healthProfileId": {
-            "type": "string",
-            "description": "Health Profile ID",
-            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
-          },
-          "dictionaryCode": {
-            "type": "string",
-            "description": "Referenced Dictionary Code (e.g. A1, B2)",
-            "example": "A1"
-          },
-          "examinationId": {
-            "type": "string",
-            "description": "Examination ID if created from clinic visit"
-          },
-          "assessmentResultId": {
-            "type": "string",
-            "description": "Assessment Result ID if created from risk screening"
-          },
-          "bpTarget": {
-            "type": "string",
-            "description": "Target Blood Pressure",
-            "example": "< 130/80 mmHg"
-          },
-          "lipidTarget": {
-            "type": "string",
-            "description": "Target Lipid (LDL-C)",
-            "example": "< 1.8 mmol/L"
-          },
-          "bmiTarget": {
-            "type": "string",
-            "description": "Target BMI / Weight",
-            "example": "BMI 20 - 22.9"
-          },
-          "glycemicTarget": {
-            "type": "string",
-            "description": "Target Glycemic / HbA1c",
-            "example": "HbA1c < 7.0%"
-          },
-          "dietAdvice": {
-            "type": "string",
-            "description": "Diet Advice"
-          },
-          "exerciseAdvice": {
-            "type": "string",
-            "description": "Exercise Advice"
-          },
-          "doctorNotes": {
-            "type": "string",
-            "description": "Doctor Notes"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "DOCTOR_VERIFIED",
-              "COMPLETED",
-              "CANCELLED"
-            ],
-            "default": "DRAFT"
-          }
-        },
-        "required": [
-          "healthProfileId"
-        ]
-      },
-      "VerifyPatientTargetDto": {
-        "type": "object",
-        "properties": {
-          "bpTarget": {
-            "type": "string",
-            "description": "Target Blood Pressure adjusted by doctor",
-            "example": "< 130/80 mmHg"
-          },
-          "lipidTarget": {
-            "type": "string",
-            "description": "Target Lipid adjusted by doctor",
-            "example": "< 1.8 mmol/L"
-          },
-          "bmiTarget": {
-            "type": "string",
-            "description": "Target BMI adjusted by doctor",
-            "example": "BMI 20 - 22.9"
-          },
-          "glycemicTarget": {
-            "type": "string",
-            "description": "Target Glycemic adjusted by doctor",
-            "example": "HbA1c < 7.0%"
-          },
-          "dietAdvice": {
-            "type": "string",
-            "description": "Diet Advice adjusted by doctor"
-          },
-          "exerciseAdvice": {
-            "type": "string",
-            "description": "Exercise Advice adjusted by doctor"
-          },
-          "doctorNotes": {
-            "type": "string",
-            "description": "Doctor clinical notes & verification remarks"
-          }
-        }
-      },
-      "UpdatePatientTargetDto": {
-        "type": "object",
-        "properties": {
-          "healthProfileId": {
-            "type": "string",
-            "description": "Health Profile ID",
-            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
-          },
-          "dictionaryCode": {
-            "type": "string",
-            "description": "Referenced Dictionary Code (e.g. A1, B2)",
-            "example": "A1"
-          },
-          "examinationId": {
-            "type": "string",
-            "description": "Examination ID if created from clinic visit"
-          },
-          "assessmentResultId": {
-            "type": "string",
-            "description": "Assessment Result ID if created from risk screening"
-          },
-          "bpTarget": {
-            "type": "string",
-            "description": "Target Blood Pressure",
-            "example": "< 130/80 mmHg"
-          },
-          "lipidTarget": {
-            "type": "string",
-            "description": "Target Lipid (LDL-C)",
-            "example": "< 1.8 mmol/L"
-          },
-          "bmiTarget": {
-            "type": "string",
-            "description": "Target BMI / Weight",
-            "example": "BMI 20 - 22.9"
-          },
-          "glycemicTarget": {
-            "type": "string",
-            "description": "Target Glycemic / HbA1c",
-            "example": "HbA1c < 7.0%"
-          },
-          "dietAdvice": {
-            "type": "string",
-            "description": "Diet Advice"
-          },
-          "exerciseAdvice": {
-            "type": "string",
-            "description": "Exercise Advice"
-          },
-          "doctorNotes": {
-            "type": "string",
-            "description": "Doctor Notes"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "DOCTOR_VERIFIED",
-              "COMPLETED",
-              "CANCELLED"
-            ],
-            "default": "DRAFT"
-          }
-        }
-      },
       "TreatmentTemplate": {
         "type": "object",
         "properties": {
@@ -8335,6 +11319,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "facilityId": {
             "type": "string",
@@ -8446,6 +11434,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "planCode": {
             "type": "string",
@@ -8628,6 +11620,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
+          },
           "facilityId": {
             "type": "string",
             "description": "Facility ID offering this care package",
@@ -8651,6 +11647,11 @@
                 "$ref": "#/components/schemas/CarePackageType"
               }
             ]
+          },
+          "doctorExpertId": {
+            "type": "object",
+            "description": "Bác sĩ chuyên gia phụ trách gói (Bắt buộc nếu type=VIP, null nếu type=STANDARD)",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
           },
           "description": {
             "type": "object",
@@ -8698,11 +11699,6 @@
             "description": "Facility ID (Optional if staff is authenticated, defaults to staff facilityId)",
             "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
           },
-          "code": {
-            "type": "string",
-            "description": "Unique care package code",
-            "example": "PKG-CARDIO-30D"
-          },
           "name": {
             "type": "string",
             "description": "Care package name",
@@ -8716,6 +11712,11 @@
                 "$ref": "#/components/schemas/CarePackageType"
               }
             ]
+          },
+          "doctorExpertId": {
+            "type": "object",
+            "description": "ID Bác sĩ Chuyên gia (Bắt buộc nếu type=VIP, phải để trống/null nếu type=STANDARD)",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
           },
           "description": {
             "type": "string",
@@ -8743,7 +11744,6 @@
           }
         },
         "required": [
-          "code",
           "name",
           "durationDays",
           "priceAmount"
@@ -8756,11 +11756,6 @@
             "type": "string",
             "description": "Facility ID (Optional if staff is authenticated, defaults to staff facilityId)",
             "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
-          },
-          "code": {
-            "type": "string",
-            "description": "Unique care package code",
-            "example": "PKG-CARDIO-30D"
           },
           "name": {
             "type": "string",
@@ -8775,6 +11770,11 @@
                 "$ref": "#/components/schemas/CarePackageType"
               }
             ]
+          },
+          "doctorExpertId": {
+            "type": "object",
+            "description": "ID Bác sĩ Chuyên gia (Bắt buộc nếu type=VIP, phải để trống/null nếu type=STANDARD)",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
           },
           "description": {
             "type": "string",
@@ -8819,16 +11819,6 @@
           "status"
         ]
       },
-      "CareSubscriptionStatus": {
-        "type": "string",
-        "enum": [
-          "PENDING",
-          "ACTIVE",
-          "EXPIRED",
-          "CANCELLED"
-        ],
-        "description": "Trạng thái gói chăm sóc: PENDING / ACTIVE / EXPIRED / CANCELLED"
-      },
       "PatientCareSubscription": {
         "type": "object",
         "properties": {
@@ -8842,6 +11832,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "healthProfileId": {
             "type": "string",
@@ -8983,6 +11977,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "requestCode": {
             "type": "string",
@@ -9168,6 +12166,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
+          },
           "facilityId": {
             "type": "string",
             "description": "Facility ID to which the conversation belongs"
@@ -9221,6 +12223,15 @@
           "lastMessagePreview": {
             "type": "object",
             "description": "Đoạn trích dẫn tin nhắn mới nhất"
+          },
+          "isPinned": {
+            "type": "boolean",
+            "description": "Hội thoại đã được ghim lên đầu hay chưa",
+            "default": false
+          },
+          "pinnedAt": {
+            "type": "object",
+            "description": "Thời điểm ghim hội thoại"
           }
         },
         "required": [
@@ -9229,7 +12240,8 @@
           "updatedAt",
           "facilityId",
           "type",
-          "status"
+          "status",
+          "isPinned"
         ]
       },
       "CreateDirectConversationDto": {
@@ -9287,6 +12299,10 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "deletedAt": {
+            "type": "object",
+            "nullable": true
           },
           "conversationId": {
             "type": "string",
@@ -9359,6 +12375,19 @@
           "isDeleted"
         ]
       },
+      "PinConversationDto": {
+        "type": "object",
+        "properties": {
+          "isPinned": {
+            "type": "boolean",
+            "description": "Trạng thái ghim hội thoại (true = ghim, false = bỏ ghim)",
+            "example": true
+          }
+        },
+        "required": [
+          "isPinned"
+        ]
+      },
       "SendMessageDto": {
         "type": "object",
         "properties": {
@@ -9408,6 +12437,49 @@
         "required": [
           "isPinned"
         ]
+      },
+      "OcrPdfDto": {
+        "type": "object",
+        "properties": {
+          "force_ocr": {
+            "type": "boolean",
+            "description": "Bắt buộc chạy OCR ngay cả khi PDF đã chứa text kỹ thuật số sẵn",
+            "default": false,
+            "example": false
+          },
+          "dpi": {
+            "type": "number",
+            "description": "Độ phân giải render ảnh từ trang PDF (DPI)",
+            "default": 150,
+            "example": 150
+          },
+          "lang": {
+            "type": "string",
+            "description": "Ngôn ngữ OCR cần nhận diện",
+            "default": "vie+eng",
+            "example": "vie+eng"
+          },
+          "engine": {
+            "type": "string",
+            "description": "Engine OCR sử dụng (rapidocr | tesseract)",
+            "enum": [
+              "rapidocr",
+              "tesseract"
+            ],
+            "default": "rapidocr",
+            "example": "rapidocr"
+          }
+        }
+      },
+      "OcrCccdDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "description": "Ghi chú hoặc ngữ cảnh phân tích CCCD",
+            "example": "Xác thực hồ sơ bệnh nhân"
+          }
+        }
       }
     }
   }
