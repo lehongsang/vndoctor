@@ -417,6 +417,7 @@ export class TreatmentTargetsService {
     if (dto.smokingAdvice !== undefined) target.smokingAdvice = dto.smokingAdvice;
     if (dto.doctorNotes !== undefined) target.doctorNotes = dto.doctorNotes;
     if (dto.expertNotes !== undefined) target.expertNotes = dto.expertNotes;
+    if (dto.examinationId !== undefined) target.examinationId = dto.examinationId;
 
     // Ghi nhận bác sĩ thao tác gần nhất nếu chưa có
     if (!target.doctorId && staff.role === StaffRole.DOCTOR) {

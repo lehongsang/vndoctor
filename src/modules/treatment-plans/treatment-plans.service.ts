@@ -213,6 +213,7 @@ export class TreatmentPlansService {
       healthProfileId: dto.healthProfileId,
       doctorId,
       treatmentTargetId: dto.treatmentTargetId ?? null,
+      examinationId: dto.examinationId ?? null,
       title: dto.title,
       startDate: dto.startDate || todayStr,
       endDate: dto.endDate ?? null,
@@ -274,7 +275,8 @@ export class TreatmentPlansService {
       .createQueryBuilder('plan')
       .leftJoinAndSelect('plan.healthProfile', 'profile')
       .leftJoinAndSelect('plan.doctor', 'doctor')
-      .leftJoinAndSelect('plan.treatmentTarget', 'target');
+      .leftJoinAndSelect('plan.treatmentTarget', 'target')
+      .leftJoinAndSelect('plan.examination', 'examination');
 
     if (accountId) {
       qb.andWhere('profile.accountId = :accountId', { accountId });
@@ -316,7 +318,7 @@ export class TreatmentPlansService {
   async findPlanById(id: string, accountId?: string): Promise<TreatmentPlan> {
     const plan = await this.planRepo.findOne({
       where: { id },
-      relations: ['healthProfile', 'doctor', 'treatmentTarget'],
+      relations: ['healthProfile', 'doctor', 'treatmentTarget', 'examination'],
     });
 
     if (!plan) {

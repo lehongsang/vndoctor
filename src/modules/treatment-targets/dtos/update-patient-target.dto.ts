@@ -51,4 +51,9 @@ export class UpdatePatientTargetDto {
   @IsString()
   @IsOptional()
   expertNotes?: string;
+
+  @ApiPropertyOptional({ description: 'Associated Medical Examination ID (UUID)', example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33' })
+  @IsString()
+  @IsOptional()
+  examinationId?: string;
 }

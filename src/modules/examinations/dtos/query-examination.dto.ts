@@ -22,6 +22,16 @@ export class QueryExaminationDto {
   @IsUUID(undefined, { message: 'facilityId must be a valid UUID' })
   facilityId?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by Treatment Target ID (UUID)' })
+  @IsOptional()
+  @IsUUID(undefined, { message: 'treatmentTargetId must be a valid UUID' })
+  treatmentTargetId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by Treatment Plan ID (UUID)' })
+  @IsOptional()
+  @IsUUID(undefined, { message: 'treatmentPlanId must be a valid UUID' })
+  treatmentPlanId?: string;
+
   @ApiPropertyOptional({ enum: ExaminationStatus, enumName: 'ExaminationStatus' })
   @IsOptional()
   @IsEnum(ExaminationStatus, { message: 'status must be a valid ExaminationStatus' })

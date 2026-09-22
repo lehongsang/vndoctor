@@ -30,6 +30,22 @@ export class CreateExaminationDto {
   @IsUUID(undefined, { message: 'assessmentInputId must be a valid UUID' })
   assessmentInputId?: string;
 
+  @ApiPropertyOptional({
+    description: 'Linked Patient Treatment Target ID (UUID) từ phân tầng nguy cơ',
+    example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+  })
+  @IsOptional()
+  @IsUUID(undefined, { message: 'treatmentTargetId must be a valid UUID' })
+  treatmentTargetId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Linked Treatment Plan ID (UUID) phác đồ điều trị của bệnh nhân',
+    example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+  })
+  @IsOptional()
+  @IsUUID(undefined, { message: 'treatmentPlanId must be a valid UUID' })
+  treatmentPlanId?: string;
+
   @ApiPropertyOptional({ description: 'Heart rate (bpm)', example: 78 })
   @IsOptional()
   @Type(() => Number)

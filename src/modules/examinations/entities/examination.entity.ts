@@ -6,6 +6,8 @@ import { HealthProfile } from '@/modules/health-profiles/entities/health-profile
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { RiskFactorAssessmentInput } from '@/modules/risk-assessments/entities/risk-factor-assessment-input.entity';
+import { PatientTreatmentTarget } from '@/modules/treatment-targets/entities/patient-treatment-target.entity';
+import { TreatmentPlan } from '@/modules/treatment-plans/entities/treatment-plan.entity';
 import { DecimalTransformer } from '@/utils/typeorm-transformers';
 
 /**
@@ -53,6 +55,22 @@ export class Examination extends BaseEntity {
   @ManyToOne(() => RiskFactorAssessmentInput, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'assessmentInputId' })
   assessmentInput?: RiskFactorAssessmentInput | null;
+
+  @ApiPropertyOptional({ description: 'Linked Patient Treatment Target ID (Mục tiêu điều trị từ phân tầng nguy cơ)' })
+  @Column({ type: 'uuid', nullable: true })
+  treatmentTargetId?: string | null;
+
+  @ManyToOne(() => PatientTreatmentTarget, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'treatmentTargetId' })
+  treatmentTarget?: PatientTreatmentTarget | null;
+
+  @ApiPropertyOptional({ description: 'Linked Treatment Plan ID (Phác đồ điều trị của bệnh nhân)' })
+  @Column({ type: 'uuid', nullable: true })
+  treatmentPlanId?: string | null;
+
+  @ManyToOne(() => TreatmentPlan, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'treatmentPlanId' })
+  treatmentPlanEntity?: TreatmentPlan | null;
 
   @ApiPropertyOptional({ description: 'Heart rate (bpm)', example: 78 })
   @Column({ type: 'int', nullable: true })

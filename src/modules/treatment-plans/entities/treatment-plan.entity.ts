@@ -3,6 +3,7 @@ import { VnDoctorPlanStatus } from '@/commons/enums/vndoctor.enum';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
 import { PatientTreatmentTarget } from '@/modules/treatment-targets/entities/patient-treatment-target.entity';
+import { Examination } from '@/modules/examinations/entities/examination.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
@@ -38,6 +39,14 @@ export class TreatmentPlan extends BaseEntity {
   @ManyToOne(() => PatientTreatmentTarget, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'treatment_target_id' })
   treatmentTarget?: PatientTreatmentTarget | null;
+
+  @ApiPropertyOptional({ description: 'Associated medical examination ID (Phiếu khám bệnh liên kết)' })
+  @Column({ type: 'uuid', nullable: true, name: 'examination_id' })
+  examinationId?: string | null;
+
+  @ManyToOne(() => Examination, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'examination_id' })
+  examination?: Examination | null;
 
   @ApiProperty({ description: 'Title of treatment plan', example: 'Phác đồ điều trị Tăng huyết áp 3 tháng' })
   @Column({ type: 'varchar', length: 255 })

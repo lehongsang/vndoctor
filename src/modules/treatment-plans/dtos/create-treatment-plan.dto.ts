@@ -12,6 +12,11 @@ export class CreateTreatmentPlanDto {
   @IsOptional()
   treatmentTargetId?: string;
 
+  @ApiPropertyOptional({ description: 'Associated Medical Examination ID (UUID)' })
+  @IsUUID()
+  @IsOptional()
+  examinationId?: string;
+
   @ApiProperty({ description: 'Title of treatment plan', example: 'Phác đồ điều trị Tăng huyết áp 3 tháng' })
   @IsString()
   @IsNotEmpty()

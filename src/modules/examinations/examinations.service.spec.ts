@@ -7,6 +7,8 @@ import { Examination } from './entities/examination.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import { PatientTreatmentTarget } from '@/modules/treatment-targets/entities/patient-treatment-target.entity';
+import { TreatmentPlan } from '@/modules/treatment-plans/entities/treatment-plan.entity';
 import { ExaminationStatus } from '@/commons/enums/vndoctor.enum';
 import { NotFound } from '@/commons/exceptions';
 
@@ -94,6 +96,20 @@ describe('ExaminationsService', () => {
           provide: getRepositoryToken(StaffUser),
           useValue: {
             findOne: jest.fn().mockResolvedValue({ id: 'doctor-uuid-1', fullName: 'BS Nguyen' }),
+          },
+        },
+        {
+          provide: getRepositoryToken(PatientTreatmentTarget),
+          useValue: {
+            findOne: jest.fn().mockResolvedValue({ id: 'target-uuid-1', healthProfileId: 'profile-uuid-1' }),
+            update: jest.fn().mockResolvedValue({ affected: 1 }),
+          },
+        },
+        {
+          provide: getRepositoryToken(TreatmentPlan),
+          useValue: {
+            findOne: jest.fn().mockResolvedValue({ id: 'plan-uuid-1', healthProfileId: 'profile-uuid-1' }),
+            update: jest.fn().mockResolvedValue({ affected: 1 }),
           },
         },
       ],
