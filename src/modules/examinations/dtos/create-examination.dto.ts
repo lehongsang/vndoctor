@@ -114,11 +114,6 @@ export class CreateExaminationDto {
   @IsString({ message: 'icd10Code must be a string' })
   icd10Code?: string;
 
-  @ApiPropertyOptional({ description: 'Kế hoạch điều trị & Đơn thuốc (Treatment plan & Prescription)', example: 'Amlodipine 5mg x 1 viên/ngày uống buổi sáng; Hạn chế ăn mặn' })
-  @IsOptional()
-  @IsString({ message: 'treatmentPlan must be a string' })
-  treatmentPlan?: string;
-
   @ApiPropertyOptional({ description: 'Ngày hẹn tái khám (YYYY-MM-DD)', example: '2026-10-08' })
   @IsOptional()
   @IsDateString({}, { message: 'nextAppointmentDate must be in YYYY-MM-DD format' })

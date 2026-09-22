@@ -170,7 +170,7 @@ describe('ExaminationsService', () => {
     it('should update examination successfully', async () => {
       const result = await service.update('exam-uuid-1', {
         status: ExaminationStatus.COMPLETED,
-        treatmentPlan: 'Take medication daily',
+        diagnosis: 'Updated diagnosis',
       });
 
       expect(examRepo.findOne).toHaveBeenCalled();

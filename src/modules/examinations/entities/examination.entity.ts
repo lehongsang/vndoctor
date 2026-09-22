@@ -120,10 +120,6 @@ export class Examination extends BaseEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   icd10Code?: string | null;
 
-  @ApiPropertyOptional({ description: 'Prescription & treatment plan summary' })
-  @Column({ type: 'text', nullable: true })
-  treatmentPlan?: string | null;
-
   @ApiPropertyOptional({ description: 'Follow-up appointment date (YYYY-MM-DD)' })
   @Column({ type: 'date', nullable: true })
   nextAppointmentDate?: string | null;

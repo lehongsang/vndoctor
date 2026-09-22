@@ -152,7 +152,6 @@ export class ExaminationsService {
       clinicalSymptoms: dto.clinicalSymptoms ?? null,
       diagnosis: dto.diagnosis,
       icd10Code: dto.icd10Code ?? null,
-      treatmentPlan: dto.treatmentPlan ?? null,
       nextAppointmentDate: dto.nextAppointmentDate ?? null,
       status: dto.status,
       examinationDate: new Date(),
@@ -216,7 +215,6 @@ export class ExaminationsService {
     if (dto.clinicalSymptoms !== undefined) exam.clinicalSymptoms = dto.clinicalSymptoms;
     if (dto.diagnosis !== undefined) exam.diagnosis = dto.diagnosis;
     if (dto.icd10Code !== undefined) exam.icd10Code = dto.icd10Code;
-    if (dto.treatmentPlan !== undefined) exam.treatmentPlan = dto.treatmentPlan;
     if (dto.nextAppointmentDate !== undefined) exam.nextAppointmentDate = dto.nextAppointmentDate;
     if (dto.status !== undefined) exam.status = dto.status;
     if (dto.assessmentInputId !== undefined) exam.assessmentInputId = dto.assessmentInputId;
