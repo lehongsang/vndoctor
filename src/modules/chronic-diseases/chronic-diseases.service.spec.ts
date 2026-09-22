@@ -66,8 +66,12 @@ describe('ChronicDiseasesService', () => {
     jest.clearAllMocks();
   });
 
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
   describe('createChronicDisease', () => {
-    it('should create chronic disease successfully', async () => {
+    it('should create chronic disease successfully and return only id, code, name, icd10Code', async () => {
       mockDiseaseRepo.findOne.mockResolvedValue(null);
       mockDiseaseRepo.create.mockReturnValue(mockDisease);
       mockDiseaseRepo.save.mockResolvedValue(mockDisease);
@@ -79,7 +83,12 @@ describe('ChronicDiseasesService', () => {
         category: 'Tim mạch',
       });
 
-      expect(result.code).toBe('HYPERTENSION');
+      expect(result).toEqual({
+        id: 'disease-01',
+        code: 'HYPERTENSION',
+        name: 'Tăng huyết áp vô căn (nguyên phát)',
+        icd10Code: 'I10',
+      });
       expect(mockDiseaseRepo.save).toHaveBeenCalled();
     });
 
@@ -92,6 +101,26 @@ describe('ChronicDiseasesService', () => {
           name: 'Tăng huyết áp',
         }),
       ).rejects.toThrow(Conflict);
+    });
+  });
+
+  describe('getChronicDiseaseById', () => {
+    it('should return disease with only 4 fields (id, code, name, icd10Code)', async () => {
+      mockDiseaseRepo.findOne.mockResolvedValue(mockDisease);
+
+      const result = await service.getChronicDiseaseById('disease-01');
+      expect(result).toEqual({
+        id: 'disease-01',
+        code: 'HYPERTENSION',
+        name: 'Tăng huyết áp vô căn (nguyên phát)',
+        icd10Code: 'I10',
+      });
+    });
+
+    it('should throw NotFound if disease does not exist', async () => {
+      mockDiseaseRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.getChronicDiseaseById('not-exist')).rejects.toThrow(NotFound);
     });
   });
 
@@ -120,13 +149,18 @@ describe('ChronicDiseasesService', () => {
   });
 
   describe('getProfileDiseases', () => {
-    it('should return disease entities assigned to profile', async () => {
+    it('should return disease objects with only 4 core fields', async () => {
       mockProfileDiseaseRepo.findOne.mockResolvedValue(mockProfileDisease);
       mockDiseaseRepo.find.mockResolvedValue([mockDisease]);
 
       const list = await service.getProfileDiseases('profile-111');
       expect(list).toHaveLength(1);
-      expect(list[0].id).toBe('disease-01');
+      expect(list[0]).toEqual({
+        id: 'disease-01',
+        code: 'HYPERTENSION',
+        name: 'Tăng huyết áp vô căn (nguyên phát)',
+        icd10Code: 'I10',
+      });
     });
 
     it('should return empty array if no diseases assigned', async () => {

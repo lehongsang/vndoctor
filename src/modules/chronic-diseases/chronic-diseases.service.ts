@@ -6,6 +6,7 @@ import * as path from 'path';
 import { ChronicDisease } from './entities/chronic-disease.entity';
 import { ProfileChronicDisease } from './entities/profile-chronic-disease.entity';
 import {
+  ChronicDiseaseResponseDto,
   CreateChronicDiseaseDto,
   QueryChronicDiseaseDto,
   UpdateChronicDiseaseDto,
@@ -20,6 +21,18 @@ interface IcdSeedItem {
   directIcd10Code?: string;
   directIcd10Name?: string;
   relatedIcd10Codes?: string[];
+}
+
+/**
+ * Hàm helper chuẩn hóa dữ liệu bệnh mạn tính trả về chỉ gồm 4 trường: id, code, name, icd10Code.
+ */
+function mapToResponseDto(disease: ChronicDisease): ChronicDiseaseResponseDto {
+  return {
+    id: disease.id,
+    code: disease.code,
+    name: disease.name,
+    icd10Code: disease.icd10Code || null,
+  };
 }
 
 @Injectable()
@@ -88,14 +101,14 @@ export class ChronicDiseasesService implements OnModuleInit {
   }
 
   /**
-   * Retrieves paginated list of chronic diseases.
+   * Lấy danh sách bệnh mạn tính phân trang (chỉ trả về id, code, name, icd10Code).
    *
    * @param query - Search and filter parameters.
    * @returns Paginated items and total count.
    */
   async getChronicDiseases(
     query: QueryChronicDiseaseDto,
-  ): Promise<{ items: ChronicDisease[]; total: number; page: number; limit: number }> {
+  ): Promise<{ items: ChronicDiseaseResponseDto[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 50));
     const skip = (page - 1) * limit;
@@ -120,16 +133,21 @@ export class ChronicDiseasesService implements OnModuleInit {
     qb.orderBy('cd.displayOrder', 'ASC').addOrderBy('cd.createdAt', 'ASC').skip(skip).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    return { items, total, page, limit };
+    return {
+      items: items.map(mapToResponseDto),
+      total,
+      page,
+      limit,
+    };
   }
 
   /**
-   * Finds a chronic disease by ID.
+   * Lấy chi tiết một bệnh mạn tính theo ID (chỉ trả về id, code, name, icd10Code).
    *
    * @param id - Disease UUID.
-   * @returns Chronic disease entity.
+   * @returns Chronic disease response DTO.
    */
-  async getChronicDiseaseById(id: string): Promise<ChronicDisease> {
+  async getChronicDiseaseById(id: string): Promise<ChronicDiseaseResponseDto> {
     const disease = await this.chronicDiseaseRepository.findOne({ where: { id } });
     if (!disease) {
       throw new NotFound(
@@ -137,16 +155,16 @@ export class ChronicDiseasesService implements OnModuleInit {
         `Không tìm thấy bệnh mãn tính với mã ID: ${id}`,
       );
     }
-    return disease;
+    return mapToResponseDto(disease);
   }
 
   /**
-   * Creates a new master chronic disease entry.
+   * Thêm mới một bệnh mạn tính vào danh mục chuẩn (chỉ trả về id, code, name, icd10Code).
    *
    * @param dto - Disease data.
-   * @returns Newly created disease.
+   * @returns Newly created disease response DTO.
    */
-  async createChronicDisease(dto: CreateChronicDiseaseDto): Promise<ChronicDisease> {
+  async createChronicDisease(dto: CreateChronicDiseaseDto): Promise<ChronicDiseaseResponseDto> {
     const existing = await this.chronicDiseaseRepository.findOne({
       where: { code: dto.code.trim().toUpperCase() },
     });
@@ -163,33 +181,47 @@ export class ChronicDiseasesService implements OnModuleInit {
       code: dto.code.trim().toUpperCase(),
     });
 
-    return this.chronicDiseaseRepository.save(disease);
+    const saved = await this.chronicDiseaseRepository.save(disease);
+    return mapToResponseDto(saved);
   }
 
   /**
-   * Updates a master chronic disease entry.
+   * Cập nhật thông tin bệnh mạn tính trong danh mục (chỉ trả về id, code, name, icd10Code).
    *
    * @param id - Disease UUID.
    * @param dto - Update payload.
-   * @returns Updated disease.
+   * @returns Updated disease response DTO.
    */
   async updateChronicDisease(
     id: string,
     dto: UpdateChronicDiseaseDto,
-  ): Promise<ChronicDisease> {
-    const disease = await this.getChronicDiseaseById(id);
+  ): Promise<ChronicDiseaseResponseDto> {
+    const disease = await this.chronicDiseaseRepository.findOne({ where: { id } });
+    if (!disease) {
+      throw new NotFound(
+        ErrorCode.CHRONIC_DISEASE_NOT_FOUND,
+        `Không tìm thấy bệnh mãn tính với mã ID: ${id}`,
+      );
+    }
     Object.assign(disease, dto);
-    return this.chronicDiseaseRepository.save(disease);
+    const saved = await this.chronicDiseaseRepository.save(disease);
+    return mapToResponseDto(saved);
   }
 
   /**
-   * Soft delete a chronic disease from catalogue.
+   * Xóa mềm bệnh mạn tính khỏi danh mục.
    *
    * @param id - Disease UUID.
    * @returns Soft deletion result.
    */
   async deleteChronicDisease(id: string): Promise<{ success: boolean; message: string }> {
-    const disease = await this.getChronicDiseaseById(id);
+    const disease = await this.chronicDiseaseRepository.findOne({ where: { id } });
+    if (!disease) {
+      throw new NotFound(
+        ErrorCode.CHRONIC_DISEASE_NOT_FOUND,
+        `Không tìm thấy bệnh mãn tính với mã ID: ${id}`,
+      );
+    }
     disease.isActive = false;
     await this.chronicDiseaseRepository.save(disease);
     await this.chronicDiseaseRepository.softRemove(disease);
@@ -197,12 +229,12 @@ export class ChronicDiseasesService implements OnModuleInit {
   }
 
   /**
-   * Retrieves selected chronic diseases associated with a Health Profile.
+   * Lấy danh sách chi tiết các bệnh mạn tính đã gán cho một hồ sơ sức khỏe (chỉ trả về id, code, name, icd10Code).
    *
    * @param healthProfileId - Health Profile UUID.
-   * @returns Array of ChronicDisease objects.
+   * @returns Array of ChronicDiseaseResponseDto objects.
    */
-  async getProfileDiseases(healthProfileId: string): Promise<ChronicDisease[]> {
+  async getProfileDiseases(healthProfileId: string): Promise<ChronicDiseaseResponseDto[]> {
     const record = await this.profileChronicDiseaseRepository.findOne({
       where: { healthProfileId },
     });
@@ -211,14 +243,16 @@ export class ChronicDiseasesService implements OnModuleInit {
       return [];
     }
 
-    return this.chronicDiseaseRepository.find({
+    const diseases = await this.chronicDiseaseRepository.find({
       where: { id: In(record.diseaseIds) },
       order: { displayOrder: 'ASC' },
     });
+
+    return diseases.map(mapToResponseDto);
   }
 
   /**
-   * Sets (upserts) the array of chronic diseases associated with a Health Profile.
+   * Gán / cập nhật mảng bệnh mạn tính cho một hồ sơ sức khỏe.
    *
    * @param healthProfileId - Health Profile UUID.
    * @param diseaseIds - Array of disease UUIDs.
@@ -258,4 +292,3 @@ export class ChronicDiseasesService implements OnModuleInit {
     return this.profileChronicDiseaseRepository.save(record);
   }
 }
-

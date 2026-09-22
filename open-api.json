@@ -1337,7 +1337,7 @@
     },
     "/api/chronic-diseases": {
       "get": {
-        "description": "Lấy danh sách các bệnh mạn tính chuẩn ICD-10 (Tăng huyết áp, Đái tháo đường, Mỡ máu...)",
+        "description": "Lấy danh sách các bệnh mạn tính chuẩn ICD-10 (Tăng huyết áp, Đái tháo đường, Mỡ máu...), trả về các trường cốt lõi: id, code, name, icd10Code.",
         "operationId": "ChronicDiseasesController_getChronicDiseases",
         "parameters": [
           {
@@ -1424,7 +1424,7 @@
         ]
       },
       "post": {
-        "description": "Thêm mới mã bệnh và mã ICD-10 vào danh mục chuẩn của hệ thống",
+        "description": "Thêm mới mã bệnh và mã ICD-10 vào danh mục chuẩn của hệ thống (trả về: id, code, name, icd10Code)",
         "operationId": "ChronicDiseasesController_createChronicDisease",
         "parameters": [],
         "requestBody": {
@@ -1448,7 +1448,7 @@
                       "$ref": "#/components/schemas/AppResponseSerialization"
                     }
                   ],
-                  "$ref": "#/components/schemas/ChronicDisease"
+                  "$ref": "#/components/schemas/ChronicDiseaseResponseDto"
                 }
               }
             }
@@ -1467,7 +1467,7 @@
     },
     "/api/chronic-diseases/profile/{healthProfileId}": {
       "get": {
-        "description": "Trả về các bệnh mạn tính đã gán cho một hồ sơ sức khỏe bệnh nhân",
+        "description": "Trả về các bệnh mạn tính đã gán cho một hồ sơ sức khỏe bệnh nhân (chỉ gồm: id, code, name, icd10Code)",
         "operationId": "ChronicDiseasesController_getProfileDiseases",
         "parameters": [
           {
@@ -1494,7 +1494,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/ChronicDisease"
+                        "$ref": "#/components/schemas/ChronicDiseaseResponseDto"
                       }
                     }
                   }
@@ -1556,7 +1556,7 @@
     },
     "/api/chronic-diseases/{id}": {
       "get": {
-        "description": "Lấy thông tin chi tiết một bệnh mạn tính theo UUID",
+        "description": "Lấy thông tin chi tiết một bệnh mạn tính theo UUID (chỉ gồm: id, code, name, icd10Code)",
         "operationId": "ChronicDiseasesController_getChronicDiseaseById",
         "parameters": [
           {
@@ -1579,7 +1579,7 @@
                       "$ref": "#/components/schemas/AppResponseSerialization"
                     }
                   ],
-                  "$ref": "#/components/schemas/ChronicDisease"
+                  "$ref": "#/components/schemas/ChronicDiseaseResponseDto"
                 }
               }
             }
@@ -1591,7 +1591,7 @@
         ]
       },
       "patch": {
-        "description": "Chỉnh sửa tên bệnh, mã ICD-10, nhóm bệnh hoặc trạng thái",
+        "description": "Chỉnh sửa thông tin bệnh mạn tính (trả về: id, code, name, icd10Code)",
         "operationId": "ChronicDiseasesController_updateChronicDisease",
         "parameters": [
           {
@@ -1624,7 +1624,7 @@
                       "$ref": "#/components/schemas/AppResponseSerialization"
                     }
                   ],
-                  "$ref": "#/components/schemas/ChronicDisease"
+                  "$ref": "#/components/schemas/ChronicDiseaseResponseDto"
                 }
               }
             }
@@ -9403,63 +9403,35 @@
           }
         }
       },
-      "ChronicDisease": {
+      "ChronicDiseaseResponseDto": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "deletedAt": {
-            "type": "object",
-            "nullable": true
+            "type": "string",
+            "description": "Mã định danh bệnh mạn tính (UUID)",
+            "example": "01a08454-a217-70cc-9ff2-c03053354a10"
           },
           "code": {
             "type": "string",
-            "description": "Unique code of disease (e.g., DIABETES, HYPERTENSION)",
-            "example": "DIABETES"
+            "description": "Mã code chuẩn bệnh (ví dụ: SCORE2_HYPERTENSION, DIABETES)",
+            "example": "SCORE2_HYPERTENSION"
           },
           "name": {
             "type": "string",
-            "description": "Full name of disease",
-            "example": "Đái tháo đường Type 2"
+            "description": "Tên bệnh mạn tính",
+            "example": "Tăng huyết áp"
           },
           "icd10Code": {
             "type": "object",
-            "description": "ICD-10 code",
-            "example": "E11"
-          },
-          "category": {
-            "type": "object",
-            "description": "Category (Tim mạch, Chuyển hóa...)",
-            "example": "Chuyển hóa"
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "Active status",
-            "default": true
-          },
-          "displayOrder": {
-            "type": "number",
-            "description": "Display order in list",
-            "default": 0
+            "description": "Mã phân loại quốc tế ICD-10",
+            "example": "I10",
+            "nullable": true
           }
         },
         "required": [
           "id",
-          "createdAt",
-          "updatedAt",
           "code",
-          "name",
-          "isActive",
-          "displayOrder"
+          "name"
         ]
       },
       "ProfileChronicDisease": {

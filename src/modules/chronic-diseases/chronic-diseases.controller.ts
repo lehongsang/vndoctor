@@ -13,13 +13,13 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ChronicDiseasesService } from './chronic-diseases.service';
 import {
+  ChronicDiseaseResponseDto,
   CreateChronicDiseaseDto,
   QueryChronicDiseaseDto,
   SetProfileChronicDiseasesDto,
   UpdateChronicDiseaseDto,
 } from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
-import { ChronicDisease } from './entities/chronic-disease.entity';
 import { ProfileChronicDisease } from './entities/profile-chronic-disease.entity';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
@@ -38,7 +38,8 @@ export class ChronicDiseasesController {
   @Get()
   @Doc({
     summary: 'Public / App / CMS - Danh sách danh mục bệnh mạn tính',
-    description: 'Lấy danh sách các bệnh mạn tính chuẩn ICD-10 (Tăng huyết áp, Đái tháo đường, Mỡ máu...)',
+    description:
+      'Lấy danh sách các bệnh mạn tính chuẩn ICD-10 (Tăng huyết áp, Đái tháo đường, Mỡ máu...), trả về các trường cốt lõi: id, code, name, icd10Code.',
   })
   async getChronicDiseases(@Query() query: QueryChronicDiseaseDto) {
     return this.chronicDiseasesService.getChronicDiseases(query);
@@ -48,10 +49,13 @@ export class ChronicDiseasesController {
   @Get('profile/:healthProfileId')
   @Doc({
     summary: 'Public / App / CMS - Lấy danh sách bệnh nền của một hồ sơ sức khỏe',
-    description: 'Trả về các bệnh mạn tính đã gán cho một hồ sơ sức khỏe bệnh nhân',
-    response: { serialization: ChronicDisease, isArray: true },
+    description:
+      'Trả về các bệnh mạn tính đã gán cho một hồ sơ sức khỏe bệnh nhân (chỉ gồm: id, code, name, icd10Code)',
+    response: { serialization: ChronicDiseaseResponseDto, isArray: true },
   })
-  async getProfileDiseases(@Param('healthProfileId') healthProfileId: string) {
+  async getProfileDiseases(
+    @Param('healthProfileId') healthProfileId: string,
+  ): Promise<ChronicDiseaseResponseDto[]> {
     return this.chronicDiseasesService.getProfileDiseases(healthProfileId);
   }
 
@@ -76,10 +80,13 @@ export class ChronicDiseasesController {
   @Get(':id')
   @Doc({
     summary: 'Public / App / CMS - Chi tiết bệnh mạn tính theo ID',
-    description: 'Lấy thông tin chi tiết một bệnh mạn tính theo UUID',
-    response: { serialization: ChronicDisease },
+    description:
+      'Lấy thông tin chi tiết một bệnh mạn tính theo UUID (chỉ gồm: id, code, name, icd10Code)',
+    response: { serialization: ChronicDiseaseResponseDto },
   })
-  async getChronicDiseaseById(@Param('id') id: string) {
+  async getChronicDiseaseById(
+    @Param('id') id: string,
+  ): Promise<ChronicDiseaseResponseDto> {
     return this.chronicDiseasesService.getChronicDiseaseById(id);
   }
 
@@ -89,10 +96,13 @@ export class ChronicDiseasesController {
   @ApiBearerAuth('access-token')
   @Doc({
     summary: 'Role: ADMIN - Thêm mới bệnh mạn tính vào danh mục',
-    description: 'Thêm mới mã bệnh và mã ICD-10 vào danh mục chuẩn của hệ thống',
-    response: { serialization: ChronicDisease },
+    description:
+      'Thêm mới mã bệnh và mã ICD-10 vào danh mục chuẩn của hệ thống (trả về: id, code, name, icd10Code)',
+    response: { serialization: ChronicDiseaseResponseDto },
   })
-  async createChronicDisease(@Body() dto: CreateChronicDiseaseDto) {
+  async createChronicDisease(
+    @Body() dto: CreateChronicDiseaseDto,
+  ): Promise<ChronicDiseaseResponseDto> {
     return this.chronicDiseasesService.createChronicDisease(dto);
   }
 
@@ -102,13 +112,14 @@ export class ChronicDiseasesController {
   @ApiBearerAuth('access-token')
   @Doc({
     summary: 'Role: ADMIN - Cập nhật thông tin bệnh mạn tính',
-    description: 'Chỉnh sửa tên bệnh, mã ICD-10, nhóm bệnh hoặc trạng thái',
-    response: { serialization: ChronicDisease },
+    description:
+      'Chỉnh sửa thông tin bệnh mạn tính (trả về: id, code, name, icd10Code)',
+    response: { serialization: ChronicDiseaseResponseDto },
   })
   async updateChronicDisease(
     @Param('id') id: string,
     @Body() dto: UpdateChronicDiseaseDto,
-  ) {
+  ): Promise<ChronicDiseaseResponseDto> {
     return this.chronicDiseasesService.updateChronicDisease(id, dto);
   }
 
