@@ -102,6 +102,13 @@ export class PatientTreatmentTarget extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   smokingAdvice?: string | null;
 
+  @ApiPropertyOptional({
+    description: 'Các mục tiêu điều trị tùy chỉnh / mở rộng bổ sung do bác sĩ thiết lập (dạng key-value hoặc dynamic JSON)',
+    example: { uricAcid: '< 360 umol/L', restingHeartRate: '60 - 75 bpm' },
+  })
+  @Column({ type: 'jsonb', nullable: true, name: 'custom_targets' })
+  customTargets?: Record<string, unknown> | null;
+
   @ApiPropertyOptional({ description: 'Primary Doctor clinical notes' })
   @Column({ type: 'text', nullable: true })
   doctorNotes?: string | null;

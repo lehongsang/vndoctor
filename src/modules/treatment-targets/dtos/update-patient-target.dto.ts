@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsObject, IsOptional, IsString } from 'class-validator';
 
 export class UpdatePatientTargetDto {
   @ApiPropertyOptional({ description: 'Target Blood Pressure', example: '< 130/80 mmHg' })
@@ -41,6 +41,14 @@ export class UpdatePatientTargetDto {
   @IsString()
   @IsOptional()
   smokingAdvice?: string;
+
+  @ApiPropertyOptional({
+    description: 'Các mục tiêu điều trị tùy chỉnh / mở rộng bổ sung do bác sĩ thiết lập (dạng key-value hoặc dynamic JSON)',
+    example: { uricAcid: '< 360 umol/L', restingHeartRate: '60 - 75 bpm' },
+  })
+  @IsObject()
+  @IsOptional()
+  customTargets?: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Primary Doctor clinical notes' })
   @IsString()

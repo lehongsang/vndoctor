@@ -415,6 +415,7 @@ export class TreatmentTargetsService {
     if (dto.dietAdvice !== undefined) target.dietAdvice = dto.dietAdvice;
     if (dto.exerciseAdvice !== undefined) target.exerciseAdvice = dto.exerciseAdvice;
     if (dto.smokingAdvice !== undefined) target.smokingAdvice = dto.smokingAdvice;
+    if (dto.customTargets !== undefined) target.customTargets = dto.customTargets;
     if (dto.doctorNotes !== undefined) target.doctorNotes = dto.doctorNotes;
     if (dto.expertNotes !== undefined) target.expertNotes = dto.expertNotes;
     if (dto.examinationId !== undefined) target.examinationId = dto.examinationId;
@@ -464,6 +465,7 @@ export class TreatmentTargetsService {
     if (dto.dietAdvice !== undefined) target.dietAdvice = dto.dietAdvice;
     if (dto.exerciseAdvice !== undefined) target.exerciseAdvice = dto.exerciseAdvice;
     if (dto.smokingAdvice !== undefined) target.smokingAdvice = dto.smokingAdvice;
+    if (dto.customTargets !== undefined) target.customTargets = dto.customTargets;
     if (dto.doctorNotes !== undefined) target.doctorNotes = dto.doctorNotes;
     if (dto.expertNotes !== undefined) target.expertNotes = dto.expertNotes;
 
