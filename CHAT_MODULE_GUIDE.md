@@ -140,3 +140,35 @@ function sendChatMessage(conversationId, text) {
   });
 }
 ```
+
+---
+
+## 6. QUY TẮC NGHIỆP VỤ KHỞI TẠO PHÒNG CHAT THEO GÓI CHĂM SÓC
+
+Khi gói chăm sóc được duyệt và kích hoạt (`POST /care-subscriptions/:id/assign-and-activate`):
+
+### 6.1. Gói Tiêu Chuẩn (STANDARD):
+- **Cơ chế**: Không tạo nhóm chat chung. Tự động khởi tạo **2 kênh chat trực tiếp 1-1 (`ConversationType.DIRECT`)**:
+  1. **Kênh 1-1 với Bác sĩ phụ trách**:
+     - Tiêu đề: `Tư vấn: [Tên Bệnh Nhân] - BS. [Tên Bác Sĩ]`
+     - Tin nhắn chào mừng `SYSTEM`: *"Chào mừng bạn đến với kênh tư vấn trực tiếp với Bác sĩ phụ trách [Tên Bác Sĩ] của gói [Tên Gói]. Hãy để lại tin nhắn hoặc triệu chứng khi cần hỗ trợ y tế!"*
+  2. **Kênh 1-1 với Điều dưỡng phụ trách**:
+     - Tiêu đề: `Hỗ trợ: [Tên Bệnh Nhân] - ĐD. [Tên Điều Dưỡng]`
+     - Tin nhắn chào mừng `SYSTEM`: *"Chào mừng bạn đến với kênh hỗ trợ trực tiếp với Điều dưỡng phụ trách [Tên Điều Dưỡng] của gói [Tên Gói]. Hãy để lại tin nhắn khi cần hỗ trợ lịch hẹn, theo dõi và chăm sóc sức khỏe!"*
+
+### 6.2. Gói VIP (VIP):
+- **Cơ chế**: Khởi tạo đầy đủ **3 Kênh chat 1-1 riêng biệt** + **1 Phòng Chat Nhóm Chăm Sóc VIP (`CARE_TEAM`)**:
+  1. **Kênh 1-1 với Bác sĩ phụ trách**:
+     - Tiêu đề: `Tư vấn: [Tên Bệnh Nhân] - BS. [Tên Bác Sĩ]`
+     - Tin nhắn chào mừng `SYSTEM`: *"Chào mừng bạn đến với kênh tư vấn trực tiếp với Bác sĩ phụ trách [Tên Bác Sĩ] của gói [Tên Gói]. Hãy để lại tin nhắn hoặc triệu chứng khi cần hỗ trợ y tế!"*
+  2. **Kênh 1-1 với Điều dưỡng phụ trách**:
+     - Tiêu đề: `Hỗ trợ: [Tên Bệnh Nhân] - ĐD. [Tên Điều Dưỡng]`
+     - Tin nhắn chào mừng `SYSTEM`: *"Chào mừng bạn đến với kênh hỗ trợ trực tiếp với Điều dưỡng phụ trách [Tên Điều Dưỡng] của gói [Tên Gói]. Hãy để lại tin nhắn khi cần hỗ trợ lịch hẹn, theo dõi và chăm sóc sức khỏe!"*
+  3. **Kênh 1-1 với Bác sĩ Chuyên gia đầu ngành**:
+     - Tiêu đề: `Tư vấn Chuyên gia: [Tên Bệnh Nhân] - BS. [Tên Chuyên Gia]`
+     - Tin nhắn chào mừng `SYSTEM`: *"Chào mừng bạn đến với kênh tư vấn chuyên sâu 1-1 với Bác sĩ Chuyên gia [Tên Chuyên Gia] của gói VIP [Tên Gói]. Hãy để lại tin nhắn hoặc kết quả xét nghiệm khi cần tham vấn ý kiến chuyên gia!"*
+  4. **Đặc quyền Phòng Chat Nhóm Chăm Sóc VIP (`ConversationType.CARE_TEAM`)**:
+     - Thành viên: Gồm cả 4 bên (Bệnh nhân, Bác sĩ chính, Điều dưỡng, Bác sĩ Chuyên gia).
+     - Tiêu đề: `Nhóm Chăm Sóc VIP - [Tên Bệnh Nhân]`
+     - Tin nhắn chào mừng `SYSTEM`: *"Chào mừng bạn đến với nhóm chăm sóc sức khỏe của gói VIP [Tên Gói]. Đội ngũ phụ trách: Bác sĩ chính: [Tên BS], Điều dưỡng: [Tên ĐD], Bác sĩ chuyên gia: [Tên Chuyên Gia]. Hãy để lại tin nhắn hoặc triệu chứng khi cần hỗ trợ!"*
+

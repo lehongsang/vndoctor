@@ -117,7 +117,7 @@ export class Examination extends BaseEntity {
   diagnosis: string;
 
   @ApiPropertyOptional({ description: 'Primary ICD-10 Code', example: 'I10' })
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 200, nullable: true })
   icd10Code?: string | null;
 
   @ApiPropertyOptional({ description: 'Follow-up appointment date (YYYY-MM-DD)' })

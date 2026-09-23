@@ -16,7 +16,7 @@ export class ChronicDisease extends BaseEntity {
   name: string;
 
   @ApiPropertyOptional({ description: 'ICD-10 code', example: 'E11' })
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 200, nullable: true })
   icd10Code?: string | null;
 
   @ApiPropertyOptional({ description: 'Category (Tim mạch, Chuyển hóa...)', example: 'Chuyển hóa' })

@@ -414,49 +414,150 @@ export class CareSubscriptionsService {
 
       const savedSubscription = await manager.save(PatientCareSubscription, subscription);
 
-      // 8. Initialize or find CARE_TEAM conversation room
-      let conversation = await manager.findOne(Conversation, {
-        where: {
-          subscriptionId: savedSubscription.id,
-          type: ConversationType.CARE_TEAM,
-        },
-      });
-
+      // 8. Initialize conversation rooms based on package type
       const patientName = subscription.healthProfile?.fullName ?? 'Bệnh nhân';
 
-      if (!conversation) {
-        conversation = manager.create(Conversation, {
+      // 8.1. Kênh chat 1-1 với Bác sĩ phụ trách (Áp dụng cho CẢ Gói Thường và Gói VIP)
+      let doctorConv = await manager.findOne(Conversation, {
+        where: {
+          subscriptionId: savedSubscription.id,
+          directUserId: doctor.id,
+          type: ConversationType.DIRECT,
+        },
+      });
+      if (!doctorConv) {
+        doctorConv = manager.create(Conversation, {
           facilityId,
-          type: ConversationType.CARE_TEAM,
+          type: ConversationType.DIRECT,
           status: ConversationStatus.ACTIVE,
           subscriptionId: savedSubscription.id,
           healthProfileId: savedSubscription.healthProfileId,
-          title: `Nhóm Chăm Sóc - ${patientName}`,
+          directUserId: doctor.id,
+          title: `Tư vấn: ${patientName} - BS. ${doctor.fullName}`,
         });
-        conversation = await manager.save(Conversation, conversation);
+        doctorConv = await manager.save(Conversation, doctorConv);
       }
 
-      // 9. Send initial SYSTEM welcome message in the conversation room
-      let welcomeContent = `Chào mừng bạn đến với nhóm chăm sóc sức khỏe của gói "${carePackage.name}". Đội ngũ phụ trách: Bác sĩ chính: ${doctor.fullName}, Điều dưỡng: ${nurse.fullName}`;
-      if (expert) {
-        welcomeContent += `, Bác sĩ chuyên gia: ${expert.fullName}`;
-      }
-      welcomeContent += '. Hãy để lại tin nhắn hoặc triệu chứng khi cần hỗ trợ!';
-
-      const systemMessage = manager.create(Message, {
-        conversationId: conversation.id,
+      const doctorWelcome = `Chào mừng bạn đến với kênh tư vấn trực tiếp với Bác sĩ phụ trách ${doctor.fullName} của gói "${carePackage.name}". Hãy để lại tin nhắn hoặc triệu chứng khi cần hỗ trợ y tế!`;
+      const doctorMsg = manager.create(Message, {
+        conversationId: doctorConv.id,
         senderType: SenderType.SYSTEM,
         messageType: MessageType.SYSTEM,
-        content: welcomeContent,
+        content: doctorWelcome,
         isPinned: true,
       });
-      const savedMessage = await manager.save(Message, systemMessage);
+      const savedDoctorMsg = await manager.save(Message, doctorMsg);
+      doctorConv.lastMessageId = savedDoctorMsg.id;
+      doctorConv.lastMessageAt = now;
+      doctorConv.lastMessagePreview = doctorWelcome.substring(0, 250);
+      await manager.save(Conversation, doctorConv);
 
-      // Update conversation last message metadata
-      conversation.lastMessageId = savedMessage.id;
-      conversation.lastMessageAt = now;
-      conversation.lastMessagePreview = welcomeContent.substring(0, 250);
-      await manager.save(Conversation, conversation);
+      // 8.2. Kênh chat 1-1 với Điều dưỡng phụ trách (Áp dụng cho CẢ Gói Thường và Gói VIP)
+      let nurseConv = await manager.findOne(Conversation, {
+        where: {
+          subscriptionId: savedSubscription.id,
+          directUserId: nurse.id,
+          type: ConversationType.DIRECT,
+        },
+      });
+      if (!nurseConv) {
+        nurseConv = manager.create(Conversation, {
+          facilityId,
+          type: ConversationType.DIRECT,
+          status: ConversationStatus.ACTIVE,
+          subscriptionId: savedSubscription.id,
+          healthProfileId: savedSubscription.healthProfileId,
+          directUserId: nurse.id,
+          title: `Hỗ trợ: ${patientName} - ĐD. ${nurse.fullName}`,
+        });
+        nurseConv = await manager.save(Conversation, nurseConv);
+      }
+
+      const nurseWelcome = `Chào mừng bạn đến với kênh hỗ trợ trực tiếp với Điều dưỡng phụ trách ${nurse.fullName} của gói "${carePackage.name}". Hãy để lại tin nhắn khi cần hỗ trợ lịch hẹn, theo dõi và chăm sóc sức khỏe!`;
+      const nurseMsg = manager.create(Message, {
+        conversationId: nurseConv.id,
+        senderType: SenderType.SYSTEM,
+        messageType: MessageType.SYSTEM,
+        content: nurseWelcome,
+        isPinned: true,
+      });
+      const savedNurseMsg = await manager.save(Message, nurseMsg);
+      nurseConv.lastMessageId = savedNurseMsg.id;
+      nurseConv.lastMessageAt = now;
+      nurseConv.lastMessagePreview = nurseWelcome.substring(0, 250);
+      await manager.save(Conversation, nurseConv);
+
+      // 8.3. ĐẶC QUYỀN GÓI VIP: Thêm kênh 1-1 với Chuyên gia & Phòng Chat Nhóm Chăm Sóc VIP
+      if (carePackage.type === CarePackageType.VIP && expert) {
+        // (a) Kênh chat 1-1 riêng với Bác sĩ Chuyên gia
+        let expertConv = await manager.findOne(Conversation, {
+          where: {
+            subscriptionId: savedSubscription.id,
+            directUserId: expert.id,
+            type: ConversationType.DIRECT,
+          },
+        });
+        if (!expertConv) {
+          expertConv = manager.create(Conversation, {
+            facilityId,
+            type: ConversationType.DIRECT,
+            status: ConversationStatus.ACTIVE,
+            subscriptionId: savedSubscription.id,
+            healthProfileId: savedSubscription.healthProfileId,
+            directUserId: expert.id,
+            title: `Tư vấn Chuyên gia: ${patientName} - BS. ${expert.fullName}`,
+          });
+          expertConv = await manager.save(Conversation, expertConv);
+        }
+
+        const expertWelcome = `Chào mừng bạn đến với kênh tư vấn chuyên sâu 1-1 với Bác sĩ Chuyên gia ${expert.fullName} của gói VIP "${carePackage.name}". Hãy để lại tin nhắn hoặc kết quả xét nghiệm khi cần tham vấn ý kiến chuyên gia!`;
+        const expertMsg = manager.create(Message, {
+          conversationId: expertConv.id,
+          senderType: SenderType.SYSTEM,
+          messageType: MessageType.SYSTEM,
+          content: expertWelcome,
+          isPinned: true,
+        });
+        const savedExpertMsg = await manager.save(Message, expertMsg);
+        expertConv.lastMessageId = savedExpertMsg.id;
+        expertConv.lastMessageAt = now;
+        expertConv.lastMessagePreview = expertWelcome.substring(0, 250);
+        await manager.save(Conversation, expertConv);
+
+        // (b) Phòng chat Nhóm Chăm Sóc VIP (Bệnh nhân + Bác sĩ + Điều dưỡng + Chuyên gia)
+        let groupConv = await manager.findOne(Conversation, {
+          where: {
+            subscriptionId: savedSubscription.id,
+            type: ConversationType.CARE_TEAM,
+          },
+        });
+
+        if (!groupConv) {
+          groupConv = manager.create(Conversation, {
+            facilityId,
+            type: ConversationType.CARE_TEAM,
+            status: ConversationStatus.ACTIVE,
+            subscriptionId: savedSubscription.id,
+            healthProfileId: savedSubscription.healthProfileId,
+            title: `Nhóm Chăm Sóc VIP - ${patientName}`,
+          });
+          groupConv = await manager.save(Conversation, groupConv);
+        }
+
+        const groupWelcome = `Chào mừng bạn đến với nhóm chăm sóc sức khỏe của gói VIP "${carePackage.name}". Đội ngũ phụ trách: Bác sĩ chính: ${doctor.fullName}, Điều dưỡng: ${nurse.fullName}, Bác sĩ chuyên gia: ${expert.fullName}. Hãy để lại tin nhắn hoặc triệu chứng khi cần hỗ trợ!`;
+        const groupMsg = manager.create(Message, {
+          conversationId: groupConv.id,
+          senderType: SenderType.SYSTEM,
+          messageType: MessageType.SYSTEM,
+          content: groupWelcome,
+          isPinned: true,
+        });
+        const savedGroupMsg = await manager.save(Message, groupMsg);
+        groupConv.lastMessageId = savedGroupMsg.id;
+        groupConv.lastMessageAt = now;
+        groupConv.lastMessagePreview = groupWelcome.substring(0, 250);
+        await manager.save(Conversation, groupConv);
+      }
 
       return savedSubscription;
     });
