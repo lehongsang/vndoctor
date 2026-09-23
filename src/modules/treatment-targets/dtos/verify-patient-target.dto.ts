@@ -43,12 +43,12 @@ export class VerifyPatientTargetDto {
   smokingAdvice?: string;
 
   @ApiPropertyOptional({
-    description: 'Các mục tiêu điều trị tùy chỉnh / mở rộng bổ sung do bác sĩ xác nhận (dạng key-value hoặc dynamic JSON)',
-    example: { uricAcid: '< 360 umol/L', restingHeartRate: '60 - 75 bpm' },
+    description: 'Các mục tiêu điều trị tùy chỉnh bổ sung do bác sĩ xác nhận (dạng key-value: Tên mục tiêu -> Giá trị mục tiêu)',
+    example: { 'Acid Uric': '< 360 µmol/L', 'Nhịp tim lúc nghỉ': '60 - 75 nhịp/phút' },
   })
   @IsObject()
   @IsOptional()
-  customTargets?: Record<string, unknown>;
+  customTargets?: Record<string, string>;
 
   @ApiPropertyOptional({ description: 'Doctor clinical notes & verification remarks' })
   @IsString()
