@@ -302,6 +302,37 @@ describe('HealthProfilesService', () => {
       );
     });
 
+    it('should filter by assigned staff when caller is DOCTOR / NURSE / STAFF', async () => {
+      const mockQb = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[mockProfile], 1]),
+      };
+      mockRepository.createQueryBuilder.mockReturnValue(mockQb);
+
+      const result = await service.getFacilityProfiles(
+        { page: 1, limit: 10 },
+        {
+          id: 'doctor-1',
+          facilityId: 'facility-1',
+          staffCode: 'DOC01',
+          fullName: 'BS. Nguyễn Văn A',
+          role: StaffRole.DOCTOR,
+          username: 'doctor',
+          type: 'STAFF',
+        },
+      );
+
+      expect(result.items).toHaveLength(1);
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        '(careSub.assignedDoctorId = :staffId OR careSub.assignedNurseId = :staffId OR careSub.assignedExpertId = :staffId)',
+        { staffId: 'doctor-1' },
+      );
+    });
+
     it('should throw Forbidden when regular staff attempts to query another facility', async () => {
       await expect(
         service.getFacilityProfiles(

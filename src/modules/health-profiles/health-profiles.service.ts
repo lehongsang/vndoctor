@@ -194,8 +194,11 @@ export class HealthProfilesService {
           ) || profile.careSubscriptions[0];
 
         if (activeSub) {
+          profile.careSubscriptionId = activeSub.id;
+          profile.carePackageId = activeSub.carePackageId || activeSub.carePackage?.id || null;
           profile.subscription = {
             id: activeSub.id,
+            carePackageId: activeSub.carePackageId,
             status: activeSub.status,
             startedAt: activeSub.startedAt,
             expiresAt: activeSub.expiresAt,
@@ -207,9 +210,13 @@ export class HealthProfilesService {
             updatedAt: activeSub.updatedAt,
           };
         } else {
+          profile.careSubscriptionId = null;
+          profile.carePackageId = null;
           profile.subscription = null;
         }
       } else {
+        profile.careSubscriptionId = null;
+        profile.carePackageId = null;
         profile.subscription = null;
         profile.careSubscriptions = [];
       }
@@ -258,8 +265,11 @@ export class HealthProfilesService {
         ) || profile.careSubscriptions[0];
 
       if (activeSub) {
+        profile.careSubscriptionId = activeSub.id;
+        profile.carePackageId = activeSub.carePackageId || activeSub.carePackage?.id || null;
         profile.subscription = {
           id: activeSub.id,
+          carePackageId: activeSub.carePackageId,
           status: activeSub.status,
           startedAt: activeSub.startedAt,
           expiresAt: activeSub.expiresAt,
@@ -271,9 +281,13 @@ export class HealthProfilesService {
           updatedAt: activeSub.updatedAt,
         };
       } else {
+        profile.careSubscriptionId = null;
+        profile.carePackageId = null;
         profile.subscription = null;
       }
     } else {
+      profile.careSubscriptionId = null;
+      profile.carePackageId = null;
       profile.subscription = null;
       profile.careSubscriptions = [];
     }
@@ -351,10 +365,27 @@ export class HealthProfilesService {
 
     const qb = this.healthProfileRepository
       .createQueryBuilder('profile')
-      .leftJoinAndSelect('profile.facility', 'facility');
+      .leftJoinAndSelect('profile.facility', 'facility')
+      .leftJoinAndSelect('profile.careSubscriptions', 'careSub')
+      .leftJoinAndSelect('careSub.carePackage', 'carePackage')
+      .leftJoinAndSelect('careSub.assignedDoctor', 'assignedDoctor')
+      .leftJoinAndSelect('careSub.assignedNurse', 'assignedNurse')
+      .leftJoinAndSelect('careSub.assignedExpert', 'assignedExpert');
 
     if (targetFacilityId) {
       qb.andWhere('profile.facilityId = :facilityId', { facilityId: targetFacilityId });
+    }
+
+    // Phân quyền: Nếu không phải Admin (ADMIN / VNDOCTOR_ADMIN) thì chỉ lấy các hồ sơ mà nhân viên đó được phân công
+    if (
+      staff &&
+      staff.role !== StaffRole.ADMIN &&
+      staff.role !== StaffRole.VNDOCTOR_ADMIN
+    ) {
+      qb.andWhere(
+        '(careSub.assignedDoctorId = :staffId OR careSub.assignedNurseId = :staffId OR careSub.assignedExpertId = :staffId)',
+        { staffId: staff.id },
+      );
     }
 
     if (query.linkStatus) {
@@ -389,7 +420,55 @@ export class HealthProfilesService {
 
     qb.orderBy('profile.createdAt', 'DESC').skip(skip).take(limit);
 
-    const [items, total] = await qb.getManyAndCount();
+    const [profiles, total] = await qb.getManyAndCount();
+
+    const items = profiles.map((profile) => {
+      if (profile.careSubscriptions && profile.careSubscriptions.length > 0) {
+        // Lọc các gói chăm sóc thuộc cơ sở y tế này (nếu có targetFacilityId)
+        const facilitySubs = targetFacilityId
+          ? profile.careSubscriptions.filter(
+              (s) => s.carePackage?.facilityId === targetFacilityId,
+            )
+          : profile.careSubscriptions;
+
+        facilitySubs.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+
+        const activeSub =
+          facilitySubs.find((s) => s.status === CareSubscriptionStatus.ACTIVE) ||
+          facilitySubs[0];
+
+        if (activeSub) {
+          profile.careSubscriptionId = activeSub.id;
+          profile.carePackageId = activeSub.carePackageId || activeSub.carePackage?.id || null;
+          profile.subscription = {
+            id: activeSub.id,
+            carePackageId: activeSub.carePackageId,
+            status: activeSub.status,
+            startedAt: activeSub.startedAt,
+            expiresAt: activeSub.expiresAt,
+            carePackage: activeSub.carePackage,
+            assignedDoctor: activeSub.assignedDoctor,
+            assignedNurse: activeSub.assignedNurse,
+            assignedExpert: activeSub.assignedExpert,
+            createdAt: activeSub.createdAt,
+            updatedAt: activeSub.updatedAt,
+          };
+        } else {
+          profile.careSubscriptionId = null;
+          profile.carePackageId = null;
+          profile.subscription = null;
+        }
+      } else {
+        profile.careSubscriptionId = null;
+        profile.carePackageId = null;
+        profile.subscription = null;
+      }
+      profile.careSubscriptions = [];
+      return profile;
+    });
+
     return { items, total, page, limit };
   }
 

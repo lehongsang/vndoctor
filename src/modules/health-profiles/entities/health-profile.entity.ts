@@ -191,6 +191,20 @@ export class HealthProfile extends BaseEntity {
   careSubscriptions?: Relation<PatientCareSubscription>[];
 
   @ApiPropertyOptional({
+    description: 'ID đăng ký gói chăm sóc của bệnh nhân tại cơ sở y tế (nếu có, chưa có trả null)',
+    example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+  })
+  @Expose()
+  careSubscriptionId?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'ID gói dịch vụ chăm sóc của cơ sở y tế (nếu có, chưa có trả null)',
+    example: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+  })
+  @Expose()
+  carePackageId?: string | null;
+
+  @ApiPropertyOptional({
     description: 'Thông tin gói chăm sóc và bác sĩ được phân công (nếu có)',
   })
   @Expose()
