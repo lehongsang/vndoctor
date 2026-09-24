@@ -61,6 +61,16 @@ describe('ConversationsService', () => {
     conversation: mockConversation as Conversation,
   };
 
+  const mockConversationQueryBuilder = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    addOrderBy: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    getManyAndCount: jest.fn().mockResolvedValue([[mockConversation], 1]),
+  };
+
   const mockConversationRepo = {
     create: jest.fn().mockImplementation((dto: Partial<Conversation>): Conversation => dto as Conversation),
     save: jest.fn().mockImplementation((entity: Partial<Conversation>): Promise<Conversation> => Promise.resolve({ id: 'conv-1', ...entity } as Conversation)),
@@ -70,15 +80,7 @@ describe('ConversationsService', () => {
       }
       return Promise.resolve(null);
     }),
-    createQueryBuilder: jest.fn().mockReturnValue({
-      leftJoinAndSelect: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      addOrderBy: jest.fn().mockReturnThis(),
-      skip: jest.fn().mockReturnThis(),
-      take: jest.fn().mockReturnThis(),
-      getManyAndCount: jest.fn().mockResolvedValue([[mockConversation], 1]),
-    }),
+    createQueryBuilder: jest.fn().mockReturnValue(mockConversationQueryBuilder),
   };
 
   const mockMessageQueryBuilder = {
@@ -217,6 +219,20 @@ describe('ConversationsService', () => {
 
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
+    });
+
+    it('should filter conversations for staff member by staffUserId', async () => {
+      const result = await service.findAll(
+        { page: 1, limit: 20 },
+        'facility-1',
+        'doc-1',
+      );
+
+      expect(result.data).toHaveLength(1);
+      expect(mockConversationQueryBuilder.andWhere).toHaveBeenCalledWith(
+        '(conv.directUserId = :staffUserId OR sub.assignedDoctorId = :staffUserId OR sub.assignedNurseId = :staffUserId OR sub.assignedExpertId = :staffUserId)',
+        { staffUserId: 'doc-1' },
+      );
     });
   });
 

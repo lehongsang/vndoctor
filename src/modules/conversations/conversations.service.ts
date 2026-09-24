@@ -167,6 +167,13 @@ export class ConversationsService {
       qb.andWhere('conv.facilityId = :facilityId', { facilityId: staffFacilityId });
     }
 
+    if (staffUserId) {
+      qb.andWhere(
+        '(conv.directUserId = :staffUserId OR sub.assignedDoctorId = :staffUserId OR sub.assignedNurseId = :staffUserId OR sub.assignedExpertId = :staffUserId)',
+        { staffUserId },
+      );
+    }
+
     if (accountId) {
       qb.andWhere('(profile.accountId = :accountId OR subProfile.accountId = :accountId)', {
         accountId,
