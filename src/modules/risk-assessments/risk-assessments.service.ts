@@ -487,16 +487,23 @@ export class RiskAssessmentsService {
     result.doctorId = doctorId;
     if (dto.conclusion !== undefined) result.conclusion = dto.conclusion;
     if (dto.recommendations !== undefined) result.recommendations = dto.recommendations;
+    if (dto.riskLevel !== undefined) result.riskLevel = dto.riskLevel;
+    if (dto.riskScore !== undefined) result.riskScore = dto.riskScore;
     result.evaluatedAt = new Date();
 
     const savedResult = await this.resultRepo.save(result);
 
+    const input = result.assessmentInput || (await this.inputRepo.findOne({ where: { id: result.assessmentInputId } }));
+    if (input) {
+      input.status = AssessmentStatus.EVALUATED;
+      await this.inputRepo.save(input);
+    }
+
     const fullResult = (await this.resultRepo.findOne({
       where: { id: savedResult.id },
-      relations: ['doctor', 'assessmentInput'],
+      relations: ['doctor', 'assessmentInput', 'assessmentInput.healthProfile', 'assessmentInput.facility'],
     })) as RiskFactorAssessmentResult;
 
-    const input = result.assessmentInput || (await this.inputRepo.findOne({ where: { id: result.assessmentInputId } }));
     const { hasWarningAlert, redFlags } = input
       ? this.calculateRedFlags(input)
       : { hasWarningAlert: false, redFlags: [] };
@@ -513,12 +520,12 @@ export class RiskAssessmentsService {
    *
    * @param query - QueryRiskAssessmentDto
    * @param accountId - Optional account ID for patient access
-   * @returns Paginated assessment results
+   * @returns Paginated assessment results with red flags
    */
   async findAll(
     query: QueryRiskAssessmentDto,
     accountId?: string,
-  ): Promise<{ data: RiskFactorAssessmentResult[]; total: number; page: number; limit: number }> {
+  ): Promise<{ data: RiskAssessmentResultWithRedFlags[]; total: number; page: number; limit: number }> {
     const qb = this.resultRepo
       .createQueryBuilder('result')
       .leftJoinAndSelect('result.doctor', 'doctor')
@@ -566,10 +573,22 @@ export class RiskAssessmentsService {
     const skip = (page - 1) * limit;
 
     qb.orderBy('result.evaluatedAt', 'DESC')
+      .addOrderBy('result.updatedAt', 'DESC')
       .skip(skip)
       .take(limit);
 
-    const [data, total] = await qb.getManyAndCount();
+    const [rawResults, total] = await qb.getManyAndCount();
+
+    const data: RiskAssessmentResultWithRedFlags[] = rawResults.map((res) => {
+      const { hasWarningAlert, redFlags } = res.assessmentInput
+        ? this.calculateRedFlags(res.assessmentInput)
+        : { hasWarningAlert: false, redFlags: [] };
+      return Object.assign(res, {
+        assessmentResultId: res.id,
+        hasWarningAlert,
+        redFlags,
+      });
+    });
 
     return { data, total, page, limit };
   }
@@ -582,26 +601,34 @@ export class RiskAssessmentsService {
    * @returns RiskFactorAssessmentResult with doctor details and red flags
    */
   async findOne(id: string, accountId?: string): Promise<RiskAssessmentResultWithRedFlags> {
-    const input = await this.inputRepo.findOne({
+    let input = await this.inputRepo.findOne({
       where: { id },
-      relations: ['healthProfile'],
+      relations: ['healthProfile', 'facility'],
     });
 
-    if (!input) {
+    let result: RiskFactorAssessmentResult | null = null;
+
+    if (input) {
+      result = await this.resultRepo.findOne({
+        where: { assessmentInputId: id },
+        relations: ['doctor', 'assessmentInput', 'assessmentInput.healthProfile', 'assessmentInput.facility'],
+      });
+    } else {
+      result = await this.resultRepo.findOne({
+        where: { id },
+        relations: ['doctor', 'assessmentInput', 'assessmentInput.healthProfile', 'assessmentInput.facility'],
+      });
+      if (result && result.assessmentInput) {
+        input = result.assessmentInput;
+      }
+    }
+
+    if (!input || !result) {
       throw new NotFound(ErrorCode.RISK_ASSESSMENT_NOT_FOUND, 'Không tìm thấy phiếu đánh giá nguy cơ');
     }
 
     if (accountId && input.healthProfile && input.healthProfile.accountId !== accountId) {
       throw new Forbidden(ErrorCode.HEALTH_PROFILE_ACCESS_DENIED, 'Bạn không có quyền truy cập kết quả này');
-    }
-
-    const result = await this.resultRepo.findOne({
-      where: { assessmentInputId: id },
-      relations: ['doctor'],
-    });
-
-    if (!result) {
-      throw new NotFound(ErrorCode.RISK_ASSESSMENT_RESULT_NOT_FOUND, 'Không tìm thấy kết quả đánh giá');
     }
 
     const { hasWarningAlert, redFlags } = this.calculateRedFlags(input);
