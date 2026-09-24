@@ -233,6 +233,8 @@ export class PatientLinksService {
     }
 
     profile.facilityId = staff.facilityId;
+    profile.accountId = account.id;
+    profile.phoneNumber = cleanPhone;
     profile.linkStatus = FacilityPatientLinkStatus.PENDING;
     profile.isLinked = false;
     if (!profile.hospitalPatientCode) {
