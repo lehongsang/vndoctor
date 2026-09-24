@@ -1,10 +1,8 @@
-import { AppAccountJwtPayload, CurrentAccount } from '@/commons/decorators/current-account.decorator';
 import { AuthUserContext, CurrentAuthUser } from '@/commons/decorators/current-auth-user.decorator';
 import { CurrentStaff, StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { Roles } from '@/commons/decorators/roles.decorator';
 import { Doc } from '@/commons/docs/doc.decorator';
 import { StaffRole } from '@/commons/enums/vndoctor.enum';
-import { AppAuthGuard } from '@/commons/guards/app-auth.guard';
 import { CombinedAuthGuard } from '@/commons/guards/combined-auth.guard';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
@@ -75,36 +73,23 @@ export class RiskAssessmentsController {
   }
 
   @Get()
-  @UseGuards(AppAuthGuard)
+  @UseGuards(CombinedAuthGuard)
   @ApiBearerAuth('access-token')
   @Doc({
-    summary: 'App Auth - Lấy danh sách kết quả đánh giá nguy cơ của bệnh nhân',
-    description: 'Lấy lịch sử các kết quả phân tầng nguy cơ có lọc theo hồ sơ, mức độ nguy cơ',
+    summary: 'App / Staff Auth - Lấy lịch sử kết quả phân tầng của một hồ sơ sức khỏe',
+    description:
+      'Lấy danh sách lịch sử các kết quả phân tầng nguy cơ cho Bệnh nhân (App) hoặc Bác sĩ / Nhân viên y tế (Staff), có hỗ trợ lọc theo hồ sơ sức khỏe, mức độ nguy cơ, cơ sở y tế và phân trang.',
     response: { serialization: RiskFactorAssessmentResult, isArray: true },
   })
-  async findAllForApp(
+  async findAll(
     @Query() query: QueryRiskAssessmentDto,
-    @CurrentAccount() account: AppAccountJwtPayload,
+    @CurrentAuthUser() user: AuthUserContext,
   ) {
-    return this.riskAssessmentsService.findAll(query, account.id);
-  }
-
-  @Get('staff')
-  @UseGuards(StaffAuthGuard, StaffRolesGuard)
-  @ApiBearerAuth('access-token')
-  @Doc({
-    summary: 'Staff Auth - Danh sách phiếu đánh giá nguy cơ tại cơ sở y tế',
-    description: 'Bác sĩ/Nhân viên y tế tra cứu danh sách kết quả đánh giá cần thẩm định hoặc theo dõi',
-    response: { serialization: RiskFactorAssessmentResult, isArray: true },
-  })
-  async findAllForStaff(
-    @Query() query: QueryRiskAssessmentDto,
-    @CurrentStaff() staff: StaffJwtPayload,
-  ) {
-    if (staff.role !== StaffRole.ADMIN && !query.facilityId) {
-      query.facilityId = staff.facilityId;
+    if (user.type === 'STAFF' && user.staff?.role !== StaffRole.ADMIN && !query.facilityId) {
+      query.facilityId = user.staff?.facilityId;
     }
-    return this.riskAssessmentsService.findAll(query);
+    const accountId = user.type === 'APP_ACCOUNT' ? user.account?.id : undefined;
+    return this.riskAssessmentsService.findAll(query, accountId);
   }
 
   @Get(':id')
