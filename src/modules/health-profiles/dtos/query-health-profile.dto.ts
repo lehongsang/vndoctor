@@ -41,4 +41,12 @@ export class QueryHealthProfileDto extends PartialType(GetManyBaseQueryParams) {
   @IsString()
   @IsOptional()
   phoneNumber?: string;
+
+  @ApiPropertyOptional({
+    description: 'Lọc theo ID nhân viên y tế / Bác sĩ / Điều dưỡng được phân công phụ trách gói',
+    example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+  })
+  @IsUUID('all')
+  @IsOptional()
+  staffId?: string;
 }

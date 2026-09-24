@@ -376,15 +376,11 @@ export class HealthProfilesService {
       qb.andWhere('profile.facilityId = :facilityId', { facilityId: targetFacilityId });
     }
 
-    // Phân quyền: Nếu không phải Admin (ADMIN / VNDOCTOR_ADMIN) thì chỉ lấy các hồ sơ mà nhân viên đó được phân công
-    if (
-      staff &&
-      staff.role !== StaffRole.ADMIN &&
-      staff.role !== StaffRole.VNDOCTOR_ADMIN
-    ) {
+    // Lọc theo nhân viên được phân công phụ trách gói (nếu có truyền query.staffId)
+    if (query.staffId) {
       qb.andWhere(
         '(careSub.assignedDoctorId = :staffId OR careSub.assignedNurseId = :staffId OR careSub.assignedExpertId = :staffId)',
-        { staffId: staff.id },
+        { staffId: query.staffId },
       );
     }
 

@@ -302,7 +302,7 @@ describe('HealthProfilesService', () => {
       );
     });
 
-    it('should filter by assigned staff when caller is DOCTOR / NURSE / STAFF', async () => {
+    it('should filter by assigned staff when query.staffId is provided', async () => {
       const mockQb = {
         leftJoinAndSelect: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
@@ -314,7 +314,7 @@ describe('HealthProfilesService', () => {
       mockRepository.createQueryBuilder.mockReturnValue(mockQb);
 
       const result = await service.getFacilityProfiles(
-        { page: 1, limit: 10 },
+        { page: 1, limit: 10, staffId: 'doctor-1' },
         {
           id: 'doctor-1',
           facilityId: 'facility-1',
