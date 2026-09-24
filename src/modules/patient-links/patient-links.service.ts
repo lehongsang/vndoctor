@@ -160,8 +160,7 @@ export class PatientLinksService {
 
     const qb = this.healthProfileRepository
       .createQueryBuilder('profile')
-      .leftJoinAndSelect('profile.facility', 'facility')
-      .leftJoinAndSelect('profile.profileChronicDisease', 'pcd');
+      .leftJoinAndSelect('profile.facility', 'facility');
 
     if (targetFacilityId) {
       qb.andWhere('profile.facilityId = :facilityId', {

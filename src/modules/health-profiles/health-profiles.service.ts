@@ -17,7 +17,6 @@ import {
   ErrorCode,
 } from '@/commons/exceptions';
 import { CareSubscriptionStatus, FacilityPatientLinkStatus, ProfileRelationship, StaffRole } from '@/commons/enums/vndoctor.enum';
-import { ChronicDiseasesService } from '@/modules/chronic-diseases/chronic-diseases.service';
 import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { AuthUserContext } from '@/commons/decorators/current-auth-user.decorator';
 import { PatientCareSubscription } from '@/modules/care-subscriptions/entities/care-subscription.entity';
@@ -31,7 +30,6 @@ export class HealthProfilesService {
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(PatientCareSubscription)
     private readonly careSubscriptionRepository: Repository<PatientCareSubscription>,
-    private readonly chronicDiseasesService: ChronicDiseasesService,
   ) {}
 
   /**
@@ -80,10 +78,21 @@ export class HealthProfilesService {
       bloodType: dto.bloodType,
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
+      height: dto.height ?? null,
+      weight: dto.weight ?? null,
       isSmoking: dto.isSmoking ?? false,
       hasHypertension: dto.hasHypertension ?? false,
       hasDyslipidemia: dto.hasDyslipidemia ?? false,
       hasDiabetes: dto.hasDiabetes ?? false,
+      hasStroke: dto.hasStroke ?? false,
+      hasMyocardialInfarction: dto.hasMyocardialInfarction ?? false,
+      hasAcuteCoronarySyndrome: dto.hasAcuteCoronarySyndrome ?? false,
+      hasCoronaryArteryDisease: dto.hasCoronaryArteryDisease ?? false,
+      hasTia: dto.hasTia ?? false,
+      hasAorticAneurysm: dto.hasAorticAneurysm ?? false,
+      hasPeripheralArteryDisease: dto.hasPeripheralArteryDisease ?? false,
+      hasAtherosclerosis: dto.hasAtherosclerosis ?? false,
+      hasFamilialHypercholesterolemia: dto.hasFamilialHypercholesterolemia ?? false,
       accountId,
       facilityId: null,
       isLinked: false,
@@ -92,15 +101,6 @@ export class HealthProfilesService {
     });
 
     const savedProfile = await this.healthProfileRepository.save(profile);
-
-    // 3. Attach chronic diseases if provided
-    if (dto.chronicDiseaseIds && dto.chronicDiseaseIds.length > 0) {
-      await this.chronicDiseasesService.setProfileDiseases(
-        savedProfile.id,
-        dto.chronicDiseaseIds,
-      );
-    }
-
     return this.getProfileById(savedProfile.id);
   }
 
@@ -136,10 +136,21 @@ export class HealthProfilesService {
       bloodType: dto.bloodType,
       allergy: dto.allergy,
       medicalHistory: dto.medicalHistory,
+      height: dto.height ?? null,
+      weight: dto.weight ?? null,
       isSmoking: dto.isSmoking ?? false,
       hasHypertension: dto.hasHypertension ?? false,
       hasDyslipidemia: dto.hasDyslipidemia ?? false,
       hasDiabetes: dto.hasDiabetes ?? false,
+      hasStroke: dto.hasStroke ?? false,
+      hasMyocardialInfarction: dto.hasMyocardialInfarction ?? false,
+      hasAcuteCoronarySyndrome: dto.hasAcuteCoronarySyndrome ?? false,
+      hasCoronaryArteryDisease: dto.hasCoronaryArteryDisease ?? false,
+      hasTia: dto.hasTia ?? false,
+      hasAorticAneurysm: dto.hasAorticAneurysm ?? false,
+      hasPeripheralArteryDisease: dto.hasPeripheralArteryDisease ?? false,
+      hasAtherosclerosis: dto.hasAtherosclerosis ?? false,
+      hasFamilialHypercholesterolemia: dto.hasFamilialHypercholesterolemia ?? false,
       accountId: null,
       facilityId: staff.facilityId,
       isLinked: false,
@@ -149,15 +160,6 @@ export class HealthProfilesService {
     });
 
     const savedProfile = await this.healthProfileRepository.save(profile);
-
-    // 3. Attach chronic diseases if provided
-    if (dto.chronicDiseaseIds && dto.chronicDiseaseIds.length > 0) {
-      await this.chronicDiseasesService.setProfileDiseases(
-        savedProfile.id,
-        dto.chronicDiseaseIds,
-      );
-    }
-
     return this.getProfileById(savedProfile.id);
   }
 
@@ -165,13 +167,12 @@ export class HealthProfilesService {
    * Retrieves all Health Profiles belonging to an App Account.
    *
    * @param accountId - Owning Account UUID.
-   * @returns Array of HealthProfile objects with chronic diseases, facility & care subscriptions.
+   * @returns Array of HealthProfile objects with facility & care subscriptions.
    */
   async getMyProfiles(accountId: string): Promise<HealthProfile[]> {
     const profiles = await this.healthProfileRepository.find({
       where: { accountId },
       relations: [
-        'profileChronicDisease',
         'facility',
         'careSubscriptions',
         'careSubscriptions.carePackage',
@@ -231,7 +232,6 @@ export class HealthProfilesService {
     const profile = await this.healthProfileRepository.findOne({
       where: { id },
       relations: [
-        'profileChronicDisease',
         'facility',
         'careSubscriptions',
         'careSubscriptions.carePackage',
@@ -351,7 +351,6 @@ export class HealthProfilesService {
 
     const qb = this.healthProfileRepository
       .createQueryBuilder('profile')
-      .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
       .leftJoinAndSelect('profile.facility', 'facility');
 
     if (targetFacilityId) {
@@ -452,7 +451,6 @@ export class HealthProfilesService {
       .leftJoinAndSelect('sub.assignedDoctor', 'assignedDoctor')
       .leftJoinAndSelect('sub.assignedNurse', 'assignedNurse')
       .leftJoinAndSelect('sub.assignedExpert', 'assignedExpert')
-      .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
       .leftJoinAndSelect('profile.facility', 'facility')
       .where('sub.assignedDoctorId IS NOT NULL');
 
@@ -526,7 +524,6 @@ export class HealthProfilesService {
 
     const qb = this.healthProfileRepository
       .createQueryBuilder('profile')
-      .leftJoinAndSelect('profile.profileChronicDisease', 'pcd')
       .leftJoinAndSelect('profile.facility', 'facility');
 
     if (query.facilityId) {
@@ -611,21 +608,23 @@ export class HealthProfilesService {
     if (dto.bloodType !== undefined) profile.bloodType = dto.bloodType;
     if (dto.allergy !== undefined) profile.allergy = dto.allergy;
     if (dto.medicalHistory !== undefined) profile.medicalHistory = dto.medicalHistory;
+    if (dto.height !== undefined) profile.height = dto.height;
+    if (dto.weight !== undefined) profile.weight = dto.weight;
     if (dto.isSmoking !== undefined) profile.isSmoking = dto.isSmoking;
     if (dto.hasHypertension !== undefined) profile.hasHypertension = dto.hasHypertension;
     if (dto.hasDyslipidemia !== undefined) profile.hasDyslipidemia = dto.hasDyslipidemia;
     if (dto.hasDiabetes !== undefined) profile.hasDiabetes = dto.hasDiabetes;
+    if (dto.hasStroke !== undefined) profile.hasStroke = dto.hasStroke;
+    if (dto.hasMyocardialInfarction !== undefined) profile.hasMyocardialInfarction = dto.hasMyocardialInfarction;
+    if (dto.hasAcuteCoronarySyndrome !== undefined) profile.hasAcuteCoronarySyndrome = dto.hasAcuteCoronarySyndrome;
+    if (dto.hasCoronaryArteryDisease !== undefined) profile.hasCoronaryArteryDisease = dto.hasCoronaryArteryDisease;
+    if (dto.hasTia !== undefined) profile.hasTia = dto.hasTia;
+    if (dto.hasAorticAneurysm !== undefined) profile.hasAorticAneurysm = dto.hasAorticAneurysm;
+    if (dto.hasPeripheralArteryDisease !== undefined) profile.hasPeripheralArteryDisease = dto.hasPeripheralArteryDisease;
+    if (dto.hasAtherosclerosis !== undefined) profile.hasAtherosclerosis = dto.hasAtherosclerosis;
+    if (dto.hasFamilialHypercholesterolemia !== undefined) profile.hasFamilialHypercholesterolemia = dto.hasFamilialHypercholesterolemia;
 
     await this.healthProfileRepository.save(profile);
-
-    // Update chronic diseases if provided
-    if (dto.chronicDiseaseIds !== undefined) {
-      await this.chronicDiseasesService.setProfileDiseases(
-        id,
-        dto.chronicDiseaseIds,
-      );
-    }
-
     return this.getProfileById(id);
   }
 
@@ -644,3 +643,4 @@ export class HealthProfilesService {
     return { success: true };
   }
 }
+

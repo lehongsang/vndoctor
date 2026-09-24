@@ -2,8 +2,6 @@ import { AssessmentStatus, ProfileGender, VnDoctorRiskLevel } from '@/commons/en
 import { ErrorCode, Forbidden, NotFound } from '@/commons/exceptions';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
-import { ChronicDisease } from '@/modules/chronic-diseases/entities/chronic-disease.entity';
-import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -43,10 +41,6 @@ export class RiskAssessmentsService {
     private readonly healthProfileRepo: Repository<HealthProfile>,
     @InjectRepository(Facility)
     private readonly facilityRepo: Repository<Facility>,
-    @InjectRepository(ChronicDisease)
-    private readonly chronicDiseaseRepo: Repository<ChronicDisease>,
-    @InjectRepository(ProfileChronicDisease)
-    private readonly profileChronicDiseaseRepo: Repository<ProfileChronicDisease>,
     private readonly riskDictionaryService: RiskDictionaryService,
     private readonly treatmentTargetsService: TreatmentTargetsService,
   ) {}
@@ -64,7 +58,6 @@ export class RiskAssessmentsService {
   ): Promise<DynamicFormSchemaResponse> {
     const profile = await this.healthProfileRepo.findOne({
       where: { id: healthProfileId },
-      relations: ['profileChronicDisease'],
     });
 
     if (!profile) {
@@ -89,64 +82,39 @@ export class RiskAssessmentsService {
 
     const genderText = profile.gender === ProfileGender.FEMALE ? 'Nữ' : 'Nam';
 
-    // 2. Kiểm tra danh sách bệnh nền đã ghi nhận
-    let recordedDiseases: ChronicDisease[] = [];
-    if (profile.profileChronicDisease?.diseaseIds?.length) {
-      recordedDiseases = await this.chronicDiseaseRepo.findByIds(profile.profileChronicDisease.diseaseIds);
-    }
-
-    const diseaseText = recordedDiseases
-      .map((d) => `${d.code || ''} ${d.name || ''} ${d.icd10Code || ''}`.toLowerCase())
-      .join(' | ');
-
-    const hasRecorded = (patterns: string[]) => {
-      return patterns.some((p) => diseaseText.includes(p.toLowerCase()));
-    };
-
-    // Khối 2: Tổn thương cơ quan đích (Target Organ Damage)
-    const hasRecordedLVH = hasRecorded(['score2_6_1', 'lvh', 'i51.7', 'phì đại thất trái', 'phì đại cơ tim', 'tim to']);
-    const hasRecordedAlbuminuria = hasRecorded(['score2_6_2', 'r80', 'albumin niệu', 'microalbumin', 'protein niệu']);
-    const hasRecordedCarotidDamage = hasRecorded(['score2_6_3', 'h35.0', 'đáy mắt', 'võng mạc', 'mạch cảnh']);
-    const hasRecordedSilentInfarct = hasRecorded(['score2_6_4', 'silent infarct', 'i63.9', 'nhồi máu não thầm lặng', 'tổn thương thầm lặng trên não']);
-
-    // Khối 3: Bệnh lý mạn tính & Biến chứng tim mạch - thận (Chronic Diseases)
-    const hasRecordedDiabetes =
-      hasRecorded(['score2_9', 'diabetes', 't2d', 't1d', 'e10', 'e11', 'e14', 'đái tháo đường', 'tiểu đường']) ||
-      !!profile.hasDiabetes;
-    const hasRecordedStroke = hasRecorded(['score2_8_4', 'stroke', 'i64', 'i63', 'đột quỵ', 'tai biến']);
-    const hasRecordedMI = hasRecorded(['score2_8_1', 'myocardial_infarction', 'i21', 'nhồi máu cơ tim']);
-    const hasRecordedACS = hasRecorded(['score2_8_2', 'acute_coronary_syndrome', 'i20.0', 'hội chứng vành cấp', 'đau thắt ngực không ổn định']);
-    const hasRecordedCAD = hasRecorded(['score2_8_3', 'coronary_artery_disease', 'i25', 'bệnh động mạch vành', 'bệnh mạch vành', 'đau thắt ngực ổn định']);
-    const hasRecordedTIA = hasRecorded(['score2_8_5', 'tia', 'g45', 'thiếu máu não thoáng qua', 'thiếu máu não cục bộ thoáng qua']);
-    const hasRecordedAneurysm = hasRecorded(['score2_8_6', 'aortic_aneurysm', 'i71', 'phình động mạch chủ']);
-    const hasRecordedPAD = hasRecorded(['score2_8_7', 'peripheral_artery_disease', 'i73.9', 'i70.2', 'bệnh mạch máu ngoại vi', 'bệnh động mạch ngoại vi', 'mạch chi']);
-    const hasRecordedAtherosclerosis = hasRecorded(['score2_8_8', 'atherosclerosis', 'i70', 'xơ vữa', 'vữa xơ']);
-    const hasRecordedFH = hasRecorded(['score2_5_1', 'score2_5_2', 'familial_hypercholesterolemia', 'tăng cholesterol máu gia đình', 'tăng cholesterol gia đình']);
-
-    // Mapping field code -> boolean pre-filled & locked
+    // 2. Mapping trực tiếp các bệnh mãn tính từ hồ sơ sức khỏe
     const lockedFieldMap: Record<string, boolean> = {
-      hasLeftVentricularHypertrophy: hasRecordedLVH,
-      hasAlbuminuriaOrMicroalbuminuria: hasRecordedAlbuminuria,
-      hasCarotidWallDamage: hasRecordedCarotidDamage,
-      hasSilentInfarct: hasRecordedSilentInfarct,
-      diabetes: hasRecordedDiabetes,
-      stroke: hasRecordedStroke,
-      hasMyocardialInfarction: hasRecordedMI,
-      hasAcuteCoronarySyndrome: hasRecordedACS,
-      hasCoronaryArteryDisease: hasRecordedCAD,
-      hasTia: hasRecordedTIA,
-      hasAorticAneurysm: hasRecordedAneurysm,
-      hasPeripheralArteryDisease: hasRecordedPAD,
-      hasAtherosclerosis: hasRecordedAtherosclerosis,
-      hasFamilialHypercholesterolemia: hasRecordedFH,
+      diabetes: !!profile.hasDiabetes,
+      stroke: !!profile.hasStroke,
+      hasMyocardialInfarction: !!profile.hasMyocardialInfarction,
+      hasAcuteCoronarySyndrome: !!profile.hasAcuteCoronarySyndrome,
+      hasCoronaryArteryDisease: !!profile.hasCoronaryArteryDisease,
+      hasTia: !!profile.hasTia,
+      hasAorticAneurysm: !!profile.hasAorticAneurysm,
+      hasPeripheralArteryDisease: !!profile.hasPeripheralArteryDisease,
+      hasAtherosclerosis: !!profile.hasAtherosclerosis,
+      hasFamilialHypercholesterolemia: !!profile.hasFamilialHypercholesterolemia,
     };
 
     const hasAnyUnderlying =
       Object.values(lockedFieldMap).some(Boolean) ||
-      recordedDiseases.length > 0 ||
       !!profile.hasHypertension ||
-      !!profile.hasDyslipidemia ||
-      !!profile.hasDiabetes;
+      !!profile.hasDyslipidemia;
+
+    // Danh sách bệnh nền đã ghi nhận để hiển thị thông tin
+    const activeDiseases: Array<{ id: string; code?: string; name: string }> = [];
+    if (profile.hasHypertension) activeDiseases.push({ id: 'hypertension', code: 'HYPERTENSION', name: 'Tăng huyết áp' });
+    if (profile.hasDyslipidemia) activeDiseases.push({ id: 'dyslipidemia', code: 'DYSLIPIDEMIA', name: 'Rối loạn lipid máu' });
+    if (profile.hasDiabetes) activeDiseases.push({ id: 'diabetes', code: 'DIABETES', name: 'Đái tháo đường' });
+    if (profile.hasStroke) activeDiseases.push({ id: 'stroke', code: 'STROKE', name: 'Tiền sử đột quỵ não / Tai biến' });
+    if (profile.hasMyocardialInfarction) activeDiseases.push({ id: 'mi', code: 'MI', name: 'Nhồi máu cơ tim' });
+    if (profile.hasAcuteCoronarySyndrome) activeDiseases.push({ id: 'acs', code: 'ACS', name: 'Hội chứng vành cấp' });
+    if (profile.hasCoronaryArteryDisease) activeDiseases.push({ id: 'cad', code: 'CAD', name: 'Bệnh lý động mạch vành mạn' });
+    if (profile.hasTia) activeDiseases.push({ id: 'tia', code: 'TIA', name: 'Cơn thiếu máu não thoáng qua (TIA)' });
+    if (profile.hasAorticAneurysm) activeDiseases.push({ id: 'aneurysm', code: 'AORTIC_ANEURYSM', name: 'Phình động mạch chủ' });
+    if (profile.hasPeripheralArteryDisease) activeDiseases.push({ id: 'pad', code: 'PAD', name: 'Bệnh mạch máu ngoại vi' });
+    if (profile.hasAtherosclerosis) activeDiseases.push({ id: 'atherosclerosis', code: 'ATHEROSCLEROSIS', name: 'Vữa xơ mạch máu lớn' });
+    if (profile.hasFamilialHypercholesterolemia) activeDiseases.push({ id: 'fh', code: 'FH', name: 'Tăng Cholesterol máu gia đình' });
 
     // 3. Clone và gán metadata Auto-fill & Lock vào Schema
     const sections: FormSectionSchema[] = JSON.parse(
@@ -181,12 +149,7 @@ export class RiskAssessmentsService {
         dob: profile.dob,
         age: calculatedAge,
         gender: genderText,
-        recordedChronicDiseases: recordedDiseases.map((d) => ({
-          id: d.id,
-          code: d.code,
-          name: d.name,
-          icd10Code: d.icd10Code || undefined,
-        })),
+        recordedChronicDiseases: activeDiseases,
       },
       sections,
     };

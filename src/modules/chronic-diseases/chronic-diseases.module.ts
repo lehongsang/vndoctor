@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChronicDisease } from './entities/chronic-disease.entity';
-import { ProfileChronicDisease } from './entities/profile-chronic-disease.entity';
 import { ChronicDiseasesService } from './chronic-diseases.service';
 import { ChronicDiseasesController } from './chronic-diseases.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChronicDisease, ProfileChronicDisease]),
+    TypeOrmModule.forFeature([ChronicDisease]),
   ],
   controllers: [ChronicDiseasesController],
   providers: [ChronicDiseasesService],

@@ -7,10 +7,10 @@ import {
 } from '@/commons/enums/vndoctor.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, Relation } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, Relation } from 'typeorm';
 import { Account } from '@/modules/accounts/entities/account.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
-import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
+import { DecimalTransformer } from '@/utils/typeorm-transformers';
 import { HealthRecord } from '@/modules/health-records/entities/health-record.entity';
 import { Examination } from '@/modules/examinations/entities/examination.entity';
 import { RiskFactorAssessmentInput } from '@/modules/risk-assessments/entities/risk-factor-assessment-input.entity';
@@ -112,6 +112,14 @@ export class HealthProfile extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   medicalHistory?: string | null;
 
+  @ApiPropertyOptional({ description: 'Chiều cao (cm)', example: 170.0 })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
+  height?: number | null;
+
+  @ApiPropertyOptional({ description: 'Cân nặng (kg)', example: 65.0 })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, transformer: DecimalTransformer })
+  weight?: number | null;
+
   @ApiPropertyOptional({ description: 'Có hút thuốc lá hay không', default: false, example: false })
   @Column({ type: 'boolean', default: false })
   isSmoking: boolean;
@@ -128,8 +136,41 @@ export class HealthProfile extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   hasDiabetes: boolean;
 
-  @OneToOne(() => ProfileChronicDisease, (pcd: ProfileChronicDisease) => pcd.healthProfile, { cascade: true })
-  profileChronicDisease?: Relation<ProfileChronicDisease>;
+  @ApiPropertyOptional({ description: 'Tiền sử đột quỵ não / Tai biến', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasStroke: boolean;
+
+  @ApiPropertyOptional({ description: 'Nhồi máu cơ tim', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasMyocardialInfarction: boolean;
+
+  @ApiPropertyOptional({ description: 'Hội chứng vành cấp', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasAcuteCoronarySyndrome: boolean;
+
+  @ApiPropertyOptional({ description: 'Bệnh lý động mạch vành mạn', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasCoronaryArteryDisease: boolean;
+
+  @ApiPropertyOptional({ description: 'Cơn thiếu máu não thoáng qua (TIA)', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasTia: boolean;
+
+  @ApiPropertyOptional({ description: 'Phình động mạch chủ', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasAorticAneurysm: boolean;
+
+  @ApiPropertyOptional({ description: 'Bệnh mạch máu ngoại vi', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasPeripheralArteryDisease: boolean;
+
+  @ApiPropertyOptional({ description: 'Vữa xơ mạch máu lớn', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasAtherosclerosis: boolean;
+
+  @ApiPropertyOptional({ description: 'Tăng Cholesterol máu gia đình', default: false, example: false })
+  @Column({ type: 'boolean', default: false })
+  hasFamilialHypercholesterolemia: boolean;
 
   @OneToMany(() => HealthRecord, (record: HealthRecord) => record.healthProfile)
   healthRecords: Relation<HealthRecord>[];

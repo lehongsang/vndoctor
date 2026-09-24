@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -16,11 +15,9 @@ import {
   ChronicDiseaseResponseDto,
   CreateChronicDiseaseDto,
   QueryChronicDiseaseDto,
-  SetProfileChronicDiseasesDto,
   UpdateChronicDiseaseDto,
 } from './dtos';
 import { Doc } from '@/commons/docs/doc.decorator';
-import { ProfileChronicDisease } from './entities/profile-chronic-disease.entity';
 import { StaffAuthGuard } from '@/commons/guards/staff-auth.guard';
 import { StaffRolesGuard } from '@/commons/guards/staff-roles.guard';
 import { Roles } from '@/commons/decorators/roles.decorator';
@@ -43,37 +40,6 @@ export class ChronicDiseasesController {
   })
   async getChronicDiseases(@Query() query: QueryChronicDiseaseDto) {
     return this.chronicDiseasesService.getChronicDiseases(query);
-  }
-
-  @Public()
-  @Get('profile/:healthProfileId')
-  @Doc({
-    summary: 'Public / App / CMS - Lấy danh sách bệnh nền của một hồ sơ sức khỏe',
-    description:
-      'Trả về các bệnh mạn tính đã gán cho một hồ sơ sức khỏe bệnh nhân (chỉ gồm: id, code, name, icd10Code)',
-    response: { serialization: ChronicDiseaseResponseDto, isArray: true },
-  })
-  async getProfileDiseases(
-    @Param('healthProfileId') healthProfileId: string,
-  ): Promise<ChronicDiseaseResponseDto[]> {
-    return this.chronicDiseasesService.getProfileDiseases(healthProfileId);
-  }
-
-  @Public()
-  @Put('profile/:healthProfileId')
-  @Doc({
-    summary: 'App / CMS - Cập nhật danh sách bệnh nền cho hồ sơ sức khỏe',
-    description: 'Gán mảng UUID các bệnh mạn tính vào hồ sơ sức khỏe bệnh nhân',
-    response: { serialization: ProfileChronicDisease },
-  })
-  async setProfileDiseases(
-    @Param('healthProfileId') healthProfileId: string,
-    @Body() dto: SetProfileChronicDiseasesDto,
-  ) {
-    return this.chronicDiseasesService.setProfileDiseases(
-      healthProfileId,
-      dto.diseaseIds,
-    );
   }
 
   @Public()

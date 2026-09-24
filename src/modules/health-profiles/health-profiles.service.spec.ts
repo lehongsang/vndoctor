@@ -3,7 +3,6 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { HealthProfilesService } from './health-profiles.service';
 import { HealthProfile } from './entities/health-profile.entity';
-import { ChronicDiseasesService } from '@/modules/chronic-diseases/chronic-diseases.service';
 import {
   ProfileBloodType,
   ProfileGender,
@@ -37,10 +36,21 @@ describe('HealthProfilesService', () => {
     bloodType: ProfileBloodType.O,
     allergy: 'Penicillin',
     medicalHistory: 'None',
+    height: 170,
+    weight: 65,
     isSmoking: false,
     hasHypertension: false,
     hasDyslipidemia: false,
     hasDiabetes: false,
+    hasStroke: false,
+    hasMyocardialInfarction: false,
+    hasAcuteCoronarySyndrome: false,
+    hasCoronaryArteryDisease: false,
+    hasTia: false,
+    hasAorticAneurysm: false,
+    hasPeripheralArteryDisease: false,
+    hasAtherosclerosis: false,
+    hasFamilialHypercholesterolemia: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     generateId: () => {},
@@ -75,11 +85,6 @@ describe('HealthProfilesService', () => {
     createQueryBuilder: jest.fn(),
   };
 
-  const mockChronicDiseasesService = {
-    setProfileDiseases: jest.fn(),
-    getProfileDiseases: jest.fn(),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -95,10 +100,6 @@ describe('HealthProfilesService', () => {
         {
           provide: getRepositoryToken(PatientCareSubscription),
           useValue: mockCareSubscriptionRepository,
-        },
-        {
-          provide: ChronicDiseasesService,
-          useValue: mockChronicDiseasesService,
         },
       ],
     }).compile();
@@ -121,16 +122,11 @@ describe('HealthProfilesService', () => {
           fullName: 'Trần Thị Mai',
           dob: '1985-05-20',
           gender: ProfileGender.FEMALE,
-          chronicDiseaseIds: ['disease-01'],
         },
         'acc-111',
       );
 
       expect(result.id).toBe('profile-111');
-      expect(mockChronicDiseasesService.setProfileDiseases).toHaveBeenCalledWith(
-        'profile-111',
-        ['disease-01'],
-      );
     });
 
     it('should throw Conflict when creating a second SELF profile for same account', async () => {
@@ -168,7 +164,6 @@ describe('HealthProfilesService', () => {
           dob: '1990-01-01',
           gender: ProfileGender.MALE,
           phoneNumber: '0988776655',
-          chronicDiseaseIds: ['disease-01'],
         },
         {
           id: 'staff-1',
@@ -216,7 +211,7 @@ describe('HealthProfilesService', () => {
   });
 
   describe('updateProfile', () => {
-    it('should update profile fields and chronic diseases', async () => {
+    it('should update profile fields successfully', async () => {
       mockRepository.findOne
         .mockResolvedValueOnce({ ...mockProfile }) // getProfileById
         .mockResolvedValueOnce({ ...mockProfile, fullName: 'Tên Mới' }); // reload
@@ -226,13 +221,15 @@ describe('HealthProfilesService', () => {
         'profile-111',
         {
           fullName: 'Tên Mới',
-          chronicDiseaseIds: ['cd-1'],
+          hasStroke: true,
+          height: 172,
+          weight: 68,
         },
         'acc-111',
       );
 
       expect(result).toBeDefined();
-      expect(mockChronicDiseasesService.setProfileDiseases).toHaveBeenCalledWith('profile-111', ['cd-1']);
+      expect(mockRepository.save).toHaveBeenCalled();
     });
   });
 

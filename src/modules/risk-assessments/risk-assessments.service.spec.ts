@@ -7,8 +7,6 @@ import { RiskFactorAssessmentInput } from './entities/risk-factor-assessment-inp
 import { RiskFactorAssessmentResult } from './entities/risk-factor-assessment-result.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { Facility } from '@/modules/facilities/entities/facility.entity';
-import { ChronicDisease } from '@/modules/chronic-diseases/entities/chronic-disease.entity';
-import { ProfileChronicDisease } from '@/modules/chronic-diseases/entities/profile-chronic-disease.entity';
 import { AssessmentStatus, ProfileGender, VnDoctorRiskLevel } from '@/commons/enums/vndoctor.enum';
 import { NotFound } from '@/commons/exceptions';
 import { TreatmentTargetsService } from '@/modules/treatment-targets/treatment-targets.service';
@@ -26,20 +24,8 @@ describe('RiskAssessmentsService', () => {
     fullName: 'Nguyen Van A',
     gender: ProfileGender.MALE,
     dob: '1979-05-15',
-    profileChronicDisease: {
-      id: 'pcd-1',
-      healthProfileId: 'profile-uuid-1',
-      diseaseIds: ['disease-1'],
-    } as ProfileChronicDisease,
+    hasDiabetes: true,
   } as unknown as HealthProfile;
-
-  const mockChronicDisease: ChronicDisease = {
-    id: 'disease-1',
-    code: 'DIABETES',
-    name: 'Đái tháo đường Type 2',
-    isActive: true,
-    displayOrder: 1,
-  } as unknown as ChronicDisease;
 
   const mockResult: RiskFactorAssessmentResult = {
     id: 'result-uuid-1',
@@ -119,18 +105,6 @@ describe('RiskAssessmentsService', () => {
             findOne: jest.fn().mockResolvedValue({ id: 'fac-uuid-1', facilityName: 'Clinic A' }),
           },
         },
-        {
-          provide: getRepositoryToken(ChronicDisease),
-          useValue: {
-            findByIds: jest.fn().mockResolvedValue([mockChronicDisease]),
-          },
-        },
-        {
-          provide: getRepositoryToken(ProfileChronicDisease),
-          useValue: {
-            findOne: jest.fn().mockResolvedValue({ healthProfileId: 'profile-uuid-1', diseaseIds: ['disease-1'] }),
-          },
-        },
       ],
     }).compile();
 
@@ -172,7 +146,6 @@ describe('RiskAssessmentsService', () => {
         hasHypertension: true,
         hasDyslipidemia: true,
         hasDiabetes: true,
-        profileChronicDisease: null,
       } as unknown as HealthProfile);
 
       const schema = await service.getFormSchema('profile-uuid-2', 'acc-uuid-1');

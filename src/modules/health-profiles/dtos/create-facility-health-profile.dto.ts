@@ -1,16 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ArrayUnique,
-  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   Length,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import {
   ProfileBloodType,
@@ -82,6 +82,20 @@ export class CreateFacilityHealthProfileDto {
   @IsOptional()
   medicalHistory?: string;
 
+  @ApiPropertyOptional({ description: 'Chiều cao (cm)', example: 170.0 })
+  @IsNumber()
+  @Min(20)
+  @Max(300)
+  @IsOptional()
+  height?: number;
+
+  @ApiPropertyOptional({ description: 'Cân nặng (kg)', example: 65.0 })
+  @IsNumber()
+  @Min(1)
+  @Max(500)
+  @IsOptional()
+  weight?: number;
+
   @ApiPropertyOptional({ description: 'Có hút thuốc lá hay không', default: false, example: false })
   @IsBoolean()
   @IsOptional()
@@ -102,14 +116,48 @@ export class CreateFacilityHealthProfileDto {
   @IsOptional()
   hasDiabetes?: boolean;
 
-  @ApiPropertyOptional({
-    type: [String],
-    description: 'Danh sách UUID các bệnh mạn tính nền đã mắc',
-    example: ['018e6e5a-1234-7000-8000-000000000001'],
-  })
-  @IsArray()
-  @ArrayUnique()
-  @IsUUID('all', { each: true })
+  @ApiPropertyOptional({ description: 'Tiền sử đột quỵ não / Tai biến', default: false, example: false })
+  @IsBoolean()
   @IsOptional()
-  chronicDiseaseIds?: string[];
+  hasStroke?: boolean;
+
+  @ApiPropertyOptional({ description: 'Nhồi máu cơ tim', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasMyocardialInfarction?: boolean;
+
+  @ApiPropertyOptional({ description: 'Hội chứng vành cấp', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasAcuteCoronarySyndrome?: boolean;
+
+  @ApiPropertyOptional({ description: 'Bệnh lý động mạch vành mạn', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasCoronaryArteryDisease?: boolean;
+
+  @ApiPropertyOptional({ description: 'Cơn thiếu máu não thoáng qua (TIA)', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasTia?: boolean;
+
+  @ApiPropertyOptional({ description: 'Phình động mạch chủ', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasAorticAneurysm?: boolean;
+
+  @ApiPropertyOptional({ description: 'Bệnh mạch máu ngoại vi', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasPeripheralArteryDisease?: boolean;
+
+  @ApiPropertyOptional({ description: 'Vữa xơ mạch máu lớn', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasAtherosclerosis?: boolean;
+
+  @ApiPropertyOptional({ description: 'Tăng Cholesterol máu gia đình', default: false, example: false })
+  @IsBoolean()
+  @IsOptional()
+  hasFamilialHypercholesterolemia?: boolean;
 }

@@ -1,10 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ChronicDisease } from './entities/chronic-disease.entity';
-import { ProfileChronicDisease } from './entities/profile-chronic-disease.entity';
 import {
   ChronicDiseaseResponseDto,
   CreateChronicDiseaseDto,
@@ -42,8 +41,6 @@ export class ChronicDiseasesService implements OnModuleInit {
   constructor(
     @InjectRepository(ChronicDisease)
     private readonly chronicDiseaseRepository: Repository<ChronicDisease>,
-    @InjectRepository(ProfileChronicDisease)
-    private readonly profileChronicDiseaseRepository: Repository<ProfileChronicDisease>,
   ) {}
 
   async onModuleInit() {
@@ -226,69 +223,5 @@ export class ChronicDiseasesService implements OnModuleInit {
     await this.chronicDiseaseRepository.save(disease);
     await this.chronicDiseaseRepository.softRemove(disease);
     return { success: true, message: 'Chronic disease deleted successfully' };
-  }
-
-  /**
-   * Lấy danh sách chi tiết các bệnh mạn tính đã gán cho một hồ sơ sức khỏe (chỉ trả về id, code, name, icd10Code).
-   *
-   * @param healthProfileId - Health Profile UUID.
-   * @returns Array of ChronicDiseaseResponseDto objects.
-   */
-  async getProfileDiseases(healthProfileId: string): Promise<ChronicDiseaseResponseDto[]> {
-    const record = await this.profileChronicDiseaseRepository.findOne({
-      where: { healthProfileId },
-    });
-
-    if (!record || !record.diseaseIds || record.diseaseIds.length === 0) {
-      return [];
-    }
-
-    const diseases = await this.chronicDiseaseRepository.find({
-      where: { id: In(record.diseaseIds) },
-      order: { displayOrder: 'ASC' },
-    });
-
-    return diseases.map(mapToResponseDto);
-  }
-
-  /**
-   * Gán / cập nhật mảng bệnh mạn tính cho một hồ sơ sức khỏe.
-   *
-   * @param healthProfileId - Health Profile UUID.
-   * @param diseaseIds - Array of disease UUIDs.
-   * @returns Updated ProfileChronicDisease entity.
-   */
-  async setProfileDiseases(
-    healthProfileId: string,
-    diseaseIds: string[],
-  ): Promise<ProfileChronicDisease> {
-    // 1. Verify that all disease UUIDs exist if provided
-    if (diseaseIds.length > 0) {
-      const foundCount = await this.chronicDiseaseRepository.count({
-        where: { id: In(diseaseIds) },
-      });
-      if (foundCount !== diseaseIds.length) {
-        throw new NotFound(
-          ErrorCode.CHRONIC_DISEASE_NOT_FOUND,
-          'Một hoặc nhiều mã bệnh mãn tính được chọn không tồn tại trong danh mục hệ thống',
-        );
-      }
-    }
-
-    // 2. Upsert record
-    let record = await this.profileChronicDiseaseRepository.findOne({
-      where: { healthProfileId },
-    });
-
-    if (!record) {
-      record = this.profileChronicDiseaseRepository.create({
-        healthProfileId,
-        diseaseIds,
-      });
-    } else {
-      record.diseaseIds = diseaseIds;
-    }
-
-    return this.profileChronicDiseaseRepository.save(record);
   }
 }
