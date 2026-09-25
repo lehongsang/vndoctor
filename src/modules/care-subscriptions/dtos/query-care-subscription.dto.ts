@@ -69,4 +69,12 @@ export class QueryCareSubscriptionDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Lọc theo trạng thái đã xác nhận của bệnh nhân',
+    example: true,
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  isPatientConfirmed?: boolean;
 }

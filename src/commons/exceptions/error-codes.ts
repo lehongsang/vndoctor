@@ -107,6 +107,8 @@ export enum ErrorCode {
   CARE_SUBSCRIPTION_INVALID_STATUS = 'CARE_SUBSCRIPTION_INVALID_STATUS',
   CARE_SUBSCRIPTION_ALREADY_CANCELLED = 'CARE_SUBSCRIPTION_ALREADY_CANCELLED',
   CARE_SUBSCRIPTION_ALREADY_EXPIRED = 'CARE_SUBSCRIPTION_ALREADY_EXPIRED',
+  CARE_SUBSCRIPTION_NOT_CONFIRMED = 'CARE_SUBSCRIPTION_NOT_CONFIRMED',
+  CARE_SUBSCRIPTION_ALREADY_CONFIRMED = 'CARE_SUBSCRIPTION_ALREADY_CONFIRMED',
 
   // Conversations
   CONVERSATION_NOT_FOUND = 'CONVERSATION_NOT_FOUND',
@@ -240,6 +242,8 @@ export const DEFAULT_ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.CARE_SUBSCRIPTION_INVALID_STATUS]: 'Trạng thái gói đăng ký không hợp lệ để thực hiện thao tác này',
   [ErrorCode.CARE_SUBSCRIPTION_ALREADY_CANCELLED]: 'Gói đăng ký chăm sóc sức khỏe đã bị hủy',
   [ErrorCode.CARE_SUBSCRIPTION_ALREADY_EXPIRED]: 'Gói đăng ký chăm sóc sức khỏe đã hết hạn sử dụng',
+  [ErrorCode.CARE_SUBSCRIPTION_NOT_CONFIRMED]: 'Gói đăng ký chưa được bệnh nhân xác nhận trên ứng dụng',
+  [ErrorCode.CARE_SUBSCRIPTION_ALREADY_CONFIRMED]: 'Gói đăng ký đã được bệnh nhân xác nhận trước đó',
 
   // Conversations
   [ErrorCode.CONVERSATION_NOT_FOUND]: 'Không tìm thấy phòng hội thoại',

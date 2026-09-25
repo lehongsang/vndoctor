@@ -20,6 +20,7 @@ import {
   AssignAndActivateCareSubscriptionDto,
   CreateCareSubscriptionDto,
   QueryCareSubscriptionDto,
+  RejectCareSubscriptionDto,
   UpdateCareTeamDto,
 } from './dtos';
 import { PatientCareSubscription } from './entities/care-subscription.entity';
@@ -147,10 +148,14 @@ export class CareSubscriptionsService {
     }
 
     // 4. Create subscription in PENDING status (assignedExpertId automatically inherited from care package)
+    const isPatientSelfRegister = Boolean(accountId);
     const subscription = this.subscriptionRepo.create({
       healthProfileId: dto.healthProfileId,
       carePackageId: dto.carePackageId,
       status: CareSubscriptionStatus.PENDING,
+      isPatientConfirmed: isPatientSelfRegister,
+      patientConfirmedAt: isPatientSelfRegister ? new Date() : null,
+      registeredByStaffId: staff ? staff.id : null,
       startedAt: null,
       expiresAt: null,
       assignedDoctorId: null,
@@ -225,6 +230,12 @@ export class CareSubscriptionsService {
 
     if (query.nurseId) {
       qb.andWhere('sub.assignedNurseId = :nurseId', { nurseId: query.nurseId });
+    }
+
+    if (query.isPatientConfirmed !== undefined) {
+      qb.andWhere('sub.isPatientConfirmed = :isPatientConfirmed', {
+        isPatientConfirmed: query.isPatientConfirmed,
+      });
     }
 
     if (query.search) {
@@ -331,6 +342,13 @@ export class CareSubscriptionsService {
         throw new BadRequest(
           ErrorCode.CARE_SUBSCRIPTION_INVALID_STATUS,
           `Chỉ có thể kích hoạt gói chăm sóc đang ở trạng thái Chờ xử lý (PENDING). Trạng thái hiện tại: ${subscription.status}`,
+        );
+      }
+
+      if (!subscription.isPatientConfirmed) {
+        throw new BadRequest(
+          ErrorCode.CARE_SUBSCRIPTION_NOT_CONFIRMED,
+          'Gói chăm sóc chưa được bệnh nhân xác nhận trên ứng dụng. Vui lòng chờ bệnh nhân xác nhận trước khi kích hoạt.',
         );
       }
 
@@ -723,6 +741,138 @@ export class CareSubscriptionsService {
     }
 
     subscription.status = CareSubscriptionStatus.CANCELLED;
+    return this.subscriptionRepo.save(subscription);
+  }
+
+  /**
+   * Get all care package subscriptions registered by facility staff awaiting patient confirmation.
+   *
+   * @param accountId App account ID of the logged-in patient
+   * @returns List of subscriptions awaiting confirmation
+   */
+  async getPendingConfirmations(accountId: string): Promise<PatientCareSubscription[]> {
+    return this.subscriptionRepo
+      .createQueryBuilder('sub')
+      .innerJoinAndSelect('sub.healthProfile', 'profile')
+      .innerJoinAndSelect('sub.carePackage', 'pkg')
+      .leftJoinAndSelect('pkg.facility', 'facility')
+      .leftJoinAndSelect('sub.registeredByStaff', 'staff')
+      .where('profile.accountId = :accountId', { accountId })
+      .andWhere('sub.status = :status', { status: CareSubscriptionStatus.PENDING })
+      .andWhere('sub.isPatientConfirmed = false')
+      .orderBy('sub.createdAt', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Patient confirms a care package subscription registered on-site by medical facility staff.
+   *
+   * @param id Subscription UUID
+   * @param accountId App account ID of the confirming patient
+   * @returns Updated PatientCareSubscription
+   */
+  async confirmSubscription(
+    id: string,
+    accountId: string,
+  ): Promise<PatientCareSubscription> {
+    const subscription = await this.subscriptionRepo.findOne({
+      where: { id },
+      relations: ['healthProfile', 'carePackage', 'carePackage.facility', 'registeredByStaff'],
+    });
+
+    if (!subscription) {
+      throw new NotFound(
+        ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+        `Không tìm thấy gói chăm sóc đã đăng ký với mã ID: ${id}`,
+      );
+    }
+
+    if (subscription.healthProfile?.accountId !== accountId) {
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền xác nhận gói chăm sóc cho hồ sơ sức khỏe của tài khoản khác',
+      );
+    }
+
+    if (subscription.status !== CareSubscriptionStatus.PENDING) {
+      throw new BadRequest(
+        ErrorCode.CARE_SUBSCRIPTION_INVALID_STATUS,
+        `Chỉ có thể xác nhận gói chăm sóc đang ở trạng thái Chờ duyệt (PENDING). Trạng thái hiện tại: ${subscription.status}`,
+      );
+    }
+
+    if (subscription.isPatientConfirmed) {
+      throw new Conflict(
+        ErrorCode.CARE_SUBSCRIPTION_ALREADY_CONFIRMED,
+        'Gói chăm sóc này đã được bạn xác nhận trước đó',
+      );
+    }
+
+    subscription.isPatientConfirmed = true;
+    subscription.patientConfirmedAt = new Date();
+
+    return this.subscriptionRepo.save(subscription);
+  }
+
+  /**
+   * Patient rejects a care package subscription registered on-site by medical facility staff.
+   *
+   * @param id Subscription UUID
+   * @param dto Rejection reason payload
+   * @param accountId App account ID of the rejecting patient
+   * @returns Updated PatientCareSubscription
+   */
+  async rejectSubscription(
+    id: string,
+    dto: RejectCareSubscriptionDto,
+    accountId: string,
+  ): Promise<PatientCareSubscription> {
+    const subscription = await this.subscriptionRepo.findOne({
+      where: { id },
+      relations: ['healthProfile', 'carePackage'],
+    });
+
+    if (!subscription) {
+      throw new NotFound(
+        ErrorCode.CARE_SUBSCRIPTION_NOT_FOUND,
+        `Không tìm thấy gói chăm sóc đã đăng ký với mã ID: ${id}`,
+      );
+    }
+
+    if (subscription.healthProfile?.accountId !== accountId) {
+      throw new Forbidden(
+        ErrorCode.HEALTH_PROFILE_ACCESS_DENIED,
+        'Bạn không có quyền từ chối gói chăm sóc cho hồ sơ sức khỏe của tài khoản khác',
+      );
+    }
+
+    if (subscription.status !== CareSubscriptionStatus.PENDING) {
+      throw new BadRequest(
+        ErrorCode.CARE_SUBSCRIPTION_INVALID_STATUS,
+        `Chỉ có thể từ chối gói chăm sóc đang ở trạng thái Chờ duyệt (PENDING). Trạng thái hiện tại: ${subscription.status}`,
+      );
+    }
+
+    if (subscription.isPatientConfirmed) {
+      throw new Conflict(
+        ErrorCode.CARE_SUBSCRIPTION_ALREADY_CONFIRMED,
+        'Gói chăm sóc này đã được xác nhận, không thể từ chối',
+      );
+    }
+
+    subscription.status = CareSubscriptionStatus.CANCELLED;
+    subscription.rejectionReason = dto?.reason?.trim() || null;
+
+    // Restore package slot if configured
+    if (
+      subscription.carePackage &&
+      subscription.carePackage.maxSubscribers !== null &&
+      subscription.carePackage.maxSubscribers !== undefined
+    ) {
+      subscription.carePackage.maxSubscribers += 1;
+      await this.carePackageRepo.save(subscription.carePackage);
+    }
+
     return this.subscriptionRepo.save(subscription);
   }
 

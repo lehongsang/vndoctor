@@ -23,6 +23,7 @@ import {
   AssignAndActivateCareSubscriptionDto,
   CreateCareSubscriptionDto,
   QueryCareSubscriptionDto,
+  RejectCareSubscriptionDto,
   UpdateCareTeamDto,
 } from './dtos';
 import { PatientCareSubscription } from './entities/care-subscription.entity';
@@ -58,7 +59,7 @@ export class CareSubscriptionsController {
   @ApiBearerAuth('access-token')
   @Doc({
     summary: 'CMS Staff Auth - Nhân viên CSYT đăng ký gói chăm sóc cho bệnh nhân tại viện',
-    description: 'Bác sĩ/Nhân viên CSYT đăng ký gói chăm sóc cho hồ sơ bệnh nhân khi tư vấn trực tiếp tại phòng khám. Kiểm tra nhân viên chỉ được đăng ký gói và hồ sơ thuộc cơ sở y tế của mình.',
+    description: 'Bác sĩ/Nhân viên CSYT đăng ký gói chăm sóc cho hồ sơ bệnh nhân khi tư vấn trực tiếp tại phòng khám. Subscription được tạo ở trạng thái PENDING và chờ bệnh nhân xác nhận trên App.',
     response: { serialization: PatientCareSubscription },
   })
   async staffRegister(
@@ -66,6 +67,49 @@ export class CareSubscriptionsController {
     @CurrentStaff() staff: StaffJwtPayload,
   ): Promise<PatientCareSubscription> {
     return this.careSubscriptionsService.create(dto, undefined, staff);
+  }
+
+  @Get('pending-confirmations')
+  @UseGuards(AppAuthGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'App Auth - Danh sách gói chăm sóc do CSYT đăng ký hộ đang chờ bệnh nhân xác nhận',
+    description: 'Bệnh nhân xem danh sách các gói chăm sóc sức khỏe do Bác sĩ/Nhân viên CSYT đăng ký tại cơ sở y tế đang ở trạng thái PENDING chờ bệnh nhân xác nhận trên App.',
+    response: { serialization: PatientCareSubscription, isArray: true },
+  })
+  async getPendingConfirmations(@CurrentAccount() account: AppAccountJwtPayload) {
+    return this.careSubscriptionsService.getPendingConfirmations(account.id);
+  }
+
+  @Patch(':id/confirm')
+  @UseGuards(AppAuthGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'App Auth - Bệnh nhân xác nhận gói chăm sóc do CSYT đăng ký hộ',
+    description: 'Bệnh nhân xác nhận đồng ý tham gia gói chăm sóc sức khỏe đã được nhân viên cơ sở y tế đăng ký cho hồ sơ của mình. Sau khi xác nhận, CSYT có thể tiến hành phân công Care Team và kích hoạt gói.',
+    response: { serialization: PatientCareSubscription },
+  })
+  async confirmSubscription(
+    @Param('id') id: string,
+    @CurrentAccount() account: AppAccountJwtPayload,
+  ): Promise<PatientCareSubscription> {
+    return this.careSubscriptionsService.confirmSubscription(id, account.id);
+  }
+
+  @Patch(':id/reject')
+  @UseGuards(AppAuthGuard)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'App Auth - Bệnh nhân từ chối gói chăm sóc do CSYT đăng ký hộ',
+    description: 'Bệnh nhân từ chối gói chăm sóc sức khỏe do CSYT đăng ký hộ. Hệ thống chuyển trạng thái sang CANCELLED và hoàn lại số lượt đăng ký của gói (nếu có).',
+    response: { serialization: PatientCareSubscription },
+  })
+  async rejectSubscription(
+    @Param('id') id: string,
+    @Body() dto: RejectCareSubscriptionDto,
+    @CurrentAccount() account: AppAccountJwtPayload,
+  ): Promise<PatientCareSubscription> {
+    return this.careSubscriptionsService.rejectSubscription(id, dto, account.id);
   }
 
   @Get('me')

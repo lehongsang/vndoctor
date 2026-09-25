@@ -78,6 +78,9 @@ describe('CareSubscriptionsService', () => {
     healthProfileId: 'profile-1',
     carePackageId: 'pkg-1',
     status: CareSubscriptionStatus.PENDING,
+    isPatientConfirmed: true,
+    patientConfirmedAt: new Date(),
+    registeredByStaffId: null,
     startedAt: null,
     expiresAt: null,
     assignedDoctorId: null,
@@ -104,10 +107,13 @@ describe('CareSubscriptionsService', () => {
     find: jest.fn().mockResolvedValue([]),
     createQueryBuilder: jest.fn().mockReturnValue({
       leftJoinAndSelect: jest.fn().mockReturnThis(),
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([mockSubscription]),
       getManyAndCount: jest.fn().mockResolvedValue([[mockSubscription], 1]),
     }),
   };
@@ -463,6 +469,34 @@ describe('CareSubscriptionsService', () => {
 
       expect(result).toBeDefined();
     });
+
+    it('should throw BadRequest when subscription is not yet confirmed by patient', async () => {
+      mockDataSource.transaction.mockImplementationOnce(async (cb: (manager: unknown) => Promise<unknown>) => {
+        const mockManager = {
+          findOne: jest.fn().mockImplementation((entityClass: unknown) => {
+            if (entityClass === PatientCareSubscription) {
+              return Promise.resolve({
+                ...mockSubscription,
+                isPatientConfirmed: false,
+                carePackage: { ...mockCarePackage },
+                healthProfile: { ...mockHealthProfile },
+              });
+            }
+            return Promise.resolve(null);
+          }),
+        };
+        const res = await cb(mockManager);
+        return res;
+      });
+
+      await expect(
+        service.assignAndActivate(
+          'sub-1',
+          { assignedDoctorId: 'doc-1', assignedNurseId: 'nurse-1' },
+          'facility-1',
+        ),
+      ).rejects.toThrow(BadRequest);
+    });
   });
 
   describe('updateCareTeam', () => {
@@ -506,6 +540,86 @@ describe('CareSubscriptionsService', () => {
       });
 
       await expect(service.cancel('sub-1', 'facility-1')).rejects.toThrow(BadRequest);
+    });
+  });
+
+  describe('Patient Confirmation Flow', () => {
+    describe('getPendingConfirmations', () => {
+      it('should return pending subscriptions for patient account', async () => {
+        const result = await service.getPendingConfirmations('account-1');
+        expect(result).toBeDefined();
+        expect(Array.isArray(result)).toBe(true);
+      });
+    });
+
+    describe('confirmSubscription', () => {
+      it('should confirm subscription successfully', async () => {
+        mockSubscriptionRepo.findOne.mockResolvedValueOnce({
+          ...mockSubscription,
+          isPatientConfirmed: false,
+          patientConfirmedAt: null,
+        });
+
+        const result = await service.confirmSubscription('sub-1', 'account-1');
+        expect(result.isPatientConfirmed).toBe(true);
+        expect(result.patientConfirmedAt).toBeDefined();
+      });
+
+      it('should throw NotFound when subscription does not exist', async () => {
+        mockSubscriptionRepo.findOne.mockResolvedValueOnce(null);
+
+        await expect(service.confirmSubscription('invalid-id', 'account-1')).rejects.toThrow(NotFound);
+      });
+
+      it('should throw Forbidden when account does not own the health profile', async () => {
+        mockSubscriptionRepo.findOne.mockResolvedValueOnce({
+          ...mockSubscription,
+          healthProfile: { id: 'profile-1', accountId: 'other-account' } as HealthProfile,
+        });
+
+        await expect(service.confirmSubscription('sub-1', 'account-1')).rejects.toThrow(Forbidden);
+      });
+
+      it('should throw Conflict when already confirmed', async () => {
+        mockSubscriptionRepo.findOne.mockResolvedValueOnce({
+          ...mockSubscription,
+          isPatientConfirmed: true,
+        });
+
+        await expect(service.confirmSubscription('sub-1', 'account-1')).rejects.toThrow(Conflict);
+      });
+    });
+
+    describe('rejectSubscription', () => {
+      it('should reject subscription successfully and restore slots', async () => {
+        const pkgWithSlots = { ...mockCarePackage, maxSubscribers: 5 };
+        mockSubscriptionRepo.findOne.mockResolvedValueOnce({
+          ...mockSubscription,
+          isPatientConfirmed: false,
+          carePackage: pkgWithSlots,
+        });
+
+        const result = await service.rejectSubscription(
+          'sub-1',
+          { reason: 'Không có nhu cầu' },
+          'account-1',
+        );
+
+        expect(result.status).toBe(CareSubscriptionStatus.CANCELLED);
+        expect(result.rejectionReason).toBe('Không có nhu cầu');
+        expect(pkgWithSlots.maxSubscribers).toBe(6);
+      });
+
+      it('should throw Conflict when trying to reject an already confirmed subscription', async () => {
+        mockSubscriptionRepo.findOne.mockResolvedValueOnce({
+          ...mockSubscription,
+          isPatientConfirmed: true,
+        });
+
+        await expect(
+          service.rejectSubscription('sub-1', { reason: 'test' }, 'account-1'),
+        ).rejects.toThrow(Conflict);
+      });
     });
   });
 

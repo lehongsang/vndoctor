@@ -18,7 +18,7 @@ Thư mục chứa tài liệu mô tả chi tiết đầu vào (Input), đầu ra
 | **12** | [`12-treatment-targets.md`](./12-treatment-targets.md) | `treatment-targets` | Mục tiêu điều trị cá nhân hóa & Luồng Bác sĩ duyệt (`DOCTOR_VERIFIED`) |
 | **13** | [`13-treatment-plans.md`](./13-treatment-plans.md) | `treatment-plans` | Mẫu phác đồ viện (`treatment_templates`) & Phác đồ bệnh nhân (`treatment_plans`) |
 | **14** | [`14-care-packages.md`](./14-care-packages.md) | `care-packages` | Danh mục gói dịch vụ chăm sóc y tế (Standard/VIP, thời hạn, giá) |
-| **15** | [`15-care-subscriptions.md`](./15-care-subscriptions.md) | `care-subscriptions` | Đăng ký gói (`PENDING`), Phân công Care Team & Kích hoạt (`ACTIVE`) |
+| **15** | [`15-care-subscriptions.md`](./15-care-subscriptions.md) | `care-subscriptions` | Đăng ký gói (App/CMS), Xác nhận từ Bệnh nhân, Phân công Care Team & Kích hoạt (`ACTIVE`) |
 | **16** | [`16-care-requests.md`](./16-care-requests.md) | `care-requests` | Tiếp nhận yêu cầu hỗ trợ & Quy trình chuyển ca Điều dưỡng - Bác sĩ |
 | **17** | [`17-conversations.md`](./17-conversations.md) | `conversations` | Hội thoại Care Team, Chat 1-1 & **WebSocket Gateway (`/chat`)** realtime |
 

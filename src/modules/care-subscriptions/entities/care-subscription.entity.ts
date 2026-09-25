@@ -97,4 +97,36 @@ export class PatientCareSubscription extends BaseEntity {
   })
   @Column({ type: 'timestamptz', nullable: true, name: 'expires_at' })
   expiresAt?: Date | null;
+
+  @ApiProperty({
+    description: 'Trạng thái xác nhận của bệnh nhân cho gói chăm sóc (true nếu bệnh nhân tự đăng ký hoặc đã xác nhận)',
+    default: true,
+  })
+  @Column({ type: 'boolean', default: true, name: 'is_patient_confirmed' })
+  isPatientConfirmed: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Thời điểm bệnh nhân xác nhận gói chăm sóc trên App',
+    example: '2026-03-01T08:00:00Z',
+  })
+  @Column({ type: 'timestamptz', nullable: true, name: 'patient_confirmed_at' })
+  patientConfirmedAt?: Date | null;
+
+  @ApiPropertyOptional({
+    description: 'ID nhân viên y tế thực hiện đăng ký gói tại cơ sở y tế',
+    example: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+  })
+  @Column({ type: 'uuid', nullable: true, name: 'registered_by_staff_id' })
+  registeredByStaffId?: string | null;
+
+  @ManyToOne(() => StaffUser, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'registered_by_staff_id' })
+  registeredByStaff?: Relation<StaffUser> | null;
+
+  @ApiPropertyOptional({
+    description: 'Lý do bệnh nhân từ chối gói chăm sóc do cơ sở y tế đăng ký hộ',
+    example: 'Tôi chưa có nhu cầu sử dụng gói này',
+  })
+  @Column({ type: 'text', nullable: true, name: 'rejection_reason' })
+  rejectionReason?: string | null;
 }
