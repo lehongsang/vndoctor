@@ -12,6 +12,7 @@ import { BadRequest, Conflict, ErrorCode, Forbidden, NotFound } from '@/commons/
 import { CarePackage } from '@/modules/care-packages/entities/care-package.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, LessThan, Repository } from 'typeorm';
@@ -50,14 +51,17 @@ export class CareSubscriptionsService {
 
   /**
    * Register a new care subscription in PENDING status.
+   * Supports both App Patient registration and Facility Staff on-site registration.
    *
    * @param dto Registration input containing healthProfileId and carePackageId
    * @param accountId Optional App Account ID of the patient
+   * @param staff Optional Staff JWT context if created by Facility Staff
    * @returns Created PatientCareSubscription
    */
   async create(
     dto: CreateCareSubscriptionDto,
     accountId?: string,
+    staff?: StaffJwtPayload,
   ): Promise<PatientCareSubscription> {
     // 1. Validate Health Profile existence and ownership
     const healthProfile = await this.healthProfileRepo.findOne({
@@ -88,10 +92,42 @@ export class CareSubscriptionsService {
       );
     }
 
+    // Validate facility scope when registered by Staff at clinic
+    if (staff && staff.facilityId) {
+      if (carePackage.facilityId !== staff.facilityId) {
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Bạn không có quyền đăng ký gói chăm sóc thuộc cơ sở y tế khác với cơ sở của mình',
+        );
+      }
+      if (healthProfile.facilityId && healthProfile.facilityId !== staff.facilityId) {
+        throw new Forbidden(
+          ErrorCode.FACILITY_ACCESS_DENIED,
+          'Hồ sơ sức khỏe này thuộc quyền quản lý của cơ sở y tế khác',
+        );
+      }
+      // If healthProfile does not have facilityId assigned yet, bind it to current staff facility
+      if (!healthProfile.facilityId) {
+        healthProfile.facilityId = staff.facilityId;
+        await this.healthProfileRepo.save(healthProfile);
+      }
+    }
+
     if (carePackage.status !== CarePackageStatus.ACTIVE) {
       throw new BadRequest(
         ErrorCode.CARE_PACKAGE_INACTIVE,
         `Gói chăm sóc "${carePackage.name}" hiện đang ngừng cung cấp hoặc chưa được kích hoạt`,
+      );
+    }
+
+    if (
+      carePackage.maxSubscribers !== null &&
+      carePackage.maxSubscribers !== undefined &&
+      carePackage.maxSubscribers <= 0
+    ) {
+      throw new BadRequest(
+        ErrorCode.CARE_PACKAGE_SOLD_OUT,
+        `Gói chăm sóc "${carePackage.name}" đã hết số lượng đăng ký (Sold out)`,
       );
     }
 
@@ -122,7 +158,19 @@ export class CareSubscriptionsService {
       assignedExpertId: carePackage.doctorExpertId ?? null,
     });
 
-    return this.subscriptionRepo.save(subscription);
+    const savedSubscription = await this.subscriptionRepo.save(subscription);
+
+    // 5. Decrement remaining subscriber slots if limit is configured
+    if (
+      carePackage.maxSubscribers !== null &&
+      carePackage.maxSubscribers !== undefined &&
+      carePackage.maxSubscribers > 0
+    ) {
+      carePackage.maxSubscribers -= 1;
+      await this.carePackageRepo.save(carePackage);
+    }
+
+    return savedSubscription;
   }
 
   /**

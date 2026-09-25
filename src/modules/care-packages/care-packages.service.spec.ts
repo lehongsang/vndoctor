@@ -237,7 +237,7 @@ describe('CarePackagesService', () => {
   });
 
   describe('update', () => {
-    it('should update care package successfully', async () => {
+    it('should update care package successfully including maxSubscribers', async () => {
       mockCarePackageRepo.findOne.mockResolvedValueOnce({ ...mockCarePackage }); // findById
 
       const result = await service.update(
@@ -245,6 +245,7 @@ describe('CarePackagesService', () => {
         {
           name: 'Tên gói cập nhật',
           priceAmount: 2000000,
+          maxSubscribers: 100,
         },
         'facility-1',
       );

@@ -139,6 +139,7 @@ export class CarePackagesService {
       description: dto.description ?? null,
       durationDays: dto.durationDays,
       priceAmount: dto.priceAmount,
+      maxSubscribers: dto.maxSubscribers !== undefined ? dto.maxSubscribers : null,
       status: dto.status ?? CarePackageStatus.ACTIVE,
     });
 
@@ -318,6 +319,7 @@ export class CarePackagesService {
     if (dto.description !== undefined) carePackage.description = dto.description;
     if (dto.durationDays !== undefined) carePackage.durationDays = dto.durationDays;
     if (dto.priceAmount !== undefined) carePackage.priceAmount = dto.priceAmount;
+    if (dto.maxSubscribers !== undefined) carePackage.maxSubscribers = dto.maxSubscribers;
     if (dto.status !== undefined) carePackage.status = dto.status;
 
     return this.carePackageRepo.save(carePackage);

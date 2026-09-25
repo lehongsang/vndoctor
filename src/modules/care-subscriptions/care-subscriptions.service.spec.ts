@@ -8,6 +8,7 @@ import { BadRequest, Conflict, Forbidden, NotFound } from '@/commons/exceptions'
 import { CarePackage } from '@/modules/care-packages/entities/care-package.entity';
 import { HealthProfile } from '@/modules/health-profiles/entities/health-profile.entity';
 import { StaffUser } from '@/modules/staff/entities/staff-user.entity';
+import type { StaffJwtPayload } from '@/commons/decorators/current-staff.decorator';
 import type { TestingModule } from '@nestjs/testing';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -121,6 +122,7 @@ describe('CareSubscriptionsService', () => {
       }
       return Promise.resolve(null);
     }),
+    save: jest.fn().mockImplementation((pkg: Partial<CarePackage>) => Promise.resolve(pkg)),
   };
 
   const mockHealthProfileRepo = {
@@ -272,6 +274,35 @@ describe('CareSubscriptionsService', () => {
       ).rejects.toThrow(BadRequest);
     });
 
+    it('should throw BadRequest when care package is SOLD OUT (maxSubscribers <= 0)', async () => {
+      mockCarePackageRepo.findOne.mockResolvedValueOnce({
+        ...mockCarePackage,
+        maxSubscribers: 0,
+      });
+
+      await expect(
+        service.create(
+          { healthProfileId: 'profile-1', carePackageId: 'pkg-1' },
+          'account-1',
+        ),
+      ).rejects.toThrow(BadRequest);
+    });
+
+    it('should decrement maxSubscribers by 1 when subscription is created', async () => {
+      const pkgWithSlots = { ...mockCarePackage, maxSubscribers: 10 };
+      mockCarePackageRepo.findOne.mockResolvedValueOnce(pkgWithSlots);
+
+      await service.create(
+        { healthProfileId: 'profile-1', carePackageId: 'pkg-1' },
+        'account-1',
+      );
+
+      expect(pkgWithSlots.maxSubscribers).toBe(9);
+      expect(mockCarePackageRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ maxSubscribers: 9 }),
+      );
+    });
+
     it('should throw Conflict when an active subscription already exists', async () => {
       mockSubscriptionRepo.findOne.mockResolvedValueOnce({
         ...mockSubscription,
@@ -284,6 +315,91 @@ describe('CareSubscriptionsService', () => {
           'account-1',
         ),
       ).rejects.toThrow(Conflict);
+    });
+
+    it('should allow facility staff to register a care package for patient at clinic', async () => {
+      const mockStaff: StaffJwtPayload = {
+        id: 'staff-1',
+        facilityId: 'facility-1',
+        staffCode: 'NV-001',
+        username: 'doctor1',
+        fullName: 'Bác Sĩ Nguyễn Văn A',
+        role: StaffRole.DOCTOR,
+        type: 'STAFF',
+      };
+      mockHealthProfileRepo.findOne.mockResolvedValueOnce({
+        ...mockHealthProfile,
+        facilityId: 'facility-1',
+      });
+      mockCarePackageRepo.findOne.mockResolvedValueOnce({
+        ...mockCarePackage,
+        facilityId: 'facility-1',
+      });
+
+      const result = await service.create(
+        { healthProfileId: 'profile-1', carePackageId: 'pkg-1' },
+        undefined,
+        mockStaff,
+      );
+
+      expect(result).toBeDefined();
+      expect(mockSubscriptionRepo.save).toHaveBeenCalled();
+    });
+
+    it('should throw Forbidden if staff registers package from another facility', async () => {
+      const mockStaff: StaffJwtPayload = {
+        id: 'staff-1',
+        facilityId: 'facility-2',
+        staffCode: 'NV-001',
+        username: 'doctor1',
+        fullName: 'Bác Sĩ Nguyễn Văn A',
+        role: StaffRole.DOCTOR,
+        type: 'STAFF',
+      };
+      mockHealthProfileRepo.findOne.mockResolvedValueOnce({
+        ...mockHealthProfile,
+        facilityId: 'facility-2',
+      });
+      mockCarePackageRepo.findOne.mockResolvedValueOnce({
+        ...mockCarePackage,
+        facilityId: 'facility-1',
+      });
+
+      await expect(
+        service.create(
+          { healthProfileId: 'profile-1', carePackageId: 'pkg-1' },
+          undefined,
+          mockStaff,
+        ),
+      ).rejects.toThrow(Forbidden);
+    });
+
+    it('should throw Forbidden if staff registers for profile belonging to another facility', async () => {
+      const mockStaff: StaffJwtPayload = {
+        id: 'staff-1',
+        facilityId: 'facility-1',
+        staffCode: 'NV-001',
+        username: 'doctor1',
+        fullName: 'Bác Sĩ Nguyễn Văn A',
+        role: StaffRole.DOCTOR,
+        type: 'STAFF',
+      };
+      mockHealthProfileRepo.findOne.mockResolvedValueOnce({
+        ...mockHealthProfile,
+        facilityId: 'facility-2',
+      });
+      mockCarePackageRepo.findOne.mockResolvedValueOnce({
+        ...mockCarePackage,
+        facilityId: 'facility-1',
+      });
+
+      await expect(
+        service.create(
+          { healthProfileId: 'profile-1', carePackageId: 'pkg-1' },
+          undefined,
+          mockStaff,
+        ),
+      ).rejects.toThrow(Forbidden);
     });
   });
 

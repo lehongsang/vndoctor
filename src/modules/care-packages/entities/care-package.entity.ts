@@ -91,6 +91,13 @@ export class CarePackage extends BaseEntity {
   })
   priceAmount: number;
 
+  @ApiPropertyOptional({
+    description: 'Giới hạn số lượng người đăng ký còn lại của gói do cơ sở y tế thiết lập (0 là hết chỗ/sold out)',
+    example: 50,
+  })
+  @Column({ type: 'int', nullable: true, name: 'max_subscribers' })
+  maxSubscribers?: number | null;
+
   @ApiProperty({
     enum: CarePackageStatus,
     enumName: 'CarePackageStatus',

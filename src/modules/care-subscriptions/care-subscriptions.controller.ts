@@ -52,6 +52,22 @@ export class CareSubscriptionsController {
     return this.careSubscriptionsService.create(dto, account.id);
   }
 
+  @Post('staff-register')
+  @UseGuards(StaffAuthGuard, StaffRolesGuard)
+  @Roles(StaffRole.ADMIN, StaffRole.DOCTOR, StaffRole.NURSE, StaffRole.STAFF)
+  @ApiBearerAuth('access-token')
+  @Doc({
+    summary: 'CMS Staff Auth - Nhân viên CSYT đăng ký gói chăm sóc cho bệnh nhân tại viện',
+    description: 'Bác sĩ/Nhân viên CSYT đăng ký gói chăm sóc cho hồ sơ bệnh nhân khi tư vấn trực tiếp tại phòng khám. Kiểm tra nhân viên chỉ được đăng ký gói và hồ sơ thuộc cơ sở y tế của mình.',
+    response: { serialization: PatientCareSubscription },
+  })
+  async staffRegister(
+    @Body() dto: CreateCareSubscriptionDto,
+    @CurrentStaff() staff: StaffJwtPayload,
+  ): Promise<PatientCareSubscription> {
+    return this.careSubscriptionsService.create(dto, undefined, staff);
+  }
+
   @Get('me')
   @UseGuards(AppAuthGuard)
   @ApiBearerAuth('access-token')

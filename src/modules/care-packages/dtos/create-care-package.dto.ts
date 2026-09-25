@@ -81,6 +81,16 @@ export class CreateCarePackageDto {
   priceAmount: number;
 
   @ApiPropertyOptional({
+    description: 'Giới hạn số lượng người đăng ký gói do cơ sở y tế tự nhập (0 là hết chỗ/sold out)',
+    example: 50,
+  })
+  @IsOptional()
+  @IsInt({ message: 'maxSubscribers must be an integer' })
+  @Min(0, { message: 'maxSubscribers cannot be negative' })
+  @Type(() => Number)
+  maxSubscribers?: number | null;
+
+  @ApiPropertyOptional({
     enum: CarePackageStatus,
     enumName: 'CarePackageStatus',
     description: 'Package status (ACTIVE / INACTIVE)',
