@@ -32,8 +32,7 @@ describe('RiskAssessmentsService', () => {
     assessmentInputId: 'input-uuid-1',
     riskScore: 8.0,
     riskLevel: VnDoctorRiskLevel.HIGH,
-    conclusion: 'High risk',
-    recommendations: 'Diet and medication',
+    doctorNote: 'High risk - follow lifestyle recommendations',
     evaluatedAt: new Date(),
   } as unknown as RiskFactorAssessmentResult;
 
@@ -217,12 +216,12 @@ describe('RiskAssessmentsService', () => {
   });
 
   describe('evaluate', () => {
-    it('should allow doctor to evaluate and update conclusion', async () => {
+    it('should allow doctor to evaluate and update doctorNote and riskLevel', async () => {
       const res = await service.evaluate(
         'result-uuid-1',
         {
-          conclusion: 'Bệnh nhân có nguy cơ tim mạch rất cao cần dùng Statin liều cao',
-          recommendations: 'Uống Atorvastatin 40mg hàng ngày',
+          doctorNote: 'Bệnh nhân có nguy cơ tim mạch rất cao cần dùng Statin liều cao',
+          riskLevel: VnDoctorRiskLevel.VERY_HIGH,
         },
         'doctor-uuid-1',
       );

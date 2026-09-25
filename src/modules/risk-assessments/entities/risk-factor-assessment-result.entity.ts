@@ -41,13 +41,9 @@ export class RiskFactorAssessmentResult extends BaseEntity {
   @Column({ type: 'enum', enum: VnDoctorRiskLevel, nullable: true })
   riskLevel?: VnDoctorRiskLevel | null;
 
-  @ApiPropertyOptional({ description: 'Doctor diagnostic conclusion' })
+  @ApiPropertyOptional({ description: 'Ghi chú / lời dặn của bác sĩ khi phân tầng hoặc tư vấn kết quả' })
   @Column({ type: 'text', nullable: true })
-  conclusion?: string | null;
-
-  @ApiPropertyOptional({ description: 'Doctor treatment & lifestyle recommendations' })
-  @Column({ type: 'text', nullable: true })
-  recommendations?: string | null;
+  doctorNote?: string | null;
 
   @ApiProperty({ description: 'Evaluation completion timestamp' })
   @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })

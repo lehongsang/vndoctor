@@ -396,8 +396,7 @@ export class RiskAssessmentsService {
       assessmentInputId: savedInput.id,
       riskScore,
       riskLevel,
-      conclusion: null,
-      recommendations: null,
+      doctorNote: null,
       evaluatedAt: new Date(),
     });
 
@@ -426,10 +425,10 @@ export class RiskAssessmentsService {
   }
 
   /**
-   * Bác sĩ thẩm định, xác nhận (confirm) và đưa ra kết luận / lời khuyên chuyên môn cho kết quả phân tầng.
+   * Bác sĩ thẩm định, xác nhận (confirm) và ghi chú / điều chỉnh kết quả phân tầng.
    *
    * @param id - Assessment Result UUID (hoặc Assessment Input UUID)
-   * @param dto - EvaluateRiskAssessmentDto (conclusion, recommendations)
+   * @param dto - EvaluateRiskAssessmentDto (doctorNote, riskLevel)
    * @param doctorId - Staff User UUID of evaluating doctor
    * @returns Updated Assessment result with red flags
    */
@@ -448,10 +447,8 @@ export class RiskAssessmentsService {
     }
 
     result.doctorId = doctorId;
-    if (dto.conclusion !== undefined) result.conclusion = dto.conclusion;
-    if (dto.recommendations !== undefined) result.recommendations = dto.recommendations;
+    if (dto.doctorNote !== undefined) result.doctorNote = dto.doctorNote;
     if (dto.riskLevel !== undefined) result.riskLevel = dto.riskLevel;
-    if (dto.riskScore !== undefined) result.riskScore = dto.riskScore;
     result.evaluatedAt = new Date();
 
     const savedResult = await this.resultRepo.save(result);
